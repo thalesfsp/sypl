@@ -143,7 +143,7 @@ func (sypl *Sypl) PrintfWithOptions(o *options.Options, l level.Level, format st
 	return sypl
 }
 
-// PrintfWithOptions prints according with the specified format, also adding
+// PrintlnfWithOptions prints according with the specified format, also adding
 // a new line to the end. It's a more flexible way of printing, allowing to
 // specify a few message's options. For full-control over the message is
 // possible via `PrintMessage`.
@@ -155,7 +155,7 @@ func (sypl *Sypl) PrintlnfWithOptions(o *options.Options, l level.Level, format 
 	return sypl
 }
 
-// PrintfWithOptions prints, also adding a new line to the end. It's a more
+// PrintlnWithOptions prints, also adding a new line to the end. It's a more
 // flexible way of printing, allowing to specify a few message's options.
 // For full-control over the message is possible via `PrintMessage`.
 func (sypl *Sypl) PrintlnWithOptions(o *options.Options, l level.Level, args ...interface{}) ISypl {
@@ -220,7 +220,7 @@ func (sypl *Sypl) PrintlnPretty(l level.Level, data interface{}) ISypl {
 	return sypl.PrintMessage(msg)
 }
 
-// PrintMessagerPerOutput allows you to concurrently print messages, each one,
+// PrintMessagesToOutputs allows you to concurrently print messages, each one,
 // at the specified level and to the specified output.
 //
 // Note: If the named output doesn't exits, the message will not be printed.

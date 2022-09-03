@@ -25,6 +25,10 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [1.6.1] - 2022-09-03
+### Changed
+- Fixed documentation.
+
 ## [1.6.0] - 2022-09-02
 ### Changed
 - Removed Lumberjack dependency

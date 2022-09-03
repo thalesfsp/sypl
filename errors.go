@@ -6,4 +6,5 @@ package sypl
 
 import "errors"
 
+// ErrSyplNotInitialized is returned when sypl isn't initialized.
 var ErrSyplNotInitialized = errors.New("sypl isn't initialized. Have you instantiated it?")
