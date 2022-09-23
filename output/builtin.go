@@ -87,20 +87,48 @@ func SafeBuffer(maxLevel level.Level, processors ...processor.IProcessor) (*safe
 // ElasticSearchConfig is the ElasticSearch configuration.
 type ElasticSearchConfig = elasticsearch.Config
 
+// ElasticSearchDynamicIndexFunc is the name of the index to be used, evaluated
+// at the insertion time.
+type ElasticSearchDynamicIndexFunc = elasticsearch.DynamicIndexFunc
+
 // ElasticSearch is a built-in `output` - named `ElasticSearch`, that writes to
 // ElasticSearch.
 //
 // NOTE: By default, data is JSON-formatted.
 // NOTE: `DocumentID` is automatically generated.
+// NOTE: It's the caller's responsibility to create the index, define its
+// mapping, and settings.
 func ElasticSearch(
 	indexName string,
 	esConfig ElasticSearchConfig,
 	maxLevel level.Level,
 	processors ...processor.IProcessor,
 ) IOutput {
+	return ElasticSearchWithDynamicIndex(
+		func() string { return indexName },
+		esConfig,
+		maxLevel,
+		processors...,
+	)
+}
+
+// ElasticSearchWithDynamicIndex is a built-in `output` - named `ElasticSearch`,
+// that writes to ElasticSearch. It allows to define a function that returns the
+// index name to be used, evaluated at the insertion time.
+//
+// NOTE: By default, data is JSON-formatted.
+// NOTE: `DocumentID` is automatically generated.
+// NOTE: It's the caller's responsibility to create the index, define its
+// mapping, and settings.
+func ElasticSearchWithDynamicIndex(
+	dynamicIndexFunc ElasticSearchDynamicIndexFunc,
+	esConfig ElasticSearchConfig,
+	maxLevel level.Level,
+	processors ...processor.IProcessor,
+) IOutput {
 	o := New("ElasticSearch",
 		maxLevel,
-		elasticsearch.New(indexName, esConfig),
+		elasticsearch.NewWithDynamicIndex(dynamicIndexFunc, esConfig),
 		processors...,
 	).SetFormatter(formatter.JSON())
 

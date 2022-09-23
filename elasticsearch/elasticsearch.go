@@ -99,7 +99,7 @@ func New(
 // NOTE: It's the caller's responsibility to create the index, define its
 // mapping, and settings.
 func NewWithDynamicIndex(
-	indexName DynamicIndexFunc,
+	dynamicIndexFunc DynamicIndexFunc,
 	esConfig Config,
 ) *ElasticSearch {
 	es, err := elasticsearch.NewClient(esConfig)
@@ -125,6 +125,6 @@ func NewWithDynamicIndex(
 	return &ElasticSearch{
 		Client:       es,
 		Config:       esConfig,
-		DynamicIndex: indexName,
+		DynamicIndex: dynamicIndexFunc,
 	}
 }
