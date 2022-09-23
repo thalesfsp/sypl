@@ -26,6 +26,10 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [1.6.3] - 2022-09-23
+### Added
+- Added `elasticsearch.NewWithDynamicIndex` that allows specifying a function that defines the name of the index, evaluated at the time of insertion. An important feature, part of the index naming strategy.
+
 ## [1.6.2] - 2022-09-23
 ### Added
 - `ElasticSearch` `output` built-in

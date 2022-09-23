@@ -13,6 +13,10 @@ import (
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
+// DynamicIndexFunc is the name of the index to be used, evaluated at the
+// insertion time.
+type DynamicIndexFunc func() string
+
 // Config is the ElasticSearch configuration.
 type Config = elasticsearch.Config
 
@@ -24,11 +28,12 @@ type ElasticSearch struct {
 	// Config is the ElasticSearch configuration.
 	Config Config
 
-	// IndexName is the name of the index to be used.
+	// DynamicIndex is the name of the index to be used, evaluated at the
+	// insertion time.
 	//
 	// NOTE: It's the caller's responsibility to create the index, define its
 	// mapping, and settings.
-	Index string
+	DynamicIndex DynamicIndexFunc
 }
 
 // Write conforms to the `io.Writer` interface.
@@ -38,7 +43,7 @@ type ElasticSearch struct {
 func (es *ElasticSearch) Write(data []byte) (int, error) {
 	// Set up the request object.
 	req := esapi.IndexRequest{
-		Index: es.Index,
+		Index: es.DynamicIndex(),
 		Body:  bytes.NewReader(data),
 	}
 
@@ -78,9 +83,23 @@ func (es *ElasticSearch) Write(data []byte) (int, error) {
 // NOTE: `DocumentID` is automatically generated.
 // NOTE: It's the caller's responsibility to create the index, define its
 // mapping, and settings.
-// and defined.
 func New(
 	indexName string,
+	esConfig Config,
+) *ElasticSearch {
+	return NewWithDynamicIndex(func() string { return indexName }, esConfig)
+}
+
+// NewWithDynamicIndex is a built-in `output` - named `ElasticSearch`, that
+// writes to ElasticSearch. It allows to define a function that returns the
+// index name to be used, evaluated at the insertion time.
+//
+// NOTE: By default, data is JSON-formatted.
+// NOTE: `DocumentID` is automatically generated.
+// NOTE: It's the caller's responsibility to create the index, define its
+// mapping, and settings.
+func NewWithDynamicIndex(
+	indexName DynamicIndexFunc,
 	esConfig Config,
 ) *ElasticSearch {
 	es, err := elasticsearch.NewClient(esConfig)
@@ -104,8 +123,8 @@ func New(
 	defer res.Body.Close()
 
 	return &ElasticSearch{
-		Client: es,
-		Config: esConfig,
-		Index:  indexName,
+		Client:       es,
+		Config:       esConfig,
+		DynamicIndex: indexName,
 	}
 }
