@@ -6,6 +6,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/thalesfsp/sypl/flag"
 	"github.com/thalesfsp/sypl/message"
 	"github.com/thalesfsp/sypl/processor"
 	"github.com/thalesfsp/sypl/shared"
@@ -19,9 +20,13 @@ type IFormatter = processor.IProcessor
 //////
 
 // JSON is a JSON formatter. It automatically adds:
-// - Component name
+// - Component
 // - Level
+// - Message
+// - Output
+// - Tags
 // - Timestamp (RFC3339).
+// - Fields.
 func JSON() IFormatter {
 	return processor.New("JSON", func(m message.IMessage) error {
 		mM := map[string]interface{}{}
@@ -31,6 +36,30 @@ func JSON() IFormatter {
 		mM["level"] = strings.ToLower(m.GetLevel().String())
 		mM["timestamp"] = m.GetTimestamp().Format(time.RFC3339)
 		mM["message"] = m.GetContent().GetProcessed()
+		mM["tags"] = m.GetTags()
+		mM["Flag"] = m.GetFlag()
+		mM["OutputsNames"] = m.GetOutputsNames()
+		mM["ProcessorsNames"] = m.GetProcessorsNames()
+
+		tags := m.GetTags()
+		if tags != nil {
+			mM["tags"] = tags
+		}
+
+		flg := m.GetFlag()
+		if flg != flag.None {
+			mM["Flag"] = flg
+		}
+
+		outputsNames := m.GetOutputsNames()
+		if len(outputsNames) != 0 {
+			mM["OutputsNames"] = outputsNames
+		}
+
+		processorsNames := m.GetProcessorsNames()
+		if len(processorsNames) != 0 {
+			mM["ProcessorsNames"] = processorsNames
+		}
 
 		// Should only process fields if any.
 		if len(m.GetFields()) != 0 {
@@ -46,9 +75,13 @@ func JSON() IFormatter {
 }
 
 // Text is a text formatter. It automatically adds:
-// - Component name
+// - Component
 // - Level
+// - Message
+// - Output
+// - Tags
 // - Timestamp (RFC3339).
+// - Fields.
 func Text() IFormatter {
 	return processor.New("Text", func(m message.IMessage) error {
 		buf := new(strings.Builder)
@@ -62,6 +95,26 @@ func Text() IFormatter {
 		fmt.Fprintf(w, "level=%s\t", strings.ToLower(m.GetLevel().String()))
 		fmt.Fprintf(w, "timestamp=%s\t", m.GetTimestamp().Format(time.RFC3339))
 		fmt.Fprintf(w, "message=%s\t", m.GetContent().GetProcessed())
+
+		tags := m.GetTags()
+		if tags != nil {
+			fmt.Fprintf(w, "tags=%s\t", tags)
+		}
+
+		flg := m.GetFlag()
+		if flg != flag.None {
+			fmt.Fprintf(w, "flag=%s\t", flg)
+		}
+
+		outputsNames := m.GetOutputsNames()
+		if len(outputsNames) != 0 {
+			fmt.Fprintf(w, "outputsNames=%s\t", outputsNames)
+		}
+
+		processorsNames := m.GetProcessorsNames()
+		if len(processorsNames) != 0 {
+			fmt.Fprintf(w, "processorsNames=%s\t", processorsNames)
+		}
 
 		// Should only process fields if any.
 		if len(m.GetFields()) != 0 {

@@ -11,10 +11,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/spf13/afero"
+	"github.com/thalesfsp/sypl/fields"
+	"github.com/thalesfsp/sypl/flag"
+	"github.com/thalesfsp/sypl/formatter"
 	"github.com/thalesfsp/sypl/level"
 	"github.com/thalesfsp/sypl/message"
 	"github.com/thalesfsp/sypl/options"
@@ -477,6 +481,58 @@ func TestNew(t *testing.T) {
 		},
 	}
 
+	PrintWithOptionsFunc := args{
+		component: shared.DefaultComponentNameOutput,
+		content:   shared.DefaultContentOutput,
+		level:     level.Info,
+		maxLevel:  level.Trace,
+		run: func(a args) string {
+			var buf bytes.Buffer
+			bufWriter := bufio.NewWriter(&buf)
+
+			// Creates logger, and name it.
+			testingLogger := New(a.component)
+
+			// Creates an `Output`. In this case, called Buffer that will write
+			// to the specified buffer, and max print level @ Info.
+			BufferOutput := output.New("Buffer", a.maxLevel, bufWriter, processor.ChangeFirstCharCase(processor.Lowercase)).SetFormatter(formatter.Text())
+
+			// Adds `Output` to logger.
+			testingLogger.AddOutputs(BufferOutput)
+
+			testingLogger.PrintWithOptionsFunc(
+				a.level,
+				a.content,
+				WithTags("tag1", "tag2"),
+				WithFields(fields.Fields{
+					"field1": "value1",
+					"field2": "value2",
+					"field3": "value3",
+				}),
+				WithFlag(flag.Force),
+				WithOutputsNames([]string{"Buffer"}),
+				WithProcessorsNames([]string{"ChangeFirstCharCase"}),
+			)
+
+			bufWriter.Flush()
+
+			content := buf.String()
+
+			if !strings.Contains(content, "tag1") ||
+				!strings.Contains(content, "tag2") ||
+				!strings.Contains(content, "field1") ||
+				!strings.Contains(content, "field2") ||
+				!strings.Contains(content, "field3") ||
+				!strings.Contains(content, "flag=Force") ||
+				!strings.Contains(content, "outputsNames=[Buffer]") ||
+				!strings.Contains(content, "processorsNames=[ChangeFirstCharCase]") {
+				return "false"
+			}
+
+			return "true"
+		},
+	}
+
 	tests := []struct {
 		name string
 		args args
@@ -683,6 +739,13 @@ func TestNew(t *testing.T) {
 			args: printflnArgs,
 			want: func(a args) string {
 				return "element 1 element 2\n"
+			},
+		},
+		{
+			name: "Should print - PrintWithOptionsFunc",
+			args: PrintWithOptionsFunc,
+			want: func(a args) string {
+				return "true"
 			},
 		},
 	}

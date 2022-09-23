@@ -112,6 +112,50 @@ func ElasticSearch(
 	)
 }
 
+// ElasticSearchTagMapItem X.
+type ElasticSearchTagMapItem struct {
+	DynamicIndexFunc ElasticSearchDynamicIndexFunc
+	Level            level.Level
+}
+
+// ElasticSearchTagMap is a map of tags to index names (DynamicIndexFunc).
+type ElasticSearchTagMap = map[string]ElasticSearchTagMapItem
+
+// NewElasticSearchTagMapItem X.
+func NewElasticSearchTagMapItem(l level.Level, dynamicIndexFunc ElasticSearchDynamicIndexFunc) ElasticSearchTagMapItem {
+	return ElasticSearchTagMapItem{
+		DynamicIndexFunc: dynamicIndexFunc,
+		Level:            l,
+	}
+}
+
+// ElasticSearchWithTagMap is a built-in `output` - named `ElasticSearch`,
+// that writes to ElasticSearch. It allows to define a map of tags and indexes.
+// The index name is a function which is evaluated at the insertion time.
+//
+// NOTE: By default, data is JSON-formatted.
+// NOTE: `DocumentID` is automatically generated.
+// NOTE: It's the caller's responsibility to create the index, define its
+// mapping, and settings.
+func ElasticSearchWithTagMap(
+	tagMap ElasticSearchTagMap,
+	esConfig ElasticSearchConfig,
+	processors ...processor.IProcessor,
+) []IOutput {
+	outputs := make([]IOutput, 0, len(tagMap))
+
+	for tag, elasticSearchTagMapItem := range tagMap {
+		outputs = append(outputs, ElasticSearchWithDynamicIndex(
+			elasticSearchTagMapItem.DynamicIndexFunc,
+			esConfig,
+			elasticSearchTagMapItem.Level,
+			append(processors, processor.PrintOnlyIfTagged(tag))...,
+		))
+	}
+
+	return outputs
+}
+
 // ElasticSearchWithDynamicIndex is a built-in `output` - named `ElasticSearch`,
 // that writes to ElasticSearch. It allows to define a function that returns the
 // index name to be used, evaluated at the insertion time.

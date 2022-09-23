@@ -19,6 +19,11 @@ type IBasePrinter interface {
 	// full-control over the message. Use `New` to create the message.
 	PrintMessage(messages ...message.IMessage) ISypl
 
+	// PrintWithOptionsFunc is a more flexible way of printing, allowing to
+	// specify a few message's options in a functional way. For full-control
+	// over the message is possible via `PrintMessage`.
+	PrintWithOptionsFunc(l level.Level, ct string, o ...OptionsFunc) ISypl
+
 	// PrintWithOptions is a more flexible way of printing, allowing to specify
 	// a few message's options. For full-control over the message is possible
 	// via `PrintMessage`.

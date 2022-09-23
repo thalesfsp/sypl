@@ -27,6 +27,10 @@ Refs. for badges:
 - https://github.com/golangci/golangci-lint
 
 
+## [1.6.5] - 2022-09-23
+### Added
+- Added the ability to specify options in a functional way.
+
 ## [1.6.4] - 2022-09-23
 ### Added
 - Added `output.ElasticSearchWithDynamicIndex`.
