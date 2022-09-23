@@ -9,6 +9,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/thalesfsp/sypl/elasticsearch"
+	"github.com/thalesfsp/sypl/formatter"
 	"github.com/thalesfsp/sypl/level"
 	"github.com/thalesfsp/sypl/processor"
 	"github.com/thalesfsp/sypl/safebuffer"
@@ -80,4 +82,27 @@ func SafeBuffer(maxLevel level.Level, processors ...processor.IProcessor) (*safe
 	o := New("Buffer", maxLevel, &buf, processors...)
 
 	return &buf, o
+}
+
+// ElasticSearchConfig is the ElasticSearch configuration.
+type ElasticSearchConfig = elasticsearch.Config
+
+// ElasticSearch is a built-in `output` - named `ElasticSearch`, that writes to
+// ElasticSearch.
+//
+// NOTE: By default, data is JSON-formatted.
+// NOTE: `DocumentID` is automatically generated.
+func ElasticSearch(
+	indexName string,
+	esConfig ElasticSearchConfig,
+	maxLevel level.Level,
+	processors ...processor.IProcessor,
+) IOutput {
+	o := New("ElasticSearch",
+		maxLevel,
+		elasticsearch.New(indexName, esConfig),
+		processors...,
+	).SetFormatter(formatter.JSON())
+
+	return o
 }

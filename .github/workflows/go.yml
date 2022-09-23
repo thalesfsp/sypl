@@ -34,5 +34,6 @@ jobs:
       - name: Test
         run: make test coverage
 
-      - name: Test Integration
-        run: make test-integration coverage
+      # Requires external dependencies such as ElasticSearch.
+      # - name: Test Integration
+      #   run: make test-integration coverage

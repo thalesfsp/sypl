@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Roadmap
 
+- Add LowerCase processor
 - Fix possible race condition on `sypl.SetMaxLevel`
 - Add badges to README.md:
   - GoDoc
@@ -24,6 +25,10 @@ Refs. for badges:
 
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
+
+## [1.6.2] - 2022-09-23
+### Added
+- `ElasticSearch` `output` built-in
 
 ## [1.6.1] - 2022-09-03
 ### Changed
