@@ -495,7 +495,11 @@ func TestNew(t *testing.T) {
 
 			// Creates an `Output`. In this case, called Buffer that will write
 			// to the specified buffer, and max print level @ Info.
-			BufferOutput := output.New("Buffer", a.maxLevel, bufWriter, processor.ChangeFirstCharCase(processor.Lowercase)).SetFormatter(formatter.Text())
+			BufferOutput := output.New("Buffer",
+				a.maxLevel,
+				bufWriter,
+				processor.ChangeFirstCharCase(processor.Lowercase),
+			).SetFormatter(formatter.Text())
 
 			// Adds `Output` to logger.
 			testingLogger.AddOutputs(BufferOutput)
