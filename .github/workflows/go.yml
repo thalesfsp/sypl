@@ -27,6 +27,7 @@ jobs:
         uses: golangci/golangci-lint-action@v3.1.0
         with:
           version: v1.49.0
+          args: -v -c .golangci.yml
 
       - name: Lint
         run: golangci-lint run -v -c .golangci.yml
