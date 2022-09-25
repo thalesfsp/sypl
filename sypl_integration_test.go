@@ -133,6 +133,10 @@ func TestNewIntegration(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
+		if !strings.EqualFold(os.Getenv("SYPL_TEST_MODE"), "integration") {
+			t.SkipNow()
+		}
+
 		t.Log("Cleaning up...")
 
 		time.Sleep(1 * time.Second)
