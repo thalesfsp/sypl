@@ -6,9 +6,11 @@
 package sypl
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/thalesfsp/sypl/elasticsearch"
 	"github.com/thalesfsp/sypl/level"
@@ -19,13 +21,16 @@ import (
 
 var (
 	esConfig = output.ElasticSearchConfig{
-		Addresses: []string{"http://localhost:9200"},
+		Addresses: []string{os.Getenv("SYPL_ELASTICSEARCH_TEST_ADDRESS")},
 	}
-	esIndexName        = "test"
-	esIndexName1TagMap = "test1"
-	esIndexName2TagMap = "test2"
+	commonPrefix       = "test"
+	esIndexName        = fmt.Sprintf("%s1", commonPrefix)
+	esIndexName1TagMap = fmt.Sprintf("%s2", commonPrefix)
+	esIndexName2TagMap = fmt.Sprintf("%s3", commonPrefix)
+	esIndexName3TagMap = fmt.Sprintf("%s-catch-all", commonPrefix)
 	esTagName1TagMap   = esIndexName1TagMap
 	esTagName2TagMap   = esIndexName2TagMap
+	esTagName3TagMap   = "*"
 )
 
 func TestNewIntegration(t *testing.T) {
@@ -66,8 +71,9 @@ func TestNewIntegration(t *testing.T) {
 			// Creates logger, and name it.
 			l := New(shared.DefaultComponentNameOutput, output.ElasticSearchWithTagMap(
 				map[string]output.ElasticSearchTagMapItem{
-					esIndexName1TagMap: output.NewElasticSearchTagMapItem(level.Info, func() string { return esIndexName1TagMap }),
-					esIndexName2TagMap: output.NewElasticSearchTagMapItem(level.Info, func() string { return esIndexName2TagMap }),
+					esTagName1TagMap: output.NewElasticSearchTagMapItem(a.maxLevel, func() string { return esIndexName1TagMap }),
+					esTagName2TagMap: output.NewElasticSearchTagMapItem(a.maxLevel, func() string { return esIndexName2TagMap }),
+					esTagName3TagMap: output.NewElasticSearchTagMapItem(a.maxLevel, func() string { return esIndexName3TagMap }),
 				},
 				esConfig,
 			)...)
@@ -79,6 +85,8 @@ func TestNewIntegration(t *testing.T) {
 			l.PrintWithOptions(&options.Options{
 				Tags: []string{esTagName2TagMap},
 			}, level.Info, shared.DefaultContentOutput)
+
+			l.Infoln(shared.DefaultContentOutput)
 
 			return shared.DefaultContentOutput
 		},
@@ -97,10 +105,6 @@ func TestNewIntegration(t *testing.T) {
 				return shared.DefaultContentOutput
 			},
 			CleanUp: func() {
-				_, err := elasticsearch.New(esIndexName, esConfig).Client.Indices.Delete([]string{esIndexName})
-				if err != nil {
-					t.Fatalf("Error deleting index: %s", err)
-				}
 			},
 		},
 		{
@@ -110,15 +114,6 @@ func TestNewIntegration(t *testing.T) {
 				return shared.DefaultContentOutput
 			},
 			CleanUp: func() {
-				_, err := elasticsearch.New(esIndexName, esConfig).Client.Indices.Delete([]string{esIndexName1TagMap})
-				if err != nil {
-					t.Fatalf("Error deleting index: %s", err)
-				}
-
-				_, err = elasticsearch.New(esIndexName, esConfig).Client.Indices.Delete([]string{esIndexName2TagMap})
-				if err != nil {
-					t.Fatalf("Error deleting index: %s", err)
-				}
 			},
 		},
 	}
@@ -134,8 +129,20 @@ func TestNewIntegration(t *testing.T) {
 			if message != want {
 				t.Errorf("Got %v, want %v", message, want)
 			}
-
-			tt.CleanUp()
 		})
 	}
+
+	t.Cleanup(func() {
+		t.Log("Cleaning up...")
+
+		time.Sleep(1 * time.Second)
+
+		_, err := elasticsearch.
+			New(esIndexName, esConfig).
+			Client.Indices.
+			Delete([]string{esIndexName, esIndexName1TagMap, esIndexName2TagMap, esIndexName3TagMap})
+		if err != nil {
+			t.Fatalf("Error deleting index: %s", err)
+		}
+	})
 }

@@ -5,7 +5,10 @@
 package message
 
 import (
+	"crypto/sha1"
+	"fmt"
 	"log"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/thalesfsp/sypl/shared"
@@ -19,4 +22,10 @@ func generateUUID() string {
 	}
 
 	return id.String()
+}
+
+// generateID generates MD5 hash (content-based) for message ID. Good to be used
+// to avoid duplicated messages.
+func generateID(ct string) string {
+	return fmt.Sprintf("%x\n", sha1.Sum([]byte(strings.Trim(ct, "\f\t\r\n "))))
 }

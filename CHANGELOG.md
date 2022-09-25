@@ -27,6 +27,11 @@ Refs. for badges:
 - https://github.com/golangci/golangci-lint
 
 
+## [1.6.6] - 2022-09-25
+### Changed
+- General improvement for the ES output.
+- `SYPL_ELASTICSEARCH_TEST_ADDRESS` sets the ES address for the integration test.
+
 ## [1.6.5] - 2022-09-23
 ### Added
 - Added the ability to specify options in a functional way.
@@ -37,7 +42,7 @@ Refs. for badges:
 
 ## [1.6.3] - 2022-09-23
 ### Added
-- Added `elasticsearch.NewWithDynamicIndex` that allows specifying a function that defines the name of the index, evaluated at the time of insertion. An important feature, part of the index naming strategy.
+- Added `elasticsearch.NewWithDynamicIndex` that allows specifying a function that defines the name of the index, evaluated at the time of index. An important feature, part of the index naming strategy.
 
 ## [1.6.2] - 2022-09-23
 ### Added

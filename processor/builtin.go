@@ -215,6 +215,20 @@ func PrintOnlyIfTagged(tag string) IProcessor {
 	})
 }
 
+// PrintOnlyIfNotTaggedWith prints only if message contains the specified tag.
+func PrintOnlyIfNotTaggedWith(tags ...string) IProcessor {
+	return New("PrintOnlyIfNotTaggedWith", func(m message.IMessage) error {
+		// Iterate over tags and check if the message contains any of them.
+		for _, tag := range tags {
+			if m.ContainTag(tag) {
+				m.SetFlag(flag.Mute)
+			}
+		}
+
+		return nil
+	})
+}
+
 // Suffixer suffixes a message with the specified `suffix`.
 func Suffixer(suffix string) IProcessor {
 	return New("Suffixer", func(m message.IMessage) error {

@@ -44,6 +44,12 @@ type IMessage interface {
 	// SetContent sets the content.
 	SetContent(c content.IContent) IMessage
 
+	// SetContentBasedHashID sets a hash of the message's content.
+	GetContentBasedHashID() string
+
+	// GetContentBasedHashID returns the hash of the message's content.
+	SetContentBasedHashID(hash string) IMessage
+
 	// GetDebugEnvVarRegexeses returns the Debug env var regexes matchers.
 	GetDebugEnvVarRegexes() *debug.Debug
 

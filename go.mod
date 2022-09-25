@@ -9,6 +9,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/go-test/deep v1.0.8
 	github.com/google/uuid v1.3.0
+	github.com/iancoleman/strcase v0.2.0
 	github.com/spf13/afero v1.9.2
 	golang.org/x/sync v0.0.0-20220907140024-f12130a52804
 )

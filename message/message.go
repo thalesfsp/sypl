@@ -47,8 +47,8 @@ func newLineBreaker(knownLineBreakers ...string) *lineBreaker {
 // Message envelops the content and contains meta-information about it.
 //
 // Note: Changes in the `Message` or `Options` data structure may trigger
-// changes in the `New`, `Copy`, `mergeOptions` (from `Sypl`), or `New` (from
-// `Options`) methods.
+// changes in the `New`, `Copy`, `mergeOptions` (from `Sypl`), `New` (from
+// `Options`) methods, and the formatters.
 type message struct {
 	*options.Options
 
@@ -69,6 +69,9 @@ type message struct {
 
 	// A randomly generated UUIDv4 that uniquely identifies the message.
 	ID string
+
+	// ContentBasedHashID is a hash of the message's content.
+	ContentBasedHashID string
 
 	// Message's level.
 	Level level.Level
@@ -182,6 +185,18 @@ func (m *message) SetComponentName(name string) IMessage {
 // GetContent returns the content.
 func (m *message) GetContent() content.IContent {
 	return m.Content
+}
+
+// SetContentBasedHashID sets a hash of the message's content.
+func (m *message) SetContentBasedHashID(hash string) IMessage {
+	m.ContentBasedHashID = hash
+
+	return m
+}
+
+// GetContentBasedHashID returns the hash of the message's content.
+func (m *message) GetContentBasedHashID() string {
+	return m.ContentBasedHashID
 }
 
 // SetContent sets the content.
@@ -322,6 +337,7 @@ func (m *message) SetTimestamp(timestamp time.Time) IMessage {
 //
 // Notes:
 // - Changes in the `Message` or `Options` data structure may reflects here.
+// Should reflect in the formatters too.
 // - Could use something like the `Copier` package, but that's going to cause a
 // data race, because `Output`s are processed concurrently.
 //
@@ -331,6 +347,8 @@ func Copy(m IMessage) IMessage {
 
 	// Copy `options.Tags`.
 	msg.GetMessage().Tags = m.GetMessage().Tags
+
+	msg.SetContentBasedHashID(m.GetContentBasedHashID())
 
 	// Adds tags to `message.tags`.
 	msg.AddTags(m.GetTags()...)
@@ -365,11 +383,12 @@ func New(l level.Level, ct string) IMessage {
 	return &message{
 		Options: options.New(),
 
-		Content:     content.New(ct),
-		ID:          generateUUID(),
-		Level:       l,
-		lineBreaker: newLineBreaker("\n", "\r"),
-		tags:        treeset.NewWithStringComparator(),
-		Timestamp:   time.Now(),
+		Content:            content.New(ct),
+		ContentBasedHashID: generateID(ct),
+		ID:                 generateUUID(),
+		Level:              l,
+		lineBreaker:        newLineBreaker("\n", "\r"),
+		tags:               treeset.NewWithStringComparator(),
+		Timestamp:          time.Now(),
 	}
 }

@@ -14,25 +14,6 @@ import (
 	"github.com/thalesfsp/sypl/shared"
 )
 
-func Test_generateUUID(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "Should work",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := generateUUID()
-
-			if len(got) < 30 {
-				t.Errorf("generateUUID() = %v", got)
-			}
-		})
-	}
-}
-
 func TestNewMessage(t *testing.T) {
 	type args struct {
 		level   level.Level

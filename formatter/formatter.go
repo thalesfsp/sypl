@@ -31,34 +31,32 @@ func JSON() IFormatter {
 	return processor.New("JSON", func(m message.IMessage) error {
 		mM := map[string]interface{}{}
 
+		mM["id"] = m.GetID()
+		mM["contentBasedHashID"] = m.GetContentBasedHashID()
 		mM["component"] = m.GetComponentName()
 		mM["output"] = m.GetOutputName()
 		mM["level"] = strings.ToLower(m.GetLevel().String())
 		mM["timestamp"] = m.GetTimestamp().Format(time.RFC3339)
 		mM["message"] = m.GetContent().GetProcessed()
-		mM["tags"] = m.GetTags()
-		mM["Flag"] = m.GetFlag()
-		mM["OutputsNames"] = m.GetOutputsNames()
-		mM["ProcessorsNames"] = m.GetProcessorsNames()
 
 		tags := m.GetTags()
-		if tags != nil {
+		if len(tags) != 0 {
 			mM["tags"] = tags
 		}
 
 		flg := m.GetFlag()
 		if flg != flag.None {
-			mM["Flag"] = flg
+			mM["flag"] = flg
 		}
 
 		outputsNames := m.GetOutputsNames()
 		if len(outputsNames) != 0 {
-			mM["OutputsNames"] = outputsNames
+			mM["outputsNames"] = outputsNames
 		}
 
 		processorsNames := m.GetProcessorsNames()
 		if len(processorsNames) != 0 {
-			mM["ProcessorsNames"] = processorsNames
+			mM["processorsNames"] = processorsNames
 		}
 
 		// Should only process fields if any.
@@ -96,8 +94,11 @@ func Text() IFormatter {
 		fmt.Fprintf(w, "timestamp=%s\t", m.GetTimestamp().Format(time.RFC3339))
 		fmt.Fprintf(w, "message=%s\t", m.GetContent().GetProcessed())
 
+		fmt.Fprintf(w, "id=%s\t", m.GetID())
+		fmt.Fprintf(w, "contentBasedHashID=%s\t", m.GetContentBasedHashID())
+
 		tags := m.GetTags()
-		if tags != nil {
+		if len(tags) != 0 {
 			fmt.Fprintf(w, "tags=%s\t", tags)
 		}
 

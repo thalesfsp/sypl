@@ -42,6 +42,10 @@ issues:
         - gomnd
         - forbidigo
 
+    - path: message/util.go
+      linters:
+        - gosec
+
     - path: example_test.go
       linters:
         - lll

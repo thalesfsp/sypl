@@ -13,7 +13,7 @@ import (
 //
 // Note: Changes in the `Message` or `Options` data structure may trigger
 // changes in the `New`, `Copy` (from `Message`), `mergeOptions` (from `Sypl`),
-// or `New` methods.
+// `New` methods, and the formatters.
 type Options struct {
 	// Structured fields.
 	Fields fields.Fields
