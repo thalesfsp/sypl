@@ -26,6 +26,9 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [1.6.7] - 2022-09-25
+### Changed
+- Cleaned `text` formatter.
 
 ## [1.6.6] - 2022-09-25
 ### Changed
