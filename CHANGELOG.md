@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Roadmap
 
+- Add SetDefaultFields
+- Add SetDefaultTags
 - Add LowerCase processor
 - Fix possible race condition on `sypl.SetMaxLevel`
 - Add badges to README.md:

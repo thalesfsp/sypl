@@ -499,7 +499,7 @@ func TestNew(t *testing.T) {
 				a.maxLevel,
 				bufWriter,
 				processor.ChangeFirstCharCase(processor.Lowercase),
-			).SetFormatter(formatter.Text())
+			).SetFormatter(formatter.JSON())
 
 			// Adds `Output` to logger.
 			testingLogger.AddOutputs(BufferOutput)
@@ -522,14 +522,16 @@ func TestNew(t *testing.T) {
 
 			content := buf.String()
 
-			if !strings.Contains(content, "tag1") ||
-				!strings.Contains(content, "tag2") ||
-				!strings.Contains(content, "field1") ||
+			t.Log(content)
+
+			if !strings.Contains(content, "field1") ||
 				!strings.Contains(content, "field2") ||
 				!strings.Contains(content, "field3") ||
-				!strings.Contains(content, "flag=Force") ||
-				!strings.Contains(content, "outputsNames=[Buffer]") ||
-				!strings.Contains(content, "processorsNames=[ChangeFirstCharCase]") {
+				!strings.Contains(content, "\"flag\": 1") ||
+				!strings.Contains(content, "Buffer") ||
+				!strings.Contains(content, "tag1") ||
+				!strings.Contains(content, "tag2") ||
+				!strings.Contains(content, "ChangeFirstCharCase") {
 				return "false"
 			}
 
