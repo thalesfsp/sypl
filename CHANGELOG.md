@@ -28,7 +28,11 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
-## [1.7.0] - 2022-09-25
+## [1.7.1] - 2022-09-27
+### Changed
+- Removed CodeQL.
+
+## [1.7.0] - 2022-09-27
 ### Changed
 - Removed `Print{f|lnf}WithOptions` in favor of `PrintWithOptions` (functional).
 
