@@ -118,6 +118,9 @@ type IMessage interface {
 
 	// SetTimestamp sets the timestamp.
 	SetTimestamp(timestamp time.Time) IMessage
+
+	// IsEmpty returns true if the message is empty.
+	IsEmpty() bool
 }
 
 // ITag specifies what a Tag does.

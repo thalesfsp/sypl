@@ -2,6 +2,16 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
+// Package processor provides the building blocks to create processors, which
+// are used to process messages before they are printed. It also provides a
+// collection of built-in processors.
+//
+// NOTES:
+// - Processors are executed in the order they are added to the pipeline.
+// - It's the implementator's responsibility to check if the message has
+// content. Sypl doesn't touch the message's content - it pass thru as it's,
+// raw - as any logger. Only processors are able to change the message's
+// content. Use the `IsEmpty` help method to check if the message has content.
 package processor
 
 import (
@@ -63,6 +73,11 @@ func generateDefaultPrefix(timestamp, component string, level level.Level) strin
 // content!
 func ChangeFirstCharCase(casing Casing) IProcessor {
 	return New("ChangeFirstCharCase", func(m message.IMessage) error {
+		// Do nothing if message content is empty.
+		if m.IsEmpty() {
+			return nil
+		}
+
 		firstChar := string(m.GetContent().GetProcessed()[0])
 		contentWithoutFirstChar := m.GetContent().GetProcessed()[1:len(m.GetContent().GetProcessed())]
 

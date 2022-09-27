@@ -522,8 +522,6 @@ func TestNew(t *testing.T) {
 
 			content := buf.String()
 
-			t.Log(content)
-
 			if !strings.Contains(content, "field1") ||
 				!strings.Contains(content, "field2") ||
 				!strings.Contains(content, "field3") ||

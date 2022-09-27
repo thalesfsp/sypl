@@ -329,6 +329,11 @@ func (m *message) SetTimestamp(timestamp time.Time) IMessage {
 	return m
 }
 
+// IsEmpty returns true if the message is empty.
+func (m *message) IsEmpty() bool {
+	return strings.Trim(m.GetContent().GetOriginal(), "\f\t\r\n ") == ""
+}
+
 //////
 // Helpers.
 //////
