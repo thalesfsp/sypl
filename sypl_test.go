@@ -21,7 +21,6 @@ import (
 	"github.com/thalesfsp/sypl/formatter"
 	"github.com/thalesfsp/sypl/level"
 	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/options"
 	"github.com/thalesfsp/sypl/output"
 	"github.com/thalesfsp/sypl/processor"
 	"github.com/thalesfsp/sypl/shared"
@@ -138,9 +137,9 @@ func TestNew(t *testing.T) {
 		run: func(a args) string {
 			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(shared.DefaultTimestampFormat))
 
-			New(a.component).AddOutputs(o).PrintWithOptions(&options.Options{
-				ProcessorsNames: []string{""},
-			}, a.level, a.content)
+			New(a.component).
+				AddOutputs(o).
+				PrintWithOptions(a.level, a.content, WithProcessorsNames(""))
 
 			return buf.String()
 		},
@@ -327,9 +326,7 @@ func TestNew(t *testing.T) {
 			New(a.component).
 				AddOutputs(output.New("buffer 1", a.maxLevel, bufWriter)).
 				AddOutputs(output.New("buffer 2", a.maxLevel, bufWriter)).
-				PrintWithOptions(&options.Options{
-					OutputsNames: []string{"buffer 1"},
-				}, a.level, shared.DefaultContentOutput)
+				PrintWithOptions(a.level, a.content, WithOutputsNames("buffer 1"))
 
 			bufWriter.Flush()
 
@@ -345,9 +342,9 @@ func TestNew(t *testing.T) {
 		run: func(a args) string {
 			buf, o := output.SafeBuffer(a.maxLevel)
 
-			New(a.component).AddOutputs(o).PrintWithOptions(&options.Options{
-				OutputsNames: []string{"invalid"},
-			}, a.level, shared.DefaultContentOutput)
+			New(a.component).
+				AddOutputs(o).
+				PrintWithOptions(a.level, a.content, WithOutputsNames("invalid"))
 
 			return buf.String()
 		},
@@ -365,9 +362,7 @@ func TestNew(t *testing.T) {
 			New(a.component).
 				AddOutputs(output.New("buffer 1", a.maxLevel, bufWriter)).
 				AddOutputs(output.New("buffer 2", a.maxLevel, bufWriter)).
-				PrintWithOptions(&options.Options{
-					OutputsNames: []string{"buffer 2"},
-				}, level.Info, shared.DefaultContentOutput)
+				PrintWithOptions(a.level, a.content, WithOutputsNames("buffer 2"))
 
 			bufWriter.Flush()
 
@@ -504,19 +499,20 @@ func TestNew(t *testing.T) {
 			// Adds `Output` to logger.
 			testingLogger.AddOutputs(BufferOutput)
 
-			testingLogger.PrintWithOptionsFunc(
-				a.level,
-				a.content,
-				WithTags("tag1", "tag2"),
-				WithFields(fields.Fields{
-					"field1": "value1",
-					"field2": "value2",
-					"field3": "value3",
-				}),
-				WithFlag(flag.Force),
-				WithOutputsNames([]string{"Buffer"}),
-				WithProcessorsNames([]string{"ChangeFirstCharCase"}),
-			)
+			testingLogger.
+				PrintWithOptions(
+					a.level,
+					a.content,
+					WithTags("tag1", "tag2"),
+					WithFields(fields.Fields{
+						"field1": "value1",
+						"field2": "value2",
+						"field3": "value3",
+					}),
+					WithFlag(flag.Force),
+					WithOutputsNames("Buffer"),
+					WithProcessorsNames("ChangeFirstCharCase"),
+				)
 
 			bufWriter.Flush()
 

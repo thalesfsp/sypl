@@ -14,7 +14,6 @@ import (
 
 	"github.com/thalesfsp/sypl/elasticsearch"
 	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/options"
 	"github.com/thalesfsp/sypl/output"
 	"github.com/thalesfsp/sypl/shared"
 )
@@ -78,13 +77,17 @@ func TestNewIntegration(t *testing.T) {
 				esConfig,
 			)...)
 
-			l.PrintWithOptions(&options.Options{
-				Tags: []string{esTagName1TagMap},
-			}, level.Info, shared.DefaultContentOutput)
+			l.PrintWithOptions(
+				level.Info,
+				shared.DefaultContentOutput,
+				WithTags(esTagName1TagMap),
+			)
 
-			l.PrintWithOptions(&options.Options{
-				Tags: []string{esTagName2TagMap},
-			}, level.Info, shared.DefaultContentOutput)
+			l.PrintWithOptions(
+				level.Info,
+				shared.DefaultContentOutput,
+				WithTags(esTagName2TagMap),
+			)
 
 			l.Infoln(shared.DefaultContentOutput)
 

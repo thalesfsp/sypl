@@ -19,31 +19,15 @@ type IBasePrinter interface {
 	// full-control over the message. Use `New` to create the message.
 	PrintMessage(messages ...message.IMessage) ISypl
 
-	// PrintWithOptionsFunc is a more flexible way of printing, allowing to
+	// PrintWithOptions is a more flexible way of printing, allowing to
 	// specify a few message's options in a functional way. For full-control
 	// over the message is possible via `PrintMessage`.
-	PrintWithOptionsFunc(l level.Level, ct string, o ...OptionsFunc) ISypl
+	PrintWithOptions(l level.Level, ct string, o ...OptionFunc) ISypl
 
-	// PrintWithOptions is a more flexible way of printing, allowing to specify
-	// a few message's options. For full-control over the message is possible
-	// via `PrintMessage`.
-	PrintWithOptions(o *options.Options, l level.Level, args ...interface{}) ISypl
-
-	// PrintfWithOptions prints according with the specified format. It's a more
-	// flexible way of printing, allowing to specify a few message's options.
-	// For full-control over the message is possible via `PrintMessage`.
-	PrintfWithOptions(o *options.Options, l level.Level, format string, args ...interface{}) ISypl
-
-	// PrintfWithOptions prints according with the specified format, also adding
-	// a new line to the end. It's a more flexible way of printing, allowing to
-	// specify a few message's options. For full-control over the message is
-	// possible via `PrintMessage`.
-	PrintlnfWithOptions(o *options.Options, l level.Level, format string, args ...interface{}) ISypl
-
-	// PrintfWithOptions prints, also adding a new line to the end. It's a more
-	// flexible way of printing, allowing to specify a few message's options.
-	// For full-control over the message is possible via `PrintMessage`.
-	PrintlnWithOptions(o *options.Options, l level.Level, args ...interface{}) ISypl
+	// PrintlnWithOptions is a more flexible way of printing, allowing to
+	// specify a few message's options in a functional way. For full-control
+	// over the message is possible via `PrintMessage`.
+	PrintlnWithOptions(l level.Level, ct string, o ...OptionFunc) ISypl
 }
 
 // IBasicPrinter specifies the basic printers.

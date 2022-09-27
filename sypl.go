@@ -121,10 +121,10 @@ func (sypl *Sypl) PrintMessage(messages ...message.IMessage) ISypl {
 	return sypl
 }
 
-// PrintWithOptionsFunc is a more flexible way of printing, allowing to specify
+// PrintWithOptions is a more flexible way of printing, allowing to specify
 // a few message's options in a functional way. For full-control over the
 // message is possible via `PrintMessage`.
-func (sypl *Sypl) PrintWithOptionsFunc(l level.Level, ct string, o ...OptionsFunc) ISypl {
+func (sypl *Sypl) PrintWithOptions(l level.Level, ct string, o ...OptionFunc) ISypl {
 	m := message.New(l, ct)
 
 	// Iterate over the options.
@@ -135,41 +135,11 @@ func (sypl *Sypl) PrintWithOptionsFunc(l level.Level, ct string, o ...OptionsFun
 	return sypl.PrintMessage(m)
 }
 
-// PrintWithOptions is a more flexible way of printing, allowing to specify
-// a few message's options. For full-control over the message is possible
-// via `PrintMessage`.
-func (sypl *Sypl) PrintWithOptions(o *options.Options, l level.Level, args ...interface{}) ISypl {
-	m := message.New(l, fmt.Sprint(args...))
-
-	return sypl.PrintMessage(mergeOptions(m, o))
-}
-
-// PrintfWithOptions prints according with the specified format. It's a more
-// flexible way of printing, allowing to specify a few message's options.
-// For full-control over the message is possible via `PrintMessage`.
-func (sypl *Sypl) PrintfWithOptions(o *options.Options, l level.Level, format string, args ...interface{}) ISypl {
-	m := message.New(l, fmt.Sprintf(format, args...))
-
-	return sypl.PrintMessage(mergeOptions(m, o))
-}
-
-// PrintlnfWithOptions prints according with the specified format, also adding
-// a new line to the end. It's a more flexible way of printing, allowing to
-// specify a few message's options. For full-control over the message is
-// possible via `PrintMessage`.
-func (sypl *Sypl) PrintlnfWithOptions(o *options.Options, l level.Level, format string, args ...interface{}) ISypl {
-	m := message.New(l, fmt.Sprintf(format+"\n", args...))
-
-	return sypl.PrintMessage(mergeOptions(m, o))
-}
-
-// PrintlnWithOptions prints, also adding a new line to the end. It's a more
-// flexible way of printing, allowing to specify a few message's options.
-// For full-control over the message is possible via `PrintMessage`.
-func (sypl *Sypl) PrintlnWithOptions(o *options.Options, l level.Level, args ...interface{}) ISypl {
-	m := message.New(l, fmt.Sprintln(args...))
-
-	return sypl.PrintMessage(mergeOptions(m, o))
+// PrintlnWithOptions is a more flexible way of printing, allowing to specify
+// a few message's options in a functional way. For full-control over the
+// message is possible via `PrintMessage`.
+func (sypl *Sypl) PrintlnWithOptions(l level.Level, ct string, o ...OptionFunc) ISypl {
+	return sypl.PrintWithOptions(l, fmt.Sprintln(ct), o...)
 }
 
 //////
@@ -178,23 +148,23 @@ func (sypl *Sypl) PrintlnWithOptions(o *options.Options, l level.Level, args ...
 
 // Print just prints.
 func (sypl *Sypl) Print(l level.Level, args ...interface{}) ISypl {
-	return sypl.PrintWithOptions(options.New(), l, args...)
+	return sypl.PrintWithOptions(l, fmt.Sprint(args...))
 }
 
 // Printf prints according with the specified format.
 func (sypl *Sypl) Printf(l level.Level, format string, args ...interface{}) ISypl {
-	return sypl.PrintfWithOptions(options.New(), l, format, args...)
+	return sypl.PrintWithOptions(l, fmt.Sprintf(format, args...))
 }
 
 // Printlnf prints according with the specified format, also adding a new line
 // to the end.
 func (sypl *Sypl) Printlnf(l level.Level, format string, args ...interface{}) ISypl {
-	return sypl.PrintlnfWithOptions(options.New(), l, format, args...)
+	return sypl.PrintWithOptions(l, fmt.Sprintf(format+"\n", args...))
 }
 
 // Println prints, also adding a new line to the end.
 func (sypl *Sypl) Println(l level.Level, args ...interface{}) ISypl {
-	return sypl.PrintlnWithOptions(options.New(), l, args...)
+	return sypl.PrintWithOptions(l, fmt.Sprintln(args...))
 }
 
 //////

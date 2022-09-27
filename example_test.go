@@ -203,11 +203,13 @@ func ExampleNew_printWithOptions() {
 	c3buf.Reset()
 
 	// Prints with prefix, and suffix.
-	testingLogger.PrintWithOptions(&options.Options{
-		OutputsNames:    []string{"Buffer 1"},
-		ProcessorsNames: []string{"Prefixer", "SuffixBasedOnTag"},
-		Tags:            []string{"SuffixIt"},
-	}, level.Info, shared.DefaultContentOutput)
+	testingLogger.PrintWithOptions(
+		level.Info,
+		shared.DefaultContentOutput,
+		sypl.WithOutputsNames("Buffer 1"),
+		sypl.WithProcessorsNames("Prefixer", "SuffixBasedOnTag"),
+		sypl.WithTags("SuffixIt"),
+	)
 
 	fmt.Println(strings.EqualFold(c1buf.String(), "Output: Buffer 1 Processor: Prefixer Content: contentTest - My Suffix"))
 
@@ -243,33 +245,23 @@ func ExampleNew_flags() {
 	sypl.New("Testing Logger", output.Console(level.Info, processor.Prefixer(shared.DefaultPrefixValue))).
 		// Message will be processed, and printed independent of `Level`
 		// restrictions.
-		PrintlnWithOptions(&options.Options{
-			Flag: flag.Force,
-		}, level.Debug, shared.DefaultContentOutput).
+		PrintlnWithOptions(level.Debug, shared.DefaultContentOutput, sypl.WithFlag(flag.Force)).
 
 		// Message will be processed, but not printed.
-		PrintlnWithOptions(&options.Options{
-			Flag: flag.Mute,
-		}, level.Info, shared.DefaultContentOutput).
+		PrintlnWithOptions(level.Info, shared.DefaultContentOutput, sypl.WithFlag(flag.Mute)).
 
 		// Message will not be processed, but printed.
-		PrintlnWithOptions(&options.Options{
-			Flag: flag.Skip,
-		}, level.Info, shared.DefaultContentOutput).
+		PrintlnWithOptions(level.Info, shared.DefaultContentOutput, sypl.WithFlag(flag.Skip)).
 
 		// Should not print - restricted by level.
 		Debugln(shared.DefaultContentOutput).
 
 		// SkipAndForce message will not be processed, but will be printed
 		// independent of `Level` restrictions.
-		PrintlnWithOptions(&options.Options{
-			Flag: flag.SkipAndForce,
-		}, level.Debug, shared.DefaultContentOutput).
+		PrintlnWithOptions(level.Debug, shared.DefaultContentOutput, sypl.WithFlag(flag.SkipAndForce)).
 
 		// Message will not be processed, neither printed.
-		PrintlnWithOptions(&options.Options{
-			Flag: flag.SkipAndMute,
-		}, level.Debug, shared.DefaultContentOutput)
+		PrintlnWithOptions(level.Debug, shared.DefaultContentOutput, sypl.WithFlag(flag.SkipAndMute))
 
 	// output:
 	// My Prefix - contentTest
@@ -312,13 +304,15 @@ func ExampleNew_textFormatter() {
 	// Creates logger, and name it.
 	sypl.New(shared.DefaultComponentNameOutput).
 		AddOutputs(o).
-		PrintlnWithOptions(&options.Options{
-			Fields: fields.Fields{
+		PrintlnWithOptions(
+			level.Info,
+			shared.DefaultContentOutput,
+			sypl.WithFields(fields.Fields{
 				"field1": "value1",
 				"field2": "value2",
 				"field3": "value3",
-			},
-		}, level.Info, shared.DefaultContentOutput)
+			}),
+		)
 
 	s := buf.String()
 
@@ -348,14 +342,16 @@ func ExampleNew_jsonFormatter() {
 	// Creates logger, and name it.
 	sypl.New(shared.DefaultComponentNameOutput).
 		AddOutputs(o).
-		PrintWithOptions(&options.Options{
-			Fields: fields.Fields{
+		PrintWithOptions(
+			level.Info,
+			shared.DefaultContentOutput,
+			sypl.WithFields(fields.Fields{
 				"field1": "value1",
 				"field2": 1,
 				"field3": true,
 				"field4": []string{"1", "2"},
-			},
-		}, level.Info, shared.DefaultContentOutput)
+			}),
+		)
 
 	s := buf.String()
 
@@ -475,9 +471,11 @@ func ExampleNew_printOnlyIfTagged() {
 	// Creates logger, and name it.
 	sypl.NewDefault(shared.DefaultComponentNameOutput, level.Trace, processor.PrintOnlyIfTagged("testTag")).
 		Infoln(shared.DefaultContentOutput).
-		PrintlnWithOptions(&options.Options{
-			Tags: []string{"testTag"},
-		}, level.Info, shared.DefaultContentOutput)
+		PrintlnWithOptions(
+			level.Info,
+			shared.DefaultContentOutput,
+			sypl.WithTags("testTag"),
+		)
 
 	// Prints:
 	//
@@ -493,15 +491,19 @@ func ExampleNew_updateOutputsMaxLevel() {
 		output.New("Console 3", level.Trace, os.Stdout),
 	)
 
-	l.PrintlnWithOptions(&options.Options{
-		OutputsNames: []string{"Console 1"},
-	}, level.Info, l.GetMaxLevel())
+	l.PrintlnWithOptions(
+		level.Info,
+		fmt.Sprint(l.GetMaxLevel()),
+		sypl.WithOutputsNames("Console 1"),
+	)
 
 	l.SetMaxLevel(level.Info)
 
-	l.PrintlnWithOptions(&options.Options{
-		OutputsNames: []string{"Console 1"},
-	}, level.Info, l.GetMaxLevel())
+	l.PrintlnWithOptions(
+		level.Info,
+		fmt.Sprint(l.GetMaxLevel()),
+		sypl.WithOutputsNames("Console 1"),
+	)
 
 	// output:
 	// map[Console 1:info Console 2:debug Console 3:trace]
@@ -554,9 +556,8 @@ func ExampleNew_globalFields() {
 
 	l.Infoln(shared.DefaultContentOutput) // a=1
 
-	l.PrintlnWithOptions(&options.Options{
-		Fields: fields.Fields{"a": 2, "b": 3},
-	}, level.Info, shared.DefaultContentOutput) // a=2, b=3
+	l.PrintWithOptions(level.Info, shared.DefaultContentOutput,
+		sypl.WithFields(fields.Fields{"a": 2, "b": 3}))
 
 	l.Infoln(shared.DefaultContentOutput) // a=1
 

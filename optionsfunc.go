@@ -6,11 +6,11 @@ import (
 	"github.com/thalesfsp/sypl/message"
 )
 
-// OptionsFunc allows to specify message's options.
-type OptionsFunc func(m message.IMessage) message.IMessage
+// OptionFunc allows to specify message's options.
+type OptionFunc func(m message.IMessage) message.IMessage
 
 // WithTags add tags to a message.
-func WithTags(tags ...string) OptionsFunc {
+func WithTags(tags ...string) OptionFunc {
 	return func(m message.IMessage) message.IMessage {
 		m.AddTags(tags...)
 
@@ -19,7 +19,7 @@ func WithTags(tags ...string) OptionsFunc {
 }
 
 // WithFields add fields to a message.
-func WithFields(fields fields.Fields) OptionsFunc {
+func WithFields(fields fields.Fields) OptionFunc {
 	return func(m message.IMessage) message.IMessage {
 		m.SetFields(fields)
 
@@ -28,7 +28,7 @@ func WithFields(fields fields.Fields) OptionsFunc {
 }
 
 // WithFlag set message's flag.
-func WithFlag(f flag.Flag) OptionsFunc {
+func WithFlag(f flag.Flag) OptionFunc {
 	return func(m message.IMessage) message.IMessage {
 		m.SetFlag(f)
 
@@ -37,7 +37,7 @@ func WithFlag(f flag.Flag) OptionsFunc {
 }
 
 // WithOutputsNames set message's output names.
-func WithOutputsNames(outputsNames []string) OptionsFunc {
+func WithOutputsNames(outputsNames ...string) OptionFunc {
 	return func(m message.IMessage) message.IMessage {
 		m.SetOutputsNames(outputsNames)
 
@@ -46,7 +46,7 @@ func WithOutputsNames(outputsNames []string) OptionsFunc {
 }
 
 // WithProcessorsNames set message's processors names.
-func WithProcessorsNames(processorsNames []string) OptionsFunc {
+func WithProcessorsNames(processorsNames ...string) OptionFunc {
 	return func(m message.IMessage) message.IMessage {
 		m.SetProcessorsNames(processorsNames)
 
