@@ -567,6 +567,27 @@ func ExampleNew_globalFields() {
 	// true
 }
 
+// Global tags example.
+func ExampleNew_globalTags() {
+	buf, o := output.SafeBuffer(level.Info)
+
+	// Creates logger, and name it.
+	l := sypl.New(shared.DefaultComponentNameOutput, o.SetFormatter(formatter.JSON()))
+	l.SetTags("a", "b")
+
+	l.Infoln(shared.DefaultContentOutput) // a=1
+
+	l.PrintWithOptions(level.Info, shared.DefaultContentOutput,
+		sypl.WithFields(fields.Fields{"a": 2, "b": 3}))
+
+	l.Infoln(shared.DefaultContentOutput) // a=1
+
+	fmt.Println(stringContains(buf.String(), "contentTest", "tags", "a", "b"))
+
+	// output:
+	// true
+}
+
 // Logging filtering, and debug capability example.
 func ExampleNew_debugAndFilter() {
 	// From any SYPL logger, bump all max levels to `info`

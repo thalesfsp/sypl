@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Roadmap
 
-- Add SetDefaultFields
-- Add SetDefaultTags
 - Add LowerCase processor
 - Fix possible race condition on `sypl.SetMaxLevel`
 - Add badges to README.md:
@@ -27,6 +25,10 @@ Refs. for badges:
 
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
+
+## [1.7.2] - 2022-10-04
+### Added
+- Added the ability to specify global tags.
 
 ## [1.7.1] - 2022-09-27
 ### Changed

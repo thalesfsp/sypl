@@ -77,7 +77,6 @@ func JSON() IFormatter {
 // - Level
 // - Message
 // - Output
-// - Tags
 // - Timestamp (RFC3339).
 // - Fields.
 func Text() IFormatter {

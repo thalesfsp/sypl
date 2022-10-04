@@ -51,6 +51,7 @@ type Sypl struct {
 	fields               fields.Fields
 	outputs              []output.IOutput
 	status               status.Status
+	tags                 []string
 }
 
 // String interface implementation.
@@ -446,14 +447,26 @@ func (sypl *Sypl) Breakpoint(name string, data ...interface{}) ISypl {
 	return sypl
 }
 
-// GetFields returns the structured fields.
+// GetFields returns the global structured fields.
 func (sypl *Sypl) GetFields() fields.Fields {
 	return sypl.fields
 }
 
-// SetFields sets the structured fields.
+// SetFields sets the global structured fields.
 func (sypl *Sypl) SetFields(fields fields.Fields) ISypl {
 	sypl.fields = fields
+
+	return sypl
+}
+
+// GetTags returns the global tags.
+func (sypl *Sypl) GetTags() []string {
+	return sypl.tags
+}
+
+// SetTags adds the global tags.
+func (sypl *Sypl) SetTags(tags ...string) ISypl {
+	sypl.tags = append(sypl.tags, tags...)
 
 	return sypl
 }
@@ -535,6 +548,7 @@ func (sypl *Sypl) New(name string) *Sypl {
 	s.defaultIoWriterLevel = sypl.defaultIoWriterLevel
 	s.fields = sypl.fields
 	s.status = sypl.status
+	s.tags = sypl.tags
 
 	return s
 }
@@ -583,6 +597,13 @@ func (sypl *Sypl) process(messages ...message.IMessage) {
 			finalFields = fields.Copy(sypl.GetFields(), finalFields)
 			finalFields = fields.Copy(m.GetFields(), finalFields)
 			m.SetFields(finalFields)
+
+			// Should allows to set global tags.
+			// Per-message tags should have precedence.
+			finalTags := []string{}
+			finalTags = append(finalTags, sypl.GetTags()...)
+			finalTags = append(finalTags, m.GetTags()...)
+			m.AddTags(finalTags...)
 
 			sypl.processOutputs(m, strings.Join(outputsNames, ","))
 
@@ -687,6 +708,7 @@ func New(name string, outputs ...output.IOutput) *Sypl {
 		fields:               fields.Fields{},
 		outputs:              outputs,
 		status:               status.Enabled,
+		tags:                 []string{},
 	}
 }
 
@@ -711,5 +733,6 @@ func NewDefault(name string, maxLevel level.Level, processors ...processor.IProc
 			output.StdErr(processors...).SetFormatter(formatter.Text()),
 		},
 		status: status.Enabled,
+		tags:   []string{},
 	}
 }

@@ -216,6 +216,12 @@ type ISypl interface {
 	// global fields.
 	SetFields(fields fields.Fields) ISypl
 
+	// GetTags returns the global tags.
+	GetTags() []string
+
+	// SetTags sets the global tags.
+	SetTags(tags ...string) ISypl
+
 	// GetMaxLevel returns the `maxLevel` of all outputs.
 	GetMaxLevel() map[string]level.Level
 
