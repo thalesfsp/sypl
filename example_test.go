@@ -578,14 +578,33 @@ func ExampleNew_globalTags() {
 	l.Infoln(shared.DefaultContentOutput) // a=1
 
 	l.PrintWithOptions(level.Info, shared.DefaultContentOutput,
-		sypl.WithFields(fields.Fields{"a": 2, "b": 3}))
+		sypl.WithTags("a", "c"))
 
 	l.Infoln(shared.DefaultContentOutput) // a=1
 
-	fmt.Println(stringContains(buf.String(), "contentTest", "tags", "a", "b"))
+	fmt.Println(stringContains(buf.String(), "contentTest", "tags", "a", "b", "c"))
 
 	// output:
 	// true
+}
+
+// Global tags example - non-duplicated tags.
+func ExampleNew_globalTagsNonDup() {
+	buf, o := output.SafeBuffer(level.Info)
+
+	// Creates logger, and name it.
+	l := sypl.New(shared.DefaultComponentNameOutput, o.SetFormatter(formatter.JSON()))
+	l.SetTags("a", "b")
+
+	l.PrintWithOptions(level.Info, shared.DefaultContentOutput,
+		sypl.WithTags("a", "a", "c"))
+
+	bufStr := buf.String()
+
+	fmt.Println(strings.Count(bufStr, "\"a\""), stringContains(bufStr, "contentTest", "tags", "a", "b", "c"))
+
+	// output:
+	// 1 true
 }
 
 // Logging filtering, and debug capability example.

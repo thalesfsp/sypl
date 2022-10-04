@@ -26,6 +26,11 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [1.7.3] - 2022-10-04
+### Added
+- Only process global fields, and tags if any.
+- Added tests which ensures tags aren't duplicated.
+
 ## [1.7.2] - 2022-10-04
 ### Added
 - Added the ability to specify global tags.

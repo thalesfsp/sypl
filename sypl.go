@@ -593,17 +593,21 @@ func (sypl *Sypl) process(messages ...message.IMessage) {
 
 			// Should allows to set global fields.
 			// Per-message fields should have precedence.
-			finalFields := fields.Fields{}
-			finalFields = fields.Copy(sypl.GetFields(), finalFields)
-			finalFields = fields.Copy(m.GetFields(), finalFields)
-			m.SetFields(finalFields)
+			if sypl.GetFields() != nil {
+				finalFields := fields.Fields{}
+				finalFields = fields.Copy(sypl.GetFields(), finalFields)
+				finalFields = fields.Copy(m.GetFields(), finalFields)
+				m.SetFields(finalFields)
+			}
 
 			// Should allows to set global tags.
 			// Per-message tags should have precedence.
-			finalTags := []string{}
-			finalTags = append(finalTags, sypl.GetTags()...)
-			finalTags = append(finalTags, m.GetTags()...)
-			m.AddTags(finalTags...)
+			if sypl.GetTags() != nil {
+				finalTags := []string{}
+				finalTags = append(finalTags, sypl.GetTags()...)
+				finalTags = append(finalTags, m.GetTags()...)
+				m.AddTags(finalTags...)
+			}
 
 			sypl.processOutputs(m, strings.Join(outputsNames, ","))
 
