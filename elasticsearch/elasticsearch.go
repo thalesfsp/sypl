@@ -53,9 +53,13 @@ func (es *ElasticSearch) Write(data []byte) (int, error) {
 
 	// Set up the request object.
 	req := esapi.IndexRequest{
-		Body:       bytes.NewReader(data),
-		DocumentID: parsedData["id"].(string), // Uses unique message's ID as ID.
-		Index:      es.DynamicIndex(),
+		Body:  bytes.NewReader(data),
+		Index: es.DynamicIndex(),
+	}
+
+	// Check if parsedData as an id.
+	if parsedData["id"] != nil {
+		req.DocumentID = parsedData["id"].(string)
 	}
 
 	// Perform the request with the client.

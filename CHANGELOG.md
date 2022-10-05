@@ -26,6 +26,10 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [1.7.4] - 2022-10-04
+### Changed
+- Only sets ElasticSearch document ID if any.
+
 ## [1.7.3] - 2022-10-04
 ### Added
 - Only process global fields, and tags if any.
