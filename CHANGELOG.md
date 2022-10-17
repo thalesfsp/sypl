@@ -26,6 +26,10 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [1.8.0] - 2022-10-17
+### Changed
+- Renames `SYPL_DEBUG` to `SYPL_LEVEL`
+
 ## [1.7.4] - 2022-10-04
 ### Changed
 - Only sets ElasticSearch document ID if any.
