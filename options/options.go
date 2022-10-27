@@ -11,7 +11,7 @@ import (
 
 // Options extends printer's capabilities.
 //
-// Note: Changes in the `Message` or `Options` data structure may trigger
+// NOTE: Changes in the `Message` or `Options` data structure may trigger
 // changes in the `New`, `Copy` (from `Message`), `mergeOptions` (from `Sypl`),
 // `New` methods, and the formatters.
 type Options struct {
@@ -37,7 +37,7 @@ type Options struct {
 
 // New is the `Options` factory.
 //
-// Note: Changes in the `Message` or `Options` data structure may reflects here.
+// NOTE: Changes in the `Message` or `Options` data structure may reflects here.
 func New() *Options {
 	return &Options{
 		Fields:          fields.Fields{},

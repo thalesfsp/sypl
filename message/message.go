@@ -46,7 +46,7 @@ func newLineBreaker(knownLineBreakers ...string) *lineBreaker {
 
 // Message envelops the content and contains meta-information about it.
 //
-// Note: Changes in the `Message` or `Options` data structure may trigger
+// NOTE: Changes in the `Message` or `Options` data structure may trigger
 // changes in the `New`, `Copy`, `mergeOptions` (from `Sypl`), `New` (from
 // `Options`) methods, and the formatters.
 type message struct {
@@ -383,7 +383,7 @@ func Copy(m IMessage) IMessage {
 
 // New is the Message factory.
 //
-// Note: Changes in the `Message` or `Options` data structure may reflects here.
+// NOTE: Changes in the `Message` or `Options` data structure may reflects here.
 func New(l level.Level, ct string) IMessage {
 	return &message{
 		Options: options.New(),

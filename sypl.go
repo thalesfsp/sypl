@@ -43,7 +43,7 @@ type MessageToOutput struct {
 type Sypl struct {
 	// Name returns the logger name.
 	//
-	// Note: Exposed to deal with https://github.com/golang/go/issues/5819.
+	// NOTE: Exposed to deal with https://github.com/golang/go/issues/5819.
 	Name string
 
 	// NOTE: Changes here may reflect in the `New(name string)` method (Child).
@@ -200,7 +200,7 @@ func (sypl *Sypl) PrintlnPretty(l level.Level, data interface{}) ISypl {
 // PrintMessagesToOutputs allows you to concurrently print messages, each one,
 // at the specified level and to the specified output.
 //
-// Note: If the named output doesn't exits, the message will not be printed.
+// NOTE: If the named output doesn't exits, the message will not be printed.
 func (sypl *Sypl) PrintMessagesToOutputs(messagesToOutputs ...MessageToOutput) ISypl {
 	messages := []message.IMessage{}
 
@@ -219,7 +219,7 @@ func (sypl *Sypl) PrintMessagesToOutputs(messagesToOutputs ...MessageToOutput) I
 // PrintMessagesToOutputsWithOptions allows you to concurrently print messages,
 // each one, at the specified level and to the specified output, with options.
 //
-// Note: If the named output doesn't exits, the message will not be printed.
+// NOTE: If the named output doesn't exits, the message will not be printed.
 func (sypl *Sypl) PrintMessagesToOutputsWithOptions(
 	o *options.Options,
 	messagesToOutputs ...MessageToOutput,

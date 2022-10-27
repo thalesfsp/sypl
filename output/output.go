@@ -254,7 +254,7 @@ func (o *output) processProcessors(m message.IMessage, processorsNames string) {
 		for _, p := range o.processors {
 			// Should only use enabled Processors, and named (listed) ones.
 			//
-			// Note: `Enabled` status is checked in the `Run` method.
+			// NOTE: `Enabled` status is checked in the `Run` method.
 			if strings.Contains(processorsNames, p.GetName()) {
 				m.SetProcessorName(p.GetName())
 

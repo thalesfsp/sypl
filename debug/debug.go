@@ -18,7 +18,7 @@ const (
 	// - SYPL_DEBUG="info,componentX:outputY:debug,outputZ:trace" -> `info`
 	// - SYPL_DEBUG="componentX:outputY:debug,outputZ:trace,info" -> ``.
 	//
-	// Note: For this matcher, the order matter!
+	// NOTE: For this matcher, the order matter!
 	L Matcher = "Level"
 
 	// OL matches against a specific output, and any valid level specified in
@@ -58,7 +58,7 @@ type Debug struct {
 	// - SYPL_DEBUG="info,componentX:outputY:debug,outputZ:trace" -> `info`
 	// - SYPL_DEBUG="componentX:outputY:debug,outputZ:trace,info" -> ``.
 	//
-	// Note: For this matcher, the order matter!
+	// NOTE: For this matcher, the order matter!
 	Levels *regexp.Regexp
 
 	// Output, and levels matcher regex matches against a specific output, and
@@ -88,7 +88,7 @@ func (d *Debug) MatchL() string {
 // any valid level specified in the debug env var, example:
 // - SYPL_DEBUG="info,componentX:outputY:debug,outputZ:trace" -> `trace`
 //
-// Note: Prefer to use the `Level` method.
+// NOTE: Prefer to use the `Level` method.
 func (d *Debug) MatchOL() string {
 	return d.OutputLevels.FindString(d.Content)
 }
@@ -98,7 +98,7 @@ func (d *Debug) MatchOL() string {
 // example:
 // - SYPL_DEBUG="info,componentX:outputY:debug,outputZ:trace" -> `debug`.
 //
-// Note: Prefer to use the `Level` method.
+// NOTE: Prefer to use the `Level` method.
 func (d *Debug) MatchCOL() string {
 	return d.ComponentOutputLevels.FindString(d.Content)
 }
@@ -113,7 +113,7 @@ func (d *Debug) MatchCOL() string {
 // - {outputName:level} -> console:trace
 // - {level}, e.g.: trace
 //
-// Note: Don't use the returned level to check if `Level` succeeded because
+// NOTE: Don't use the returned level to check if `Level` succeeded because
 // `level.None` is a valid, and usable level.
 func (d *Debug) Level() (level.Level, Matcher, bool) {
 	// Shouldn't' do anything if the debug env var isn't set.

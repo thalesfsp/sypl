@@ -39,7 +39,7 @@ func (l Level) String() string {
 
 // FromInt returns a `Level` from a given integer.
 //
-// Note: Failure will return "Unknown".
+// NOTE: Failure will return "Unknown".
 func FromInt(level int) Level {
 	return Level(level)
 }

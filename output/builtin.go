@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/thalesfsp/sypl/level"
 	"github.com/thalesfsp/sypl/processor"
@@ -54,8 +55,9 @@ func FileBased(
 
 // File is a built-in `output` - named `File`, that writes to the specified file.
 //
-// Note: If the common used "-" is used, it will behave as a Console writing to
+// NOTE: If the common used "-" is used, it will behave as a Console writing to
 // stdout.
+// NOTE: If the dir and/or file does not exist, it will be created.
 func File(path string, maxLevel level.Level, processors ...processor.IProcessor) IOutput {
 	if o := dashHandler("File", path, maxLevel, processors...); o != nil {
 		return o
@@ -63,10 +65,23 @@ func File(path string, maxLevel level.Level, processors ...processor.IProcessor)
 
 	f, err := os.OpenFile(
 		path,
+		// Append, or create if not exists, and write only.
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
 		shared.DefaultFileMode,
 	)
 	if err != nil {
+		// Should try to create the dir if it doesn't exist.
+		if os.IsNotExist(err) {
+			dir := filepath.Dir(path)
+
+			if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+				log.Fatalf("%s File Output: Failed to create dir %s: %s", shared.ErrorPrefix, dir, err)
+			}
+
+			// Try again.
+			return File(path, maxLevel, processors...)
+		}
+
 		log.Fatalf("%s File Output: Failed to create/open %s: %s", shared.ErrorPrefix, path, err)
 	}
 

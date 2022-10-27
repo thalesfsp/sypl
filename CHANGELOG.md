@@ -26,6 +26,10 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [1.9.1] - 2022-10-27
+### Changed
+- `File` `Output` now tries to create the directory if it doesn't exist.
+
 ## [1.9.0] - 2022-10-27
 ### Added
 - `JSON` formatter which outputs inline non-prettified JSON.
@@ -232,7 +236,7 @@ The possibilities are endless! Checkout the [`debugAndFilter`](example_test.go) 
 ### Changed
 - Fixed names of the factories, so it doesn't stutters.
 
-Note: Breaking change.
+NOTE: Breaking change.
 
 ## [1.3.11] - 2021-08-18
 ### Added
