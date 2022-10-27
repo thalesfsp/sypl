@@ -15,9 +15,69 @@ import (
 // IFormatter specifies what a Formatter does.
 type IFormatter = processor.IProcessor
 
+// mapBuilder is a helper function to build the JSON map.
+//
+//nolint:ifshort
+func mapBuilder(m message.IMessage) map[string]interface{} {
+	mM := map[string]interface{}{}
+
+	mM["id"] = m.GetID()
+	mM["contentBasedHashID"] = m.GetContentBasedHashID()
+	mM["component"] = m.GetComponentName()
+	mM["output"] = m.GetOutputName()
+	mM["level"] = strings.ToLower(m.GetLevel().String())
+	mM["timestamp"] = m.GetTimestamp().Format(time.RFC3339)
+	mM["message"] = m.GetContent().GetProcessed()
+
+	tags := m.GetTags()
+	if len(tags) != 0 {
+		mM["tags"] = tags
+	}
+
+	flg := m.GetFlag()
+	if flg != flag.None {
+		mM["flag"] = flg
+	}
+
+	outputsNames := m.GetOutputsNames()
+	if len(outputsNames) != 0 {
+		mM["outputsNames"] = outputsNames
+	}
+
+	processorsNames := m.GetProcessorsNames()
+	if len(processorsNames) != 0 {
+		mM["processorsNames"] = processorsNames
+	}
+
+	// Should only process fields if any.
+	if len(m.GetFields()) != 0 {
+		for k, v := range m.GetFields() {
+			mM[k] = v
+		}
+	}
+
+	return mM
+}
+
 //////
 // Built-in processors.
 //////
+
+// JSONPretty is a prettified-JSON formatter. It automatically adds:
+// - Component
+// - Level
+// - Message
+// - Output
+// - Tags
+// - Timestamp (RFC3339).
+// - Fields.
+func JSONPretty() IFormatter {
+	return processor.New("JSON", func(m message.IMessage) error {
+		m.GetContent().SetProcessed(shared.Prettify(mapBuilder(m)))
+
+		return nil
+	})
+}
 
 // JSON is a JSON formatter. It automatically adds:
 // - Component
@@ -29,44 +89,7 @@ type IFormatter = processor.IProcessor
 // - Fields.
 func JSON() IFormatter {
 	return processor.New("JSON", func(m message.IMessage) error {
-		mM := map[string]interface{}{}
-
-		mM["id"] = m.GetID()
-		mM["contentBasedHashID"] = m.GetContentBasedHashID()
-		mM["component"] = m.GetComponentName()
-		mM["output"] = m.GetOutputName()
-		mM["level"] = strings.ToLower(m.GetLevel().String())
-		mM["timestamp"] = m.GetTimestamp().Format(time.RFC3339)
-		mM["message"] = m.GetContent().GetProcessed()
-
-		tags := m.GetTags()
-		if len(tags) != 0 {
-			mM["tags"] = tags
-		}
-
-		flg := m.GetFlag()
-		if flg != flag.None {
-			mM["flag"] = flg
-		}
-
-		outputsNames := m.GetOutputsNames()
-		if len(outputsNames) != 0 {
-			mM["outputsNames"] = outputsNames
-		}
-
-		processorsNames := m.GetProcessorsNames()
-		if len(processorsNames) != 0 {
-			mM["processorsNames"] = processorsNames
-		}
-
-		// Should only process fields if any.
-		if len(m.GetFields()) != 0 {
-			for k, v := range m.GetFields() {
-				mM[k] = v
-			}
-		}
-
-		m.GetContent().SetProcessed(shared.Prettify(mM))
+		m.GetContent().SetProcessed(shared.Inline(mapBuilder(m)))
 
 		return nil
 	})

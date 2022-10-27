@@ -337,7 +337,7 @@ func ExampleNew_textFormatter() {
 // JSON formatter example.
 func ExampleNew_jsonFormatter() {
 	buf, o := output.SafeBuffer(level.Info)
-	o.SetFormatter(formatter.JSON())
+	o.SetFormatter(formatter.JSONPretty())
 
 	// Creates logger, and name it.
 	sypl.New(shared.DefaultComponentNameOutput).
@@ -572,7 +572,7 @@ func ExampleNew_globalTags() {
 	buf, o := output.SafeBuffer(level.Info)
 
 	// Creates logger, and name it.
-	l := sypl.New(shared.DefaultComponentNameOutput, o.SetFormatter(formatter.JSON()))
+	l := sypl.New(shared.DefaultComponentNameOutput, o.SetFormatter(formatter.JSONPretty()))
 	l.SetTags("a", "b")
 
 	l.Infoln(shared.DefaultContentOutput) // a=1
@@ -593,7 +593,7 @@ func ExampleNew_globalTagsNonDup() {
 	buf, o := output.SafeBuffer(level.Info)
 
 	// Creates logger, and name it.
-	l := sypl.New(shared.DefaultComponentNameOutput, o.SetFormatter(formatter.JSON()))
+	l := sypl.New(shared.DefaultComponentNameOutput, o.SetFormatter(formatter.JSONPretty()))
 	l.SetTags("a", "b")
 
 	l.PrintWithOptions(level.Info, shared.DefaultContentOutput,

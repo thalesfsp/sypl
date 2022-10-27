@@ -64,7 +64,7 @@ func elasticSearchFactory(
 		maxLevel,
 		elasticsearch.NewWithDynamicIndex(dynamicIndexFunc, esConfig),
 		processors...,
-	).SetFormatter(formatter.JSON())
+	).SetFormatter(formatter.JSONPretty())
 
 	return o
 }

@@ -494,7 +494,7 @@ func TestNew(t *testing.T) {
 				a.maxLevel,
 				bufWriter,
 				processor.ChangeFirstCharCase(processor.Lowercase),
-			).SetFormatter(formatter.JSON())
+			).SetFormatter(formatter.JSONPretty())
 
 			// Adds `Output` to logger.
 			testingLogger.AddOutputs(BufferOutput)
