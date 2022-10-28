@@ -123,6 +123,11 @@ func Text() IFormatter {
 			}
 		}
 
+		// Should only process fields if any.
+		if len(m.GetTags()) != 0 {
+			fmt.Fprintf(w, "tags=[%s]", strings.Join(m.GetTags(), ", "))
+		}
+
 		w.Flush()
 
 		m.GetContent().SetProcessed(buf.String())

@@ -713,3 +713,18 @@ func ExampleNew_ioWriter() {
 	// output:
 	// true
 }
+
+// Tags a message.
+func ExampleNew_tagger() {
+	buf, o := output.SafeBuffer(level.Info, processor.Tagger("a", "b"))
+
+	o.SetFormatter(formatter.Text())
+
+	// Creates logger, and name it.
+	sypl.New(shared.DefaultComponentNameOutput, o).Infoln(shared.DefaultContentOutput)
+
+	fmt.Print(strings.Contains(buf.String(), "tags=[a, b]"))
+
+	// output:
+	// true
+}

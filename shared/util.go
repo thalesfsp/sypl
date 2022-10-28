@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
+
+	"github.com/google/uuid"
 )
 
 // Prettify encodes data returning its JSON-stringified version.
@@ -37,4 +39,10 @@ func jsonfy(prefix string, indent string, data interface{}) string {
 	}
 
 	return buf.String()
+}
+
+// GenerateUUID generates a RFC4122 UUID and DCE 1.1: Authentication and
+// Security Services.
+func GenerateUUID() string {
+	return uuid.New().String()
 }

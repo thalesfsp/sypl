@@ -252,3 +252,12 @@ func Suffixer(suffix string) IProcessor {
 		return nil
 	})
 }
+
+// Tagger tags a message with the specified `tags`.
+func Tagger(tag ...string) IProcessor {
+	return New("Tagger", func(m message.IMessage) error {
+		m.AddTags(tag...)
+
+		return nil
+	})
+}

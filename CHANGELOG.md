@@ -26,6 +26,11 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [1.9.2] - 2022-10-27
+### Added
+- `Tagger` processor, and example.
+- `File` `Output` will create a temp file in the OS's temp directory if the no `path` provided.
+
 ## [1.9.1] - 2022-10-27
 ### Changed
 - `File` `Output` now tries to create the directory if it doesn't exist.

@@ -140,12 +140,12 @@ func (o *output) GetProcessor(name string) processor.IProcessor {
 	return nil
 }
 
-// SetProcessors sets one or more processors.
+// GetProcessors returns registered processors.
 func (o *output) GetProcessors() []processor.IProcessor {
 	return o.processors
 }
 
-// GetProcessors returns registered processors.
+// SetProcessors sets one or more processors.
 func (o *output) SetProcessors(processors ...processor.IProcessor) IOutput {
 	for _, processor := range processors {
 		for i, p := range o.processors {

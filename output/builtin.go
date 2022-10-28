@@ -5,6 +5,7 @@
 package output
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -57,8 +58,14 @@ func FileBased(
 //
 // NOTE: If the common used "-" is used, it will behave as a Console writing to
 // stdout.
+// NOTE: If no path is provided, it'll create one in the OS's temp directory.
 // NOTE: If the dir and/or file does not exist, it will be created.
 func File(path string, maxLevel level.Level, processors ...processor.IProcessor) IOutput {
+	// Should create a file in the OS temp. File name should be unique (UUIDv4).
+	if path == "" {
+		path = filepath.Join(os.TempDir(), fmt.Sprintf("%s.log", shared.GenerateUUID()))
+	}
+
 	if o := dashHandler("File", path, maxLevel, processors...); o != nil {
 		return o
 	}
@@ -84,6 +91,8 @@ func File(path string, maxLevel level.Level, processors ...processor.IProcessor)
 
 		log.Fatalf("%s File Output: Failed to create/open %s: %s", shared.ErrorPrefix, path, err)
 	}
+
+	log.Printf("%s File Output: No path provided. Created/opened \"%s\"", shared.WarnPrefix, path)
 
 	return FileBased("File", maxLevel, f, processors...)
 }
