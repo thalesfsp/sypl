@@ -23,8 +23,6 @@ func Inline(data interface{}) string {
 }
 
 // InLine encodes JSON in line.
-//
-// NOTE: Only exported fields of the data structure will be printed.
 func jsonfy(prefix string, indent string, data interface{}) string {
 	buf := new(bytes.Buffer)
 
