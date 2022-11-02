@@ -26,6 +26,10 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [1.9.3] - 2022-10-27
+### Added
+- `File` `Output` should only log message if no path is provided.
+
 ## [1.9.2] - 2022-10-27
 ### Added
 - `Tagger` processor, and example.
