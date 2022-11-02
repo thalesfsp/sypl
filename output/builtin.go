@@ -64,6 +64,8 @@ func File(path string, maxLevel level.Level, processors ...processor.IProcessor)
 	// Should create a file in the OS temp. File name should be unique (UUIDv4).
 	if path == "" {
 		path = filepath.Join(os.TempDir(), fmt.Sprintf("%s.log", shared.GenerateUUID()))
+
+		log.Printf("%s File Output: No path provided. Created/opened \"%s\"", shared.WarnPrefix, path)
 	}
 
 	if o := dashHandler("File", path, maxLevel, processors...); o != nil {
@@ -91,8 +93,6 @@ func File(path string, maxLevel level.Level, processors ...processor.IProcessor)
 
 		log.Fatalf("%s File Output: Failed to create/open %s: %s", shared.ErrorPrefix, path, err)
 	}
-
-	log.Printf("%s File Output: No path provided. Created/opened \"%s\"", shared.WarnPrefix, path)
 
 	return FileBased("File", maxLevel, f, processors...)
 }
