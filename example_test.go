@@ -714,7 +714,7 @@ func ExampleNew_ioWriter() {
 	// true
 }
 
-// Tags a message.
+// Tagger processor.
 func ExampleNew_tagger() {
 	buf, o := output.SafeBuffer(level.Info, processor.Tagger("a", "b"))
 
@@ -724,6 +724,21 @@ func ExampleNew_tagger() {
 	sypl.New(shared.DefaultComponentNameOutput, o).Infoln(shared.DefaultContentOutput)
 
 	fmt.Print(strings.Contains(buf.String(), "tags=[a, b]"))
+
+	// output:
+	// true
+}
+
+// ForcePrint processor.
+func ExampleNew_forcePrintProcessor() {
+	buf, o := output.SafeBuffer(level.Info, processor.Flagger(flag.Force))
+
+	o.SetFormatter(formatter.Text())
+
+	// Creates logger, and name it.
+	sypl.New(shared.DefaultComponentNameOutput, o).Traceln(shared.DefaultContentOutput)
+
+	fmt.Print(strings.Contains(buf.String(), "message=contentTest"))
 
 	// output:
 	// true

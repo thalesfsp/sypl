@@ -26,6 +26,10 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [1.9.10] - 2022-11-08
+### Added
+- `Flagger` `Processor` which flags messages based on a given `Flag`.
+
 ## [1.9.3] - 2022-10-27
 ### Added
 - `File` `Output` should only log message if no path is provided.

@@ -150,6 +150,15 @@ func ForceBasedOnLevel(levels ...level.Level) IProcessor {
 	})
 }
 
+// Flagger flags a message.
+func Flagger(f flag.Flag) IProcessor {
+	return New("Flagger", func(m message.IMessage) error {
+		m.SetFlag(f)
+
+		return nil
+	})
+}
+
 // MuteBasedOnLevel mute messages based on the specified levels.
 func MuteBasedOnLevel(levels ...level.Level) IProcessor {
 	return New("MuteBasedOnLevel", func(m message.IMessage) error {
