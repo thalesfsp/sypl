@@ -52,7 +52,9 @@ func mapBuilder(m message.IMessage) map[string]interface{} {
 	// Should only process fields if any.
 	if len(m.GetFields()) != 0 {
 		for k, v := range m.GetFields() {
-			mM[k] = v
+			if v != nil {
+				mM[k] = v
+			}
 		}
 	}
 
@@ -119,11 +121,13 @@ func Text() IFormatter {
 		// Should only process fields if any.
 		if len(m.GetFields()) != 0 {
 			for k, v := range m.GetFields() {
-				fmt.Fprintf(w, "%s=%v\t", k, v)
+				if v != nil {
+					fmt.Fprintf(w, "%s=%v\t", k, v)
+				}
 			}
 		}
 
-		// Should only process fields if any.
+		// Should only process tags if any.
 		if len(m.GetTags()) != 0 {
 			fmt.Fprintf(w, "tags=[%s]", strings.Join(m.GetTags(), ", "))
 		}
