@@ -9,6 +9,15 @@ import (
 // OptionFunc allows to specify message's options.
 type OptionFunc func(m message.IMessage) message.IMessage
 
+// WithID set message's ID.
+func WithID(id string) OptionFunc {
+	return func(m message.IMessage) message.IMessage {
+		m.SetID(id)
+
+		return m
+	}
+}
+
 // WithTags add tags to a message.
 func WithTags(tags ...string) OptionFunc {
 	return func(m message.IMessage) message.IMessage {

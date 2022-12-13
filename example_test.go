@@ -743,3 +743,18 @@ func ExampleNew_forcePrintProcessor() {
 	// output:
 	// true
 }
+
+// WithID option.
+func ExampleNew_withID_option() {
+	buf, o := output.SafeBuffer(level.Trace)
+
+	o.SetFormatter(formatter.JSON())
+
+	// Creates logger, and name it.
+	sypl.New(shared.DefaultComponentNameOutput, o).PrintWithOptions(level.Info, shared.DefaultContentOutput, sypl.WithID("idTest"))
+
+	fmt.Print(strings.Contains(buf.String(), `"id":"idTest"`))
+
+	// output:
+	// true
+}
