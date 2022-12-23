@@ -26,6 +26,18 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [1.9.13] - 2022-11-08
+### Changed
+- Now `Breakpoint` prints the message independently of the level.
+
+## [1.9.12] - 2022-11-08
+### Added
+- Added `WithID` `Option`.
+
+## [1.9.11] - 2022-11-08
+### Changed
+- Only fields with values will be printed.
+
 ## [1.9.10] - 2022-11-08
 ### Added
 - `Flagger` `Processor` which flags messages based on a given `Flag`.

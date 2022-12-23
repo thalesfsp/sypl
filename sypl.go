@@ -434,7 +434,11 @@ func (sypl *Sypl) Breakpoint(name string, data ...interface{}) ISypl {
 		breakpointName = strings.TrimSuffix(breakpointName, ",")
 	}
 
-	sypl.Debugf("%s. Press enter to continue...", breakpointName)
+	sypl.PrintWithOptions(
+		level.Debug,
+		fmt.Sprintf("%s. Press enter to continue...", breakpointName),
+		WithFlag(flag.Force),
+	)
 
 	reader := bufio.NewReader(os.Stdin)
 
