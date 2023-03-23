@@ -38,16 +38,16 @@ type IBasicPrinter interface {
 	// Printf prints according with the specified format.
 	Printf(l level.Level, format string, args ...interface{}) ISypl
 
-	// Printlnf prints according with the specified format, also adding a new
-	// line to the end.
-	Printlnf(l level.Level, format string, args ...interface{}) ISypl
-
 	// Println prints, also adding a new line to the end.
 	Println(l level.Level, args ...interface{}) ISypl
 }
 
 // IConvenientPrinter specifies convenient printers.
 type IConvenientPrinter interface {
+	// Printlnf prints according with the specified format, also adding a new
+	// line to the end.
+	Printlnf(l level.Level, format string, args ...interface{}) ISypl
+
 	// PrintPretty prints data structures as JSON text.
 	//
 	// Notes:

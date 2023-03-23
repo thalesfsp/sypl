@@ -101,7 +101,7 @@ func (sypl *Sypl) SetDefaultIoWriterLevel(l level.Level) {
 // via `SetIoWriterLevel`, default is `none`. It always returns `0, nil`.
 //
 // NOTE: This is a convenient method, if it doesn't fits your need, just
-// implement the way you need, as you would do.
+// implement the way you need.
 func (sypl *Sypl) Write(p []byte) (int, error) {
 	sypl.process(message.New(sypl.defaultIoWriterLevel, string(p)))
 

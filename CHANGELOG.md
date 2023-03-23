@@ -26,6 +26,11 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [1.9.14] - 2023-03-23
+### Changed
+- Upgraded lint to v1.51.2.
+- Now, IBasicPrinter interface contains only native Print{f|ln} methods.
+
 ## [1.9.13] - 2022-11-08
 ### Changed
 - Now `Breakpoint` prints the message independently of the level.

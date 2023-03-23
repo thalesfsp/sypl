@@ -62,6 +62,7 @@ issues:
         - nlreturn
         - funlen
         - dupl
+        - dupword
 
     - path: doc.go
       linters:
@@ -70,6 +71,7 @@ issues:
     - path: example_test.go
       linters:
         - nosnakecase
+        - testableexamples
 
     - text: "O_WRONLY|O_RDWR|O_CREATE|O_TRUNC|O_APPEND"
       linters:
