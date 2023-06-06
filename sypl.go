@@ -486,6 +486,17 @@ func (sypl *Sypl) GetMaxLevel() map[string]level.Level {
 	return levelMap
 }
 
+// AnyMaxLevel returns if any output has the specified `maxLevel`.
+func (sypl *Sypl) AnyMaxLevel(l level.Level) bool {
+	for _, output := range sypl.GetOutputs() {
+		if output.GetMaxLevel() == l {
+			return true
+		}
+	}
+
+	return false
+}
+
 // SetMaxLevel sets the `maxLevel` of all outputs.
 func (sypl *Sypl) SetMaxLevel(l level.Level) ISypl {
 	for _, output := range sypl.GetOutputs() {
