@@ -36,6 +36,23 @@ func WithFields(fields fields.Fields) OptionFunc {
 	}
 }
 
+// WithField allows to set a field for the error.
+func WithField(key string, value any) OptionFunc {
+	return func(m message.IMessage) message.IMessage {
+		flds := m.GetFields()
+
+		if flds == nil {
+			m.SetFields(make(fields.Fields))
+		}
+
+		flds[key] = value
+
+		m.SetFields(flds)
+
+		return m
+	}
+}
+
 // WithFlag set message's flag.
 func WithFlag(f flag.Flag) OptionFunc {
 	return func(m message.IMessage) message.IMessage {
