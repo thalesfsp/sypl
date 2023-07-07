@@ -100,8 +100,8 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Setenv(shared.DebugEnvVar, tt.content)
-			defer os.Unsetenv(shared.DebugEnvVar)
+			t.Setenv(shared.LevelEnvVar, tt.content)
+			defer os.Unsetenv(shared.LevelEnvVar)
 
 			d := New(tt.args.componentName, tt.args.outputName)
 

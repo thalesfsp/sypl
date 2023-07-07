@@ -610,11 +610,11 @@ func ExampleNew_globalTagsNonDup() {
 // Logging filtering, and debug capability example.
 func ExampleNew_debugAndFilter() {
 	// From any SYPL logger, bump all max levels to `info`
-	// From any SYPL logger havong a `console` output, bump max levels to `debug`
+	// From any SYPL logger having a `console` output, bump max levels to `debug`
 	// From a logger named `pod`, for its output called `Console`, bump max levels to `trace`
 	// From a logger named `pv`, for its output called `o1`, bump max levels to `trace`
-	os.Setenv(shared.DebugEnvVar, "info,console:debug,pod:console:trace,pv:o1:trace")
-	defer os.Unsetenv(shared.DebugEnvVar)
+	os.Setenv(shared.LevelEnvVar, "info,console:debug,pod:console:trace,pv:o1:trace")
+	defer os.Unsetenv(shared.LevelEnvVar)
 
 	// From any SYPL logger, only print the following ones.
 	os.Setenv(shared.FilterEnvVar, "pod,svc,vs,np,cm,pv")

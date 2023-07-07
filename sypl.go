@@ -699,7 +699,7 @@ func (sypl *Sypl) processOutputs(m message.IMessage, outputsNames string) {
 
 			// Debug capability.
 			// Should only run if Debug env var is set.
-			if os.Getenv(shared.DebugEnvVar) != "" {
+			if os.Getenv(shared.LevelEnvVar) != "" {
 				msg.SetDebugEnvVarRegexes(
 					debug.New(msg.GetComponentName(), msg.GetOutputName()),
 				)

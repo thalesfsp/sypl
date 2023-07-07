@@ -216,7 +216,7 @@ func (o *output) Write(m message.IMessage) error {
 		finalMaxLevel := o.GetMaxLevel()
 
 		// Should only run if Debug env var is set.
-		if os.Getenv(shared.DebugEnvVar) != "" {
+		if os.Getenv(shared.LevelEnvVar) != "" {
 			debug := m.GetDebugEnvVarRegexes()
 
 			l, _, ok := debug.Level()

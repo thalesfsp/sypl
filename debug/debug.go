@@ -162,7 +162,7 @@ func New(componentName, outputName string) *Debug {
 		ComponentName: componentName,
 		OutputName:    outputName,
 
-		Content: os.Getenv(shared.DebugEnvVar),
+		Content: os.Getenv(shared.LevelEnvVar),
 
 		Levels:                regexp.MustCompile(fmt.Sprintf(lReMask, levels)),
 		OutputLevels:          regexp.MustCompile(fmt.Sprintf(oLReMask, outputName, levels)),

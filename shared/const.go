@@ -22,5 +22,5 @@ const (
 // Env vars that affects Sypl.
 const (
 	FilterEnvVar = "SYPL_FILTER"
-	DebugEnvVar  = "SYPL_LEVEL"
+	LevelEnvVar  = "SYPL_LEVEL"
 )
