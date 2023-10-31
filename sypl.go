@@ -488,13 +488,16 @@ func (sypl *Sypl) GetMaxLevel() map[string]level.Level {
 
 // AnyMaxLevel returns if any output has the specified `maxLevel`.
 func (sypl *Sypl) AnyMaxLevel(l level.Level) bool {
+	// Check level when set when output is created.
 	for _, output := range sypl.GetOutputs() {
 		if output.GetMaxLevel() == l {
 			return true
 		}
 	}
 
-	return false
+	// Check level when set output `maxLevel` is modified after creation,
+	// real-time, runtime.
+	return os.Getenv(shared.LevelEnvVar) == l.String()
 }
 
 // SetMaxLevel sets the `maxLevel` of all outputs.
@@ -720,7 +723,7 @@ func (sypl *Sypl) processOutputs(m message.IMessage, outputsNames string) {
 
 // New is the Sypl factory.
 func New(name string, outputs ...output.IOutput) *Sypl {
-	return &Sypl{
+	s := &Sypl{
 		Name: name,
 
 		defaultIoWriterLevel: level.None,
@@ -729,6 +732,8 @@ func New(name string, outputs ...output.IOutput) *Sypl {
 		status:               status.Enabled,
 		tags:                 []string{},
 	}
+
+	return s
 }
 
 // NewDefault creates a logger that covers most of all needs:
@@ -742,16 +747,8 @@ func NewDefault(name string, maxLevel level.Level, processors ...processor.IProc
 	consoleProcessors := processors
 	consoleProcessors = append(consoleProcessors, processor.MuteBasedOnLevel(level.Fatal, level.Error))
 
-	return &Sypl{
-		Name: name,
-
-		defaultIoWriterLevel: level.None,
-		fields:               fields.Fields{},
-		outputs: []output.IOutput{
-			output.Console(maxLevel, consoleProcessors...).SetFormatter(formatter.Text()),
-			output.StdErr(processors...).SetFormatter(formatter.Text()),
-		},
-		status: status.Enabled,
-		tags:   []string{},
-	}
+	return New(name, []output.IOutput{
+		output.Console(maxLevel, consoleProcessors...).SetFormatter(formatter.Text()),
+		output.StdErr(processors...).SetFormatter(formatter.Text()),
+	}...)
 }
