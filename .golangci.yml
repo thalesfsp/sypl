@@ -26,6 +26,10 @@ linters:
     - ireturn
     - varnamelen
     - interfacebloat
+    - depguard
+    - revive
+    - copyloopvar
+    - perfsprint
   fast: false
 
 # Settings for specific linters

@@ -1,6 +1,8 @@
 // Copyright 2021 The sypl Authors. All rights reserved.
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
+//
+//nolint:perfsprint
 
 package output
 
@@ -60,7 +62,7 @@ func FileBased(
 // stdout.
 // NOTE: If no path is provided, it'll create one in the OS's temp directory.
 // NOTE: If the dir and/or file does not exist, it will be created.
-func File(path string, maxLevel level.Level, processors ...processor.IProcessor) IOutput {
+func File(name string, path string, maxLevel level.Level, processors ...processor.IProcessor) IOutput {
 	// Should create a file in the OS temp. File name should be unique (UUIDv4).
 	if path == "" {
 		path = filepath.Join(os.TempDir(), fmt.Sprintf("%s.log", shared.GenerateUUID()))
@@ -68,7 +70,7 @@ func File(path string, maxLevel level.Level, processors ...processor.IProcessor)
 		log.Printf("%s File Output: No path provided. Created/opened \"%s\"", shared.WarnPrefix, path)
 	}
 
-	if o := dashHandler("File", path, maxLevel, processors...); o != nil {
+	if o := dashHandler(name, path, maxLevel, processors...); o != nil {
 		return o
 	}
 
@@ -88,13 +90,13 @@ func File(path string, maxLevel level.Level, processors ...processor.IProcessor)
 			}
 
 			// Try again.
-			return File(path, maxLevel, processors...)
+			return File(name, path, maxLevel, processors...)
 		}
 
 		log.Fatalf("%s File Output: Failed to create/open %s: %s", shared.ErrorPrefix, path, err)
 	}
 
-	return FileBased("File", maxLevel, f, processors...)
+	return FileBased(name, maxLevel, f, processors...)
 }
 
 // SafeBuffer is a built-in `output` - named `Buffer`, that writes to the buffer.

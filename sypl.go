@@ -179,6 +179,7 @@ func (sypl *Sypl) Println(l level.Level, args ...interface{}) ISypl {
 // - Message isn't processed.
 func (sypl *Sypl) PrintPretty(l level.Level, data interface{}) ISypl {
 	msg := message.New(l, fmt.Sprint(shared.Prettify(data)))
+
 	msg.SetFlag(flag.Skip)
 
 	return sypl.PrintMessage(msg)
