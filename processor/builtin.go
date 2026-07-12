@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/acarl005/stripansi"
 	"github.com/thalesfsp/sypl/color"
@@ -78,8 +79,19 @@ func ChangeFirstCharCase(casing Casing) IProcessor {
 			return nil
 		}
 
-		firstChar := string(m.GetContent().GetProcessed()[0])
-		contentWithoutFirstChar := m.GetContent().GetProcessed()[1:len(m.GetContent().GetProcessed())]
+		processed := m.GetContent().GetProcessed()
+
+		// Do nothing if there's no processed content to change.
+		if processed == "" {
+			return nil
+		}
+
+		// Decode the first rune - not byte - so multi-byte characters, e.g.:
+		// "é", aren't corrupted.
+		_, size := utf8.DecodeRuneInString(processed)
+
+		firstChar := processed[:size]
+		contentWithoutFirstChar := processed[size:]
 
 		switch casing {
 		case Uppercase:
