@@ -228,10 +228,11 @@ func (o *output) Write(m message.IMessage) error {
 
 		// Should only print if message `level` isn't above `MaxLevel`.
 		// Should only print if `level` isn't `None`.
-		// Should only print if not flagged with `Mute`.
+		// Should only print if not flagged with `Mute`, or `SkipAndMute`.
 		if m.GetLevel() != level.None &&
 			m.GetLevel() <= finalMaxLevel &&
-			m.GetFlag() != flag.Mute {
+			m.GetFlag() != flag.Mute &&
+			m.GetFlag() != flag.SkipAndMute {
 			if err := o.write(m); err != nil {
 				log.Println(shared.ErrorPrefix, err)
 
@@ -249,8 +250,11 @@ func (o *output) Write(m message.IMessage) error {
 
 // Processors logic of the Write method.
 func (o *output) processProcessors(m message.IMessage, processorsNames string) {
-	// Should not process if message is flagged with `Skip` or `SkipAndForce`.
-	if m.GetFlag() != flag.Skip && m.GetFlag() != flag.SkipAndForce {
+	// Should not process if message is flagged with `Skip`, `SkipAndForce`,
+	// or `SkipAndMute`.
+	if m.GetFlag() != flag.Skip &&
+		m.GetFlag() != flag.SkipAndForce &&
+		m.GetFlag() != flag.SkipAndMute {
 		for _, p := range o.processors {
 			// Should only use enabled Processors, and named (listed) ones.
 			//
@@ -272,7 +276,8 @@ func (o *output) write(m message.IMessage) error {
 	// Should only format if any, and if not flagged.
 	if o.GetFormatter() != nil &&
 		m.GetFlag() != flag.Skip &&
-		m.GetFlag() != flag.SkipAndForce {
+		m.GetFlag() != flag.SkipAndForce &&
+		m.GetFlag() != flag.SkipAndMute {
 		if err := o.GetFormatter().Run(m); err != nil {
 			log.Println(shared.ErrorPrefix, processor.NewProcessingError(m, err))
 		}

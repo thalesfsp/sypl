@@ -587,9 +587,9 @@ func (sypl *Sypl) process(messages ...message.IMessage) {
 		m := m
 
 		g.Go(func() error {
-			// Do nothing if message as no content, or flagged with `SkipAndMute`.
-			if m.GetContent().GetOriginal() == "" &&
-				m.GetFlag() == flag.SkipAndMute {
+			// Do nothing if message is flagged with `SkipAndMute` - it
+			// should not be processed, neither printed.
+			if m.GetFlag() == flag.SkipAndMute {
 				return nil
 			}
 
