@@ -9,7 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"maps"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -617,12 +619,19 @@ func (sypl *Sypl) New(name string) *Sypl {
 	sypl.mu.RLock()
 	defer sypl.mu.RUnlock()
 
+	// The slice/map CONTAINERS are cloned - each logger has its own mutex,
+	// so sharing a backing array (or map) would allow unsynchronized
+	// concurrent writes (data race). The output ELEMENTS stay shared by
+	// design: changes to the state of outputs, and processors, are
+	// reflected across all loggers.
+	//
+	// NOTE: The outputs slice is cloned by the factory.
 	s := New(name, sypl.outputs...)
 
 	s.defaultIoWriterLevel = sypl.defaultIoWriterLevel
-	s.fields = sypl.fields
+	s.fields = maps.Clone(sypl.fields)
 	s.status = sypl.status
-	s.tags = sypl.tags
+	s.tags = slices.Clone(sypl.tags)
 
 	return s
 }
@@ -817,9 +826,14 @@ func New(name string, outputs ...output.IOutput) *Sypl {
 
 		defaultIoWriterLevel: level.None,
 		fields:               fields.Fields{},
-		outputs:              outputs,
-		status:               status.Enabled,
-		tags:                 []string{},
+		// Defensively cloned: a caller passing `mySlice...` shares the
+		// backing array with this logger - and with any other logger built
+		// from the same slice. Each logger has its own mutex, so appends
+		// into a shared spare-capacity slot would race. The output ELEMENTS
+		// stay shared by design.
+		outputs: slices.Clone(outputs),
+		status:  status.Enabled,
+		tags:    []string{},
 	}
 
 	return s
