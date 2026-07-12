@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/thalesfsp/sypl/level"
 	"github.com/thalesfsp/sypl/shared"
@@ -168,11 +169,34 @@ type matchers struct {
 	componentOutputLevels *regexp.Regexp
 }
 
+// maxCachedMatchers bounds `matchersCache`. Component names can be
+// dynamically generated (e.g. per-request child loggers), and the cache is
+// keyed by them - without a bound it would grow forever. Above the cap,
+// matchers are compiled fresh per call - never evicted - which is the
+// simplest correct bound.
+const maxCachedMatchers = 1024
+
 // matchersCache caches compiled matchers, keyed by component, and output
 // names. `New` is called per-message-per-output; the regexes depend only on
 // the names - not on the env var content, which is read fresh on every call -
 // so they're safe to reuse.
 var matchersCache sync.Map
+
+// matchersCacheSize tracks the number of entries in `matchersCache` -
+// `sync.Map` has no O(1) length. Concurrent first-seen misses may overshoot
+// the cap by a handful of entries; the point is that growth stops.
+var matchersCacheSize atomic.Int64
+
+// newMatchers compiles the matchers for a component, and output pair.
+func newMatchers(componentName, outputName string) *matchers {
+	levels := strings.Join(level.LevelsNames(), "|")
+
+	return &matchers{
+		levels:                regexp.MustCompile(fmt.Sprintf(lReMask, levels)),
+		outputLevels:          regexp.MustCompile(fmt.Sprintf(oLReMask, outputName, levels)),
+		componentOutputLevels: regexp.MustCompile(fmt.Sprintf(cOLReMask, componentName, outputName, levels)),
+	}
+}
 
 // New is the Debug factory.
 func New(componentName, outputName string) *Debug {
@@ -180,13 +204,19 @@ func New(componentName, outputName string) *Debug {
 
 	cached, ok := matchersCache.Load(key)
 	if !ok {
-		levels := strings.Join(level.LevelsNames(), "|")
+		cached = newMatchers(componentName, outputName)
 
-		cached, _ = matchersCache.LoadOrStore(key, &matchers{
-			levels:                regexp.MustCompile(fmt.Sprintf(lReMask, levels)),
-			outputLevels:          regexp.MustCompile(fmt.Sprintf(oLReMask, outputName, levels)),
-			componentOutputLevels: regexp.MustCompile(fmt.Sprintf(cOLReMask, componentName, outputName, levels)),
-		})
+		// Bounded: above the cap, skip caching, and use the freshly
+		// compiled matchers.
+		if matchersCacheSize.Load() < maxCachedMatchers {
+			actual, loaded := matchersCache.LoadOrStore(key, cached)
+
+			cached = actual
+
+			if !loaded {
+				matchersCacheSize.Add(1)
+			}
+		}
 	}
 
 	m, _ := cached.(*matchers)
