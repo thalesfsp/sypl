@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/spf13/afero"
 	"github.com/thalesfsp/sypl/fields"
 	"github.com/thalesfsp/sypl/flag"
 	"github.com/thalesfsp/sypl/formatter"
@@ -98,20 +97,19 @@ func TestNew(t *testing.T) {
 	fileArgs := args{
 		component: shared.DefaultComponentNameOutput,
 		content:   shared.DefaultContentOutput,
-		dir:       "/tmp",
+		dir:       t.TempDir(),
 		filename:  "test.log",
 		level:     level.Info,
 		maxLevel:  level.Debug,
 		run: func(a args) string {
 			filePath := filepath.Join(a.dir, a.filename)
 
-			appFs := afero.NewMemMapFs()
-			f, err := appFs.OpenFile(
+			f, err := os.OpenFile(
 				filePath,
 				os.O_APPEND|os.O_CREATE|os.O_WRONLY,
 				shared.DefaultFileMode)
 			if err != nil {
-				t.Error("Failed to open virtal file", err)
+				t.Fatal("Failed to open file", err)
 			}
 
 			defer f.Close()
@@ -120,9 +118,9 @@ func TestNew(t *testing.T) {
 				AddOutputs(output.FileBased("virtual", level.Debug, f, processor.Prefixer("Test Prefix - "))).
 				Print(a.level, a.content)
 
-			b, err := afero.ReadFile(appFs, filePath)
+			b, err := os.ReadFile(filePath)
 			if err != nil {
-				t.Error("Failed to read virtal file", err)
+				t.Fatal("Failed to read file", err)
 			}
 
 			return string(b)

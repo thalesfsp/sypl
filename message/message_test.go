@@ -6,9 +6,9 @@ package message
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
-	"github.com/go-test/deep"
 	"github.com/thalesfsp/sypl/flag"
 	"github.com/thalesfsp/sypl/level"
 	"github.com/thalesfsp/sypl/shared"
@@ -74,10 +74,10 @@ func TestCopy(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := New(level.Info, shared.DefaultContentOutput)
 
-			if res := deep.Equal(Copy(m), m); len(res) > 0 {
+			if !reflect.DeepEqual(Copy(m), m) {
 				t.Log("Expected:", shared.Prettify(m))
 				t.Log("Got:", shared.Prettify(Copy(m)))
-				t.Error("Diff:", res)
+				t.Error("Copy(m) differs from m")
 			}
 		})
 	}
@@ -149,8 +149,8 @@ func Test_message_strip(t *testing.T) {
 				t.Errorf("Strip got %v expected %v", tt.wantSize, len(tt.m.getLineBreaker().ControlChars))
 			}
 
-			if d := deep.Equal(tt.m.getLineBreaker().ControlChars, tt.wantChars); len(d) > 0 {
-				t.Errorf("Strip %+v", d)
+			if !reflect.DeepEqual(tt.m.getLineBreaker().ControlChars, tt.wantChars) {
+				t.Errorf("Strip got %v expected %v", tt.m.getLineBreaker().ControlChars, tt.wantChars)
 			}
 
 			if tt.wantContent != tt.m.GetContent().GetProcessed() {
