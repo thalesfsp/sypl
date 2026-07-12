@@ -74,7 +74,7 @@ func mapBuilder(m message.IMessage) map[string]interface{} {
 // - Timestamp (RFC3339).
 // - Fields.
 func JSONPretty() IFormatter {
-	return processor.New("JSON", func(m message.IMessage) error {
+	return processor.New("JSONPretty", func(m message.IMessage) error {
 		m.GetContent().SetProcessed(shared.Prettify(mapBuilder(m)))
 
 		return nil
