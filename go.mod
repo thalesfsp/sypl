@@ -10,7 +10,6 @@ require (
 	github.com/go-test/deep v1.1.1
 	github.com/google/uuid v1.6.0
 	github.com/spf13/afero v1.11.0
-	golang.org/x/sync v0.9.0
 )
 
 require (

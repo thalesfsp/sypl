@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/thalesfsp/sypl/flag"
@@ -30,6 +31,13 @@ import (
 // - Any message with a `level` beyond `maxLevel` will not be written.
 // - Messages are processed according to the order processors are added.
 type output struct {
+	// mu guards the mutable state below, allowing the output to be
+	// safely reconfigured while logging.
+	//
+	// NOTE: Never held across the actual write - the builtin logger has
+	// its own mutex serializing writes.
+	mu sync.RWMutex
+
 	// Golang's builtin logger.
 	builtinLogger *builtin.Builtin
 
@@ -53,8 +61,8 @@ type output struct {
 }
 
 // String interface implementation.
-func (o output) String() string {
-	return o.name
+func (o *output) String() string {
+	return o.GetName()
 }
 
 //////
@@ -63,21 +71,33 @@ func (o output) String() string {
 
 // GetName returns the processor name.
 func (o *output) GetName() string {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+
 	return o.name
 }
 
 // SetName sets the processor name.
 func (o *output) SetName(name string) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	o.name = name
 }
 
 // GetStatus returns the processor status.
 func (o *output) GetStatus() status.Status {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+
 	return o.status
 }
 
 // SetStatus sets the processor status.
 func (o *output) SetStatus(s status.Status) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	o.status = s
 }
 
@@ -87,11 +107,17 @@ func (o *output) SetStatus(s status.Status) {
 
 // GetBuiltinLogger returns the Golang's builtin logger.
 func (o *output) GetBuiltinLogger() *builtin.Builtin {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+
 	return o.builtinLogger
 }
 
 // SetBuiltinLogger sets the Golang's builtin logger.
 func (o *output) SetBuiltinLogger(builtinLogger *builtin.Builtin) IOutput {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	o.builtinLogger = builtinLogger
 
 	return o
@@ -99,11 +125,17 @@ func (o *output) SetBuiltinLogger(builtinLogger *builtin.Builtin) IOutput {
 
 // GetFormatter returns the formatter.
 func (o *output) GetFormatter() formatter.IFormatter {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+
 	return o.formatter
 }
 
 // SetFormatter sets the formatter.
 func (o *output) SetFormatter(fmtr formatter.IFormatter) IOutput {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	o.formatter = fmtr
 
 	return o
@@ -111,11 +143,17 @@ func (o *output) SetFormatter(fmtr formatter.IFormatter) IOutput {
 
 // GetMaxLevel returns the max level.
 func (o *output) GetMaxLevel() level.Level {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+
 	return o.maxLevel
 }
 
 // SetMaxLevel sets the max level.
 func (o *output) SetMaxLevel(l level.Level) IOutput {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	o.maxLevel = l
 
 	return o
@@ -123,6 +161,9 @@ func (o *output) SetMaxLevel(l level.Level) IOutput {
 
 // AddProcessors adds one or more processors.
 func (o *output) AddProcessors(processors ...processor.IProcessor) IOutput {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	o.processors = append(o.processors, processors...)
 
 	return o
@@ -131,7 +172,7 @@ func (o *output) AddProcessors(processors ...processor.IProcessor) IOutput {
 // GetProcessor returns the registered processor by its name. If not found, will
 // be nil.
 func (o *output) GetProcessor(name string) processor.IProcessor {
-	for _, p := range o.processors {
+	for _, p := range o.GetProcessors() {
 		if strings.EqualFold(p.GetName(), name) {
 			return p
 		}
@@ -142,18 +183,32 @@ func (o *output) GetProcessor(name string) processor.IProcessor {
 
 // GetProcessors returns registered processors.
 func (o *output) GetProcessors() []processor.IProcessor {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+
 	return o.processors
 }
 
 // SetProcessors sets one or more processors.
 func (o *output) SetProcessors(processors ...processor.IProcessor) IOutput {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	// Operates on a fresh copy of the slice so concurrent readers,
+	// iterating over a previously obtained slice, never observe in-place
+	// writes.
+	updated := make([]processor.IProcessor, len(o.processors))
+	copy(updated, o.processors)
+
 	for _, processor := range processors {
-		for i, p := range o.processors {
+		for i, p := range updated {
 			if strings.EqualFold(p.GetName(), processor.GetName()) {
-				o.processors[i] = processor
+				updated[i] = processor
 			}
 		}
 	}
+
+	o.processors = updated
 
 	return o
 }
@@ -162,7 +217,7 @@ func (o *output) SetProcessors(processors ...processor.IProcessor) IOutput {
 func (o *output) GetProcessorsNames() []string {
 	processorsNames := []string{}
 
-	for _, processor := range o.processors {
+	for _, processor := range o.GetProcessors() {
 		processorsNames = append(processorsNames, processor.GetName())
 	}
 
@@ -171,11 +226,17 @@ func (o *output) GetProcessorsNames() []string {
 
 // GetWriter returns the writer.
 func (o *output) GetWriter() io.Writer {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+
 	return o.writer
 }
 
 // SetWriter sets the writer.
 func (o *output) SetWriter(w io.Writer) IOutput {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	o.writer = w
 
 	return o
@@ -267,7 +328,7 @@ func (o *output) processProcessors(m message.IMessage, processorsNames []string)
 	if m.GetFlag() != flag.Skip &&
 		m.GetFlag() != flag.SkipAndForce &&
 		m.GetFlag() != flag.SkipAndMute {
-		for _, p := range o.processors {
+		for _, p := range o.GetProcessors() {
 			// Should only use enabled Processors, and named (listed) ones.
 			//
 			// NOTE: `Enabled` status is checked in the `Run` method.
