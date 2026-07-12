@@ -5,10 +5,10 @@
 package message
 
 import (
+	"sort"
 	"strings"
 	"time"
 
-	"github.com/emirpasic/gods/sets/treeset"
 	"github.com/thalesfsp/sypl/content"
 	"github.com/thalesfsp/sypl/debug"
 	"github.com/thalesfsp/sypl/fields"
@@ -59,7 +59,7 @@ type message struct {
 	lineBreaker *lineBreaker `json:"-"`
 
 	// tags are indicators consumed by `Output`s and `Processor`s.
-	tags *treeset.Set
+	tags map[string]struct{}
 
 	// Debug capabilities.
 	debug *debug.Debug
@@ -98,27 +98,31 @@ func (m message) String() string {
 // AddTags adds one or more tags.
 func (m *message) AddTags(tags ...string) {
 	for _, tag := range tags {
-		m.tags.Add(tag)
+		m.tags[tag] = struct{}{}
 	}
 }
 
 // ContainTag verifies if tags contains the specified tag.
 func (m *message) ContainTag(tag string) bool {
-	return m.tags.Contains(tag)
+	_, ok := m.tags[tag]
+
+	return ok
 }
 
 // DeleteTag deletes a tag.
 func (m *message) DeleteTag(tag string) {
-	m.tags.Remove(tag)
+	delete(m.tags, tag)
 }
 
-// GetTags retrieves tags.
+// GetTags retrieves tags, lexicographically sorted.
 func (m *message) GetTags() []string {
 	tags := []string{}
 
-	m.tags.Each(func(index int, value interface{}) {
-		tags = append(tags, value.(string))
-	})
+	for tag := range m.tags {
+		tags = append(tags, tag)
+	}
+
+	sort.Strings(tags)
 
 	return tags
 }
@@ -142,8 +146,12 @@ func (m *message) setLineBreaker(lB *lineBreaker) IMessage {
 // Restore known linebreaks.
 func (m *message) Restore() {
 	if m.getLineBreaker().Status == status.Enabled {
-		for _, controlChar := range m.getLineBreaker().ControlChars {
-			m.GetContent().SetProcessed(m.GetContent().GetProcessed() + controlChar)
+		controlChars := m.getLineBreaker().ControlChars
+
+		// Control chars are re-appended in the reverse order they were
+		// stripped, restoring the original sequence (e.g.: "\r\n").
+		for i := len(controlChars) - 1; i >= 0; i-- {
+			m.GetContent().SetProcessed(m.GetContent().GetProcessed() + controlChars[i])
 		}
 	}
 }
@@ -348,10 +356,17 @@ func (m *message) IsEmpty() bool {
 //
 // TODO: This can be improved.
 func Copy(m IMessage) IMessage {
-	msg := New(m.GetLevel(), m.GetContent().GetOriginal())
+	// ID, content-based hash, and timestamp generation are skipped -
+	// they are copied from the source message below.
+	msg := newMessage(m.GetLevel(), m.GetContent().GetOriginal())
 
-	// Copy `options.Tags`.
-	msg.GetMessage().Tags = m.GetMessage().Tags
+	// Copy `options.Tags`. Should be a real copy, not slice aliasing.
+	if mTags := m.GetMessage().Tags; mTags != nil {
+		tags := make([]string, len(mTags))
+		copy(tags, mTags)
+
+		msg.GetMessage().Tags = tags
+	}
 
 	msg.SetContentBasedHashID(m.GetContentBasedHashID())
 
@@ -361,7 +376,9 @@ func Copy(m IMessage) IMessage {
 	msg.SetComponentName(m.GetComponentName())
 	msg.SetDebugEnvVarRegexes(m.GetDebugEnvVarRegexes())
 
-	msg.SetFields(m.GetFields())
+	// Fields should be deep copied - per-output copies are processed
+	// concurrently.
+	msg.SetFields(fields.Copy(m.GetFields(), fields.Fields{}))
 	msg.SetFlag(m.GetFlag())
 	msg.SetID(m.GetID())
 
@@ -381,19 +398,28 @@ func Copy(m IMessage) IMessage {
 // Factory.
 //////
 
+// newMessage creates a bare message, skipping ID, content-based hash, and
+// timestamp generation. Used by `Copy` - which overwrites them anyway.
+func newMessage(l level.Level, ct string) *message {
+	return &message{
+		Options: options.New(),
+
+		Content:     content.New(ct),
+		Level:       l,
+		lineBreaker: newLineBreaker("\n", "\r"),
+		tags:        map[string]struct{}{},
+	}
+}
+
 // New is the Message factory.
 //
 // NOTE: Changes in the `Message` or `Options` data structure may reflects here.
 func New(l level.Level, ct string) IMessage {
-	return &message{
-		Options: options.New(),
+	m := newMessage(l, ct)
 
-		Content:            content.New(ct),
-		ContentBasedHashID: generateID(ct),
-		ID:                 generateUUID(),
-		Level:              l,
-		lineBreaker:        newLineBreaker("\n", "\r"),
-		tags:               treeset.NewWithStringComparator(),
-		Timestamp:          time.Now(),
-	}
+	m.ContentBasedHashID = generateID(ct)
+	m.ID = generateUUID()
+	m.Timestamp = time.Now()
+
+	return m
 }

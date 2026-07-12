@@ -11,6 +11,8 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
+	"sync/atomic"
 
 	"github.com/thalesfsp/sypl/debug"
 	"github.com/thalesfsp/sypl/fields"
@@ -23,7 +25,6 @@ import (
 	"github.com/thalesfsp/sypl/processor"
 	"github.com/thalesfsp/sypl/shared"
 	"github.com/thalesfsp/sypl/status"
-	"golang.org/x/sync/errgroup"
 )
 
 // MessageToOutput defines a `Message` to printed at the specified `Level`, and
@@ -46,6 +47,10 @@ type Sypl struct {
 	// NOTE: Exposed to deal with https://github.com/golang/go/issues/5819.
 	Name string
 
+	// mu guards the mutable state below, allowing the logger to be
+	// safely reconfigured while logging.
+	mu sync.RWMutex
+
 	// NOTE: Changes here may reflect in the `New(name string)` method (Child).
 	defaultIoWriterLevel level.Level
 	fields               fields.Fields
@@ -55,8 +60,8 @@ type Sypl struct {
 }
 
 // String interface implementation.
-func (sypl Sypl) String() string {
-	return sypl.Name
+func (sypl *Sypl) String() string {
+	return sypl.GetName()
 }
 
 //////
@@ -65,31 +70,49 @@ func (sypl Sypl) String() string {
 
 // GetName returns the sypl Name.
 func (sypl *Sypl) GetName() string {
+	sypl.mu.RLock()
+	defer sypl.mu.RUnlock()
+
 	return sypl.Name
 }
 
 // SetName sets the sypl Name.
 func (sypl *Sypl) SetName(name string) {
+	sypl.mu.Lock()
+	defer sypl.mu.Unlock()
+
 	sypl.Name = name
 }
 
 // GetStatus returns the sypl status.
 func (sypl *Sypl) GetStatus() status.Status {
+	sypl.mu.RLock()
+	defer sypl.mu.RUnlock()
+
 	return sypl.status
 }
 
 // SetStatus sets the sypl status.
 func (sypl *Sypl) SetStatus(s status.Status) {
+	sypl.mu.Lock()
+	defer sypl.mu.Unlock()
+
 	sypl.status = s
 }
 
 // GetDefaultIoWriterLevel returns the sypl status.
 func (sypl *Sypl) GetDefaultIoWriterLevel() level.Level {
+	sypl.mu.RLock()
+	defer sypl.mu.RUnlock()
+
 	return sypl.defaultIoWriterLevel
 }
 
 // SetDefaultIoWriterLevel sets the default io.Writer level.
 func (sypl *Sypl) SetDefaultIoWriterLevel(l level.Level) {
+	sypl.mu.Lock()
+	defer sypl.mu.Unlock()
+
 	sypl.defaultIoWriterLevel = l
 }
 
@@ -103,7 +126,7 @@ func (sypl *Sypl) SetDefaultIoWriterLevel(l level.Level) {
 // NOTE: This is a convenient method, if it doesn't fits your need, just
 // implement the way you need.
 func (sypl *Sypl) Write(p []byte) (int, error) {
-	sypl.process(message.New(sypl.defaultIoWriterLevel, string(p)))
+	sypl.process(message.New(sypl.GetDefaultIoWriterLevel(), string(p)))
 
 	return 0, nil
 }
@@ -454,11 +477,17 @@ func (sypl *Sypl) Breakpoint(name string, data ...interface{}) ISypl {
 
 // GetFields returns the global structured fields.
 func (sypl *Sypl) GetFields() fields.Fields {
+	sypl.mu.RLock()
+	defer sypl.mu.RUnlock()
+
 	return sypl.fields
 }
 
 // SetFields sets the global structured fields.
 func (sypl *Sypl) SetFields(fields fields.Fields) ISypl {
+	sypl.mu.Lock()
+	defer sypl.mu.Unlock()
+
 	sypl.fields = fields
 
 	return sypl
@@ -466,11 +495,17 @@ func (sypl *Sypl) SetFields(fields fields.Fields) ISypl {
 
 // GetTags returns the global tags.
 func (sypl *Sypl) GetTags() []string {
+	sypl.mu.RLock()
+	defer sypl.mu.RUnlock()
+
 	return sypl.tags
 }
 
 // SetTags adds the global tags.
 func (sypl *Sypl) SetTags(tags ...string) ISypl {
+	sypl.mu.Lock()
+	defer sypl.mu.Unlock()
+
 	sypl.tags = append(sypl.tags, tags...)
 
 	return sypl
@@ -512,6 +547,9 @@ func (sypl *Sypl) SetMaxLevel(l level.Level) ISypl {
 
 // AddOutputs adds one or more outputs.
 func (sypl *Sypl) AddOutputs(outputs ...output.IOutput) ISypl {
+	sypl.mu.Lock()
+	defer sypl.mu.Unlock()
+
 	sypl.outputs = append(sypl.outputs, outputs...)
 
 	return sypl
@@ -520,7 +558,7 @@ func (sypl *Sypl) AddOutputs(outputs ...output.IOutput) ISypl {
 // GetOutput returns the registered output by its name. If not found, will be
 // nil.
 func (sypl *Sypl) GetOutput(name string) output.IOutput {
-	for _, o := range sypl.outputs {
+	for _, o := range sypl.GetOutputs() {
 		if strings.EqualFold(o.GetName(), name) {
 			return o
 		}
@@ -531,19 +569,33 @@ func (sypl *Sypl) GetOutput(name string) output.IOutput {
 
 // SetOutputs sets one or more outputs. Use to update output(s).
 func (sypl *Sypl) SetOutputs(outputs ...output.IOutput) ISypl {
+	sypl.mu.Lock()
+	defer sypl.mu.Unlock()
+
+	// Operates on a fresh copy of the slice so concurrent readers,
+	// iterating over a previously obtained slice, never observe in-place
+	// writes.
+	updated := make([]output.IOutput, len(sypl.outputs))
+	copy(updated, sypl.outputs)
+
 	for _, output := range outputs {
-		for i, o := range sypl.outputs {
+		for i, o := range updated {
 			if strings.EqualFold(o.GetName(), output.GetName()) {
-				sypl.outputs[i] = output
+				updated[i] = output
 			}
 		}
 	}
+
+	sypl.outputs = updated
 
 	return sypl
 }
 
 // GetOutputs returns registered outputs.
 func (sypl *Sypl) GetOutputs() []output.IOutput {
+	sypl.mu.RLock()
+	defer sypl.mu.RUnlock()
+
 	return sypl.outputs
 }
 
@@ -551,7 +603,7 @@ func (sypl *Sypl) GetOutputs() []output.IOutput {
 func (sypl *Sypl) GetOutputsNames() []string {
 	outputsNames := []string{}
 
-	for _, output := range sypl.outputs {
+	for _, output := range sypl.GetOutputs() {
 		outputsNames = append(outputsNames, output.GetName())
 	}
 
@@ -562,6 +614,9 @@ func (sypl *Sypl) GetOutputsNames() []string {
 // shallow copy of the parent logger. Changes to internals, such as the state of
 // outputs, and processors, are reflected cross all other loggers.
 func (sypl *Sypl) New(name string) *Sypl {
+	sypl.mu.RLock()
+	defer sypl.mu.RUnlock()
+
 	s := New(name, sypl.outputs...)
 
 	s.defaultIoWriterLevel = sypl.defaultIoWriterLevel
@@ -578,27 +633,33 @@ func (sypl *Sypl) process(messages ...message.IMessage) {
 		log.Fatalf("%s %s", shared.ErrorPrefix, ErrSyplNotInitialized)
 	}
 
-	shouldExit := false
+	// Written from concurrently processed messages, so it needs to be
+	// atomic.
+	var shouldExit atomic.Bool
 
-	g := new(errgroup.Group)
+	wg := sync.WaitGroup{}
 
 	for _, m := range messages {
 		// https://golang.org/doc/faq#closures_and_goroutines
 		m := m
 
-		g.Go(func() error {
-			// Do nothing if message as no content, or flagged with `SkipAndMute`.
-			if m.GetContent().GetOriginal() == "" &&
-				m.GetFlag() == flag.SkipAndMute {
-				return nil
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			// Do nothing if message is flagged with `SkipAndMute` - it
+			// should not be processed, neither printed.
+			if m.GetFlag() == flag.SkipAndMute {
+				return
 			}
 
 			// Should allows to filter logging by components names.
 			syplFilterEnvVar := os.Getenv(shared.FilterEnvVar)
 
 			if syplFilterEnvVar != "" &&
-				!strings.Contains(syplFilterEnvVar, sypl.GetName()) {
-				return nil
+				!filterMatch(syplFilterEnvVar, sypl.GetName()) {
+				return
 			}
 
 			// Should allows to specify `Output`(s).
@@ -628,20 +689,18 @@ func (sypl *Sypl) process(messages ...message.IMessage) {
 				m.AddTags(finalTags...)
 			}
 
-			sypl.processOutputs(m, strings.Join(outputsNames, ","))
+			sypl.processOutputs(m, outputsNames)
 
 			if m.GetLevel() == level.Fatal {
-				shouldExit = true
+				shouldExit.Store(true)
 			}
-
-			return nil
-		})
+		}()
 	}
 
-	_ = g.Wait()
+	wg.Wait()
 
 	// Should exit if `level` is `Fatal`.
-	if shouldExit {
+	if shouldExit.Load() {
 		os.Exit(1)
 	}
 }
@@ -684,20 +743,44 @@ func mergeOptions(m message.IMessage, o *options.Options) message.IMessage {
 	return m
 }
 
-// Outputs logic of the Process method.
-func (sypl *Sypl) processOutputs(m message.IMessage, outputsNames string) {
-	g := new(errgroup.Group)
+// filterMatch checks if the component `name` exactly matches - case
+// insensitive - any of the comma-separated `filter` entries.
+func filterMatch(filter, name string) bool {
+	for _, entry := range strings.Split(filter, ",") {
+		if strings.EqualFold(strings.TrimSpace(entry), name) {
+			return true
+		}
+	}
 
-	for _, o := range sypl.outputs {
+	return false
+}
+
+// contains checks if `list` contains - exact, case-insensitive match - the
+// specified `name`.
+func contains(list []string, name string) bool {
+	for _, item := range list {
+		if strings.EqualFold(item, name) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Outputs logic of the Process method.
+func (sypl *Sypl) processOutputs(m message.IMessage, outputsNames []string) {
+	wg := sync.WaitGroup{}
+
+	for _, o := range sypl.GetOutputs() {
 		// https://golang.org/doc/faq#closures_and_goroutines
 		o := o
 		m := m
 
-		// Message is isolated per `Output`.
-		msg := message.Copy(m)
-
 		// Should only use enabled Outputs, and named (listed) ones.
-		if o.GetStatus() == status.Enabled && strings.Contains(outputsNames, o.GetName()) {
+		if o.GetStatus() == status.Enabled && contains(outputsNames, o.GetName()) {
+			// Message is isolated per `Output`.
+			msg := message.Copy(m)
+
 			msg.SetComponentName(sypl.GetName())
 			msg.SetOutputName(o.GetName())
 
@@ -709,13 +792,18 @@ func (sypl *Sypl) processOutputs(m message.IMessage, outputsNames string) {
 				)
 			}
 
-			g.Go(func() error {
-				return o.Write(msg)
-			})
+			wg.Add(1)
+
+			go func() {
+				defer wg.Done()
+
+				//nolint:errcheck
+				_ = o.Write(msg)
+			}()
 		}
 	}
 
-	_ = g.Wait()
+	wg.Wait()
 }
 
 //////

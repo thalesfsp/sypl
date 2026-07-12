@@ -42,7 +42,7 @@ func WithField(key string, value any) OptionFunc {
 		flds := m.GetFields()
 
 		if flds == nil {
-			m.SetFields(make(fields.Fields))
+			flds = make(fields.Fields)
 		}
 
 		flds[key] = value
