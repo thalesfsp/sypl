@@ -26,5 +26,17 @@ func parseResponseBodyError(res *esapi.Response) (string, error) {
 		return "", err
 	}
 
-	return b["error"].(map[string]interface{})["reason"].(string), nil
+	// Checked assertions: fall back to a generic representation of the body
+	// when the shape is unexpected - never panic.
+	errMap, ok := b["error"].(map[string]interface{})
+	if !ok {
+		return fmt.Sprintf("%+v", b), nil
+	}
+
+	reason, ok := errMap["reason"].(string)
+	if !ok {
+		return fmt.Sprintf("%+v", errMap), nil
+	}
+
+	return reason, nil
 }
