@@ -3,6 +3,7 @@ package elasticsearch
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -56,8 +57,17 @@ func (es *ElasticSearch) Write(data []byte) (int, error) {
 	}
 
 	// Check if parsedData as an id.
-	if parsedData["id"] != nil {
-		req.DocumentID = parsedData["id"].(string)
+	//
+	// NOTE: A non-string id is skipped - not an error. A logging library must
+	// never panic the host application on an odd payload.
+	if id, ok := parsedData["id"].(string); ok {
+		req.DocumentID = id
+	}
+
+	// Guard against an uninitialized client - never panic the host
+	// application.
+	if es.Client == nil {
+		return 0, errors.New("elasticsearch client isn't initialized")
 	}
 
 	// Perform the request with the client.
@@ -87,7 +97,11 @@ func (es *ElasticSearch) Write(data []byte) (int, error) {
 	}
 
 	// Verify if document was really created/updated.
-	parsedRespBodyResult := parsedRespBody["result"].(string)
+	parsedRespBodyResult, ok := parsedRespBody["result"].(string)
+	if !ok {
+		return 0, fmt.Errorf("missing, or non-string \"result\" in response: %+v", parsedRespBody)
+	}
+
 	if parsedRespBodyResult == "created" || parsedRespBodyResult == "updated" {
 		return len(data), nil
 	}

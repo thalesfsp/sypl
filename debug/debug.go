@@ -5,6 +5,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/thalesfsp/sypl/level"
 	"github.com/thalesfsp/sypl/shared"
@@ -36,10 +37,16 @@ const (
 )
 
 // Matchers' regexes.
+//
+// NOTE: The env var is a comma-separated list of entries. Each mask matches
+// only a COMPLETE entry - anchored at start-or-comma before, and comma-or-end
+// after. Otherwise an entry such as "infosvc:console:trace" would leak as the
+// bare level "info" (a prefix), or an output named "es" would match an entry
+// scoped to "es-backup" (a substring).
 const (
-	lReMask   = `(?i)^(?:%s)`
-	oLReMask  = `(?i)(?:(?:%s):(?:%s))`
-	cOLReMask = `(?i)(?:(?:%s):(?:%s):(?:%s))`
+	lReMask   = `(?i)^(?:%s)(?:,|$)`
+	oLReMask  = `(?i)(?:^|,)(?:%s):(?:%s)(?:,|$)`
+	cOLReMask = `(?i)(?:^|,)(?:%s):(?:%s):(?:%s)(?:,|$)`
 )
 
 // Debug definition.
@@ -81,7 +88,7 @@ type Debug struct {
 // - For this matcher, the order matter!
 // - Prefer to use the `Level` method.
 func (d *Debug) MatchL() string {
-	return d.Levels.FindString(d.Content)
+	return strings.Trim(d.Levels.FindString(d.Content), ",")
 }
 
 // MatchOL uses the `OutputLevels` matcher against a specific output, and
@@ -90,7 +97,7 @@ func (d *Debug) MatchL() string {
 //
 // NOTE: Prefer to use the `Level` method.
 func (d *Debug) MatchOL() string {
-	return d.OutputLevels.FindString(d.Content)
+	return strings.Trim(d.OutputLevels.FindString(d.Content), ",")
 }
 
 // MatchCOL uses the `ComponentOutputLevels` matcher against a specific
@@ -100,7 +107,7 @@ func (d *Debug) MatchOL() string {
 //
 // NOTE: Prefer to use the `Level` method.
 func (d *Debug) MatchCOL() string {
-	return d.ComponentOutputLevels.FindString(d.Content)
+	return strings.Trim(d.ComponentOutputLevels.FindString(d.Content), ",")
 }
 
 // Level checks the content of the debug env var against all matchers returning:
@@ -154,9 +161,35 @@ func (d *Debug) Level() (level.Level, Matcher, bool) {
 // Factory.
 //////
 
+// matchers groups the compiled regexes for a component, and output pair.
+type matchers struct {
+	levels                *regexp.Regexp
+	outputLevels          *regexp.Regexp
+	componentOutputLevels *regexp.Regexp
+}
+
+// matchersCache caches compiled matchers, keyed by component, and output
+// names. `New` is called per-message-per-output; the regexes depend only on
+// the names - not on the env var content, which is read fresh on every call -
+// so they're safe to reuse.
+var matchersCache sync.Map
+
 // New is the Debug factory.
 func New(componentName, outputName string) *Debug {
-	levels := strings.Join(level.LevelsNames(), "|")
+	key := componentName + "\x00" + outputName
+
+	cached, ok := matchersCache.Load(key)
+	if !ok {
+		levels := strings.Join(level.LevelsNames(), "|")
+
+		cached, _ = matchersCache.LoadOrStore(key, &matchers{
+			levels:                regexp.MustCompile(fmt.Sprintf(lReMask, levels)),
+			outputLevels:          regexp.MustCompile(fmt.Sprintf(oLReMask, outputName, levels)),
+			componentOutputLevels: regexp.MustCompile(fmt.Sprintf(cOLReMask, componentName, outputName, levels)),
+		})
+	}
+
+	m, _ := cached.(*matchers)
 
 	return &Debug{
 		ComponentName: componentName,
@@ -164,8 +197,8 @@ func New(componentName, outputName string) *Debug {
 
 		Content: os.Getenv(shared.LevelEnvVar),
 
-		Levels:                regexp.MustCompile(fmt.Sprintf(lReMask, levels)),
-		OutputLevels:          regexp.MustCompile(fmt.Sprintf(oLReMask, outputName, levels)),
-		ComponentOutputLevels: regexp.MustCompile(fmt.Sprintf(cOLReMask, componentName, outputName, levels)),
+		Levels:                m.levels,
+		OutputLevels:          m.outputLevels,
+		ComponentOutputLevels: m.componentOutputLevels,
 	}
 }

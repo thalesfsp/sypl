@@ -5,13 +5,9 @@
 // license that can be found in the LICENSE file.
 
 // Package log implements a simple logging package. It defines a type, Builtin,
-// with methods for formatting output. It also has a predefined 'standard'
-// Builtin accessible through helper functions Print[f|ln], Fatal[f|ln], and
-// Panic[f|ln], which are easier to use than creating a Builtin manually.
-// That logger writes to standard error and prints the date and time
-// of each logged message.
-// The Fatal functions call os.Exit(1) after writing the log message.
-// The Panic functions call panic after writing the log message.
+// with methods for formatting output.
+// The Fatal methods call os.Exit(1) after writing the log message.
+// The Panic methods call panic after writing the log message.
 package builtin
 
 // These tests are too simple.
@@ -19,7 +15,6 @@ package builtin
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -55,13 +50,11 @@ var tests = []tester{
 // Test using Println("hello", 23, "world") or using Printf("hello %d world", 23)
 func testPrint(t *testing.T, flag int, prefix string, pattern string, useFormat bool) {
 	buf := new(bytes.Buffer)
-	SetOutput(buf)
-	SetFlags(flag)
-	SetPrefix(prefix)
+	l := NewBuiltin(buf, prefix, flag)
 	if useFormat {
-		Printf("hello %d world", 23)
+		l.Printf("hello %d world", 23)
 	} else {
-		Println("hello", 23, "world")
+		l.Println("hello", 23, "world")
 	}
 	line := buf.String()
 	pattern = "^" + pattern + "hello 23 world"
@@ -71,13 +64,6 @@ func testPrint(t *testing.T, flag int, prefix string, pattern string, useFormat 
 	}
 	if !matched {
 		t.Errorf("log output should match is %q", line)
-	}
-	SetOutput(os.Stderr)
-}
-
-func TestDefault(t *testing.T) {
-	if got := Default(); got != std {
-		t.Errorf("Default [%p] should be std [%p]", got, std)
 	}
 }
 

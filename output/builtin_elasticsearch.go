@@ -6,6 +6,7 @@ package output
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/thalesfsp/sypl/elasticsearch"
 	"github.com/thalesfsp/sypl/formatter"
@@ -124,7 +125,11 @@ func ElasticSearchWithTagMap(
 				elasticSearchTagMapItem.DynamicIndexFunc,
 				esConfig,
 				elasticSearchTagMapItem.Level,
-				append(processors, processor.PrintOnlyIfTagged(tag))...,
+				// NOTE: Clone before appending - `append(processors, ...)`
+				// would alias the caller's backing array when it has spare
+				// capacity, so later iterations would overwrite earlier
+				// outputs' tag processor.
+				append(slices.Clone(processors), processor.PrintOnlyIfTagged(tag))...,
 			))
 
 			tags = append(tags, tag)
@@ -137,7 +142,7 @@ func ElasticSearchWithTagMap(
 			eSTMI.DynamicIndexFunc,
 			esConfig,
 			eSTMI.Level,
-			append(processors, processor.PrintOnlyIfNotTaggedWith(tags...))...,
+			append(slices.Clone(processors), processor.PrintOnlyIfNotTaggedWith(tags...))...,
 		))
 	}
 
