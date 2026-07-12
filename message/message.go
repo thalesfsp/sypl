@@ -142,8 +142,12 @@ func (m *message) setLineBreaker(lB *lineBreaker) IMessage {
 // Restore known linebreaks.
 func (m *message) Restore() {
 	if m.getLineBreaker().Status == status.Enabled {
-		for _, controlChar := range m.getLineBreaker().ControlChars {
-			m.GetContent().SetProcessed(m.GetContent().GetProcessed() + controlChar)
+		controlChars := m.getLineBreaker().ControlChars
+
+		// Control chars are re-appended in the reverse order they were
+		// stripped, restoring the original sequence (e.g.: "\r\n").
+		for i := len(controlChars) - 1; i >= 0; i-- {
+			m.GetContent().SetProcessed(m.GetContent().GetProcessed() + controlChars[i])
 		}
 	}
 }
