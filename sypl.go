@@ -597,7 +597,7 @@ func (sypl *Sypl) process(messages ...message.IMessage) {
 			syplFilterEnvVar := os.Getenv(shared.FilterEnvVar)
 
 			if syplFilterEnvVar != "" &&
-				!strings.Contains(syplFilterEnvVar, sypl.GetName()) {
+				!filterMatch(syplFilterEnvVar, sypl.GetName()) {
 				return nil
 			}
 
@@ -682,6 +682,18 @@ func mergeOptions(m message.IMessage, o *options.Options) message.IMessage {
 	}
 
 	return m
+}
+
+// filterMatch checks if the component `name` exactly matches - case
+// insensitive - any of the comma-separated `filter` entries.
+func filterMatch(filter, name string) bool {
+	for _, entry := range strings.Split(filter, ",") {
+		if strings.EqualFold(strings.TrimSpace(entry), name) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // contains checks if `list` contains - exact, case-insensitive match - the
