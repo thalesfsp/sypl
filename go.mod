@@ -5,7 +5,6 @@ go 1.23
 require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/elastic/go-elasticsearch/v8 v8.16.0
-	github.com/emirpasic/gods v1.18.1
 	github.com/fatih/color v1.18.0
 	github.com/go-test/deep v1.1.1
 	github.com/google/uuid v1.6.0
