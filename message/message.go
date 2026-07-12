@@ -354,8 +354,13 @@ func (m *message) IsEmpty() bool {
 func Copy(m IMessage) IMessage {
 	msg := New(m.GetLevel(), m.GetContent().GetOriginal())
 
-	// Copy `options.Tags`.
-	msg.GetMessage().Tags = m.GetMessage().Tags
+	// Copy `options.Tags`. Should be a real copy, not slice aliasing.
+	if mTags := m.GetMessage().Tags; mTags != nil {
+		tags := make([]string, len(mTags))
+		copy(tags, mTags)
+
+		msg.GetMessage().Tags = tags
+	}
 
 	msg.SetContentBasedHashID(m.GetContentBasedHashID())
 
@@ -365,7 +370,9 @@ func Copy(m IMessage) IMessage {
 	msg.SetComponentName(m.GetComponentName())
 	msg.SetDebugEnvVarRegexes(m.GetDebugEnvVarRegexes())
 
-	msg.SetFields(m.GetFields())
+	// Fields should be deep copied - per-output copies are processed
+	// concurrently.
+	msg.SetFields(fields.Copy(m.GetFields(), fields.Fields{}))
 	msg.SetFlag(m.GetFlag())
 	msg.SetID(m.GetID())
 
