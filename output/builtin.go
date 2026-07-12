@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/thalesfsp/sypl/level"
 	"github.com/thalesfsp/sypl/processor"
@@ -41,7 +42,14 @@ func Console(maxLevel level.Level, processors ...processor.IProcessor) IOutput {
 // StdErr is a built-in `output` - named `StdErr`, that only writes to `stderr`
 // message @ Error level.
 func StdErr(processors ...processor.IProcessor) IOutput {
-	processors = append(processors, processor.PrintOnlyAtLevel(level.Fatal, level.Error))
+	// NOTE: Clone before appending - `append(processors, ...)` would write
+	// into the caller's backing array when it has spare capacity,
+	// overwriting a sibling output's processor (e.g. Console's
+	// MuteBasedOnLevel in NewDefault).
+	processors = append(
+		slices.Clone(processors),
+		processor.PrintOnlyAtLevel(level.Fatal, level.Error),
+	)
 
 	return New("StdErr", level.Error, os.Stderr, processors...)
 }

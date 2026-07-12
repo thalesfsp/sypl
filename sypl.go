@@ -847,8 +847,13 @@ func New(name string, outputs ...output.IOutput) *Sypl {
 //
 // NOTE: `processors` are applied to both outputs.
 func NewDefault(name string, maxLevel level.Level, processors ...processor.IProcessor) *Sypl {
-	consoleProcessors := processors
-	consoleProcessors = append(consoleProcessors, processor.MuteBasedOnLevel(level.Fatal, level.Error))
+	// NOTE: Clone before appending - `append(processors, ...)` would write
+	// into the caller's backing array when it has spare capacity, letting
+	// StdErr's own append overwrite Console's MuteBasedOnLevel.
+	consoleProcessors := append(
+		slices.Clone(processors),
+		processor.MuteBasedOnLevel(level.Fatal, level.Error),
+	)
 
 	return New(name, []output.IOutput{
 		output.Console(maxLevel, consoleProcessors...).SetFormatter(formatter.Text()),

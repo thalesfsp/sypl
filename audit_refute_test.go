@@ -14,6 +14,8 @@ import (
 	"github.com/thalesfsp/sypl/fields"
 	"github.com/thalesfsp/sypl/level"
 	"github.com/thalesfsp/sypl/output"
+	"github.com/thalesfsp/sypl/processor"
+	"github.com/thalesfsp/sypl/safebuffer"
 )
 
 //////
@@ -185,5 +187,76 @@ func TestAudit_FactoryOutputsSliceNotAliased(t *testing.T) {
 
 	if got := len(l2.GetOutputs()); got != 1+16 {
 		t.Fatalf("logger 2 outputs = %d, expected %d", got, 1+16)
+	}
+}
+
+//////
+// F2 - NewDefault/StdErr processors slice aliasing.
+//////
+
+// NewDefault must not alias the caller's processors slice (same class as the
+// fixed ElasticSearchWithTagMap bug): with a spare-capacity caller slice,
+// StdErr's internal append overwrote Console's MuteBasedOnLevel in the
+// shared backing array - Console ended up with [Prefixer PrintOnlyAtLevel],
+// muting everything except Fatal/Error, and double-printing those.
+func TestAudit_NewDefaultNoProcessorAliasing(t *testing.T) {
+	// Spare capacity is the trigger.
+	procs := make([]processor.IProcessor, 0, 8)
+	procs = append(procs, processor.Prefixer("P-"))
+
+	l := sypl.NewDefault("aliasing", level.Info, procs...)
+
+	consoleOut := l.GetOutput("Console")
+	stderrOut := l.GetOutput("StdErr")
+
+	// Structural: Console keeps MuteBasedOnLevel; PrintOnlyAtLevel belongs
+	// to StdErr only.
+	if consoleOut.GetProcessor("MuteBasedOnLevel") == nil {
+		t.Fatalf("Console lost MuteBasedOnLevel: %v", consoleOut.GetProcessorsNames())
+	}
+
+	if consoleOut.GetProcessor("PrintOnlyAtLevel") != nil {
+		t.Fatalf("Console gained StdErr's PrintOnlyAtLevel: %v", consoleOut.GetProcessorsNames())
+	}
+
+	if stderrOut.GetProcessor("PrintOnlyAtLevel") == nil {
+		t.Fatalf("StdErr lost PrintOnlyAtLevel: %v", stderrOut.GetProcessorsNames())
+	}
+
+	// The caller's spare capacity must be untouched.
+	for i, spare := range procs[1:cap(procs)] {
+		if spare != nil {
+			t.Fatalf("caller's backing array slot %d was written to: %v", i+1, spare)
+		}
+	}
+
+	// Behavioral: Info prints exactly once, on the stdout side only;
+	// Error routes to the stderr side only (Fatal shares the exact same
+	// MuteBasedOnLevel/PrintOnlyAtLevel routing, but calls os.Exit).
+	var bufOut, bufErr safebuffer.Buffer
+
+	consoleOut.SetWriter(&bufOut)
+	consoleOut.GetBuiltinLogger().SetOutput(&bufOut)
+
+	stderrOut.SetWriter(&bufErr)
+	stderrOut.GetBuiltinLogger().SetOutput(&bufErr)
+
+	l.Infoln("info-msg")
+	l.Errorln("err-msg")
+
+	if got := strings.Count(bufOut.String(), "info-msg"); got != 1 {
+		t.Fatalf("stdout side printed info %d time(s), expected exactly once: %q", got, bufOut.String())
+	}
+
+	if strings.Contains(bufErr.String(), "info-msg") {
+		t.Fatalf("stderr side leaked an info message: %q", bufErr.String())
+	}
+
+	if strings.Contains(bufOut.String(), "err-msg") {
+		t.Fatalf("stdout side leaked an error message (MuteBasedOnLevel broken): %q", bufOut.String())
+	}
+
+	if got := strings.Count(bufErr.String(), "P-err-msg"); got != 1 {
+		t.Fatalf("stderr side printed error %d time(s), expected exactly once: %q", got, bufErr.String())
 	}
 }

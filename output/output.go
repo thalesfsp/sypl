@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"syscall"
@@ -401,8 +402,13 @@ func New(name string,
 		builtinLogger: builtin.NewBuiltin(w, "", 0),
 		maxLevel:      maxLevel,
 
-		name:       name,
-		processors: processors,
+		name: name,
+		// Defensively cloned: a caller passing `mySlice...` shares the
+		// backing array with this output - and with any other output built
+		// from the same slice - so a later `AddProcessors` append could
+		// write into a sibling's spare-capacity slot. The processor
+		// ELEMENTS stay shared by design.
+		processors: slices.Clone(processors),
 		status:     status.Enabled,
 		writer:     w,
 	}
