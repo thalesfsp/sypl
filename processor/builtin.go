@@ -43,6 +43,23 @@ const (
 // Helpers
 //////
 
+// pid is cached - it can't change during the process' lifetime, and calling
+// `os.Getpid` per-message is wasteful.
+var pid = os.Getpid()
+
+// levelsToSet converts a slice of levels to a set, allowing processors to
+// test membership exactly - and cheaply, instead of matching against a
+// concatenated string of levels' names.
+func levelsToSet(levels []level.Level) map[level.Level]struct{} {
+	set := make(map[level.Level]struct{}, len(levels))
+
+	for _, l := range levels {
+		set[l] = struct{}{}
+	}
+
+	return set
+}
+
 // generateDefaultPrefix generates prefix for the `PrefixBasedOnMask` processor.
 func generateDefaultPrefix(timestamp, component string, level level.Level) string {
 	return fmt.Sprintf("%s [%d] [%s] [%s] ",
@@ -50,7 +67,7 @@ func generateDefaultPrefix(timestamp, component string, level level.Level) strin
 		timestamp,
 
 		// PID.
-		os.Getpid(),
+		pid,
 
 		// Component name.
 		component,
@@ -151,10 +168,10 @@ func ErrorSimulator(msg string) IProcessor {
 
 // ForceBasedOnLevel force messages to be printed based on the specified levels.
 func ForceBasedOnLevel(levels ...level.Level) IProcessor {
-	return New("ForceBasedOnLevel", func(m message.IMessage) error {
-		concatenatedLevels := level.LevelsToString(levels)
+	levelSet := levelsToSet(levels)
 
-		if strings.Contains(concatenatedLevels, m.GetLevel().String()) {
+	return New("ForceBasedOnLevel", func(m message.IMessage) error {
+		if _, ok := levelSet[m.GetLevel()]; ok {
 			m.SetFlag(flag.Force)
 		}
 
@@ -173,10 +190,10 @@ func Flagger(f flag.Flag) IProcessor {
 
 // MuteBasedOnLevel mute messages based on the specified levels.
 func MuteBasedOnLevel(levels ...level.Level) IProcessor {
-	return New("MuteBasedOnLevel", func(m message.IMessage) error {
-		concatenatedLevels := level.LevelsToString(levels)
+	levelSet := levelsToSet(levels)
 
-		if strings.Contains(concatenatedLevels, m.GetLevel().String()) {
+	return New("MuteBasedOnLevel", func(m message.IMessage) error {
+		if _, ok := levelSet[m.GetLevel()]; ok {
 			m.SetFlag(flag.Mute)
 		}
 
@@ -203,10 +220,10 @@ func PrefixBasedOnMask(timestampFormat string) IProcessor {
 // `PrefixBasedOnMask`. It prefixes all messages, except for the specified
 // levels.
 func PrefixBasedOnMaskExceptForLevels(timestampFormat string, levels ...level.Level) IProcessor {
-	return New("PrefixBasedOnMaskExceptForLevels", func(m message.IMessage) error {
-		concatenatedLevels := level.LevelsToString(levels)
+	levelSet := levelsToSet(levels)
 
-		if !strings.Contains(concatenatedLevels, m.GetLevel().String()) {
+	return New("PrefixBasedOnMaskExceptForLevels", func(m message.IMessage) error {
+		if _, ok := levelSet[m.GetLevel()]; !ok {
 			m.GetContent().SetProcessed(generateDefaultPrefix(
 				m.GetTimestamp().Format(timestampFormat),
 				m.GetComponentName(),
@@ -229,10 +246,10 @@ func Prefixer(prefix string) IProcessor {
 
 // PrintOnlyAtLevel prints only if message is at the specified level.
 func PrintOnlyAtLevel(levels ...level.Level) IProcessor {
-	return New("PrintOnlyAtLevel", func(m message.IMessage) error {
-		concatenatedLevels := level.LevelsToString(levels)
+	levelSet := levelsToSet(levels)
 
-		if !strings.Contains(concatenatedLevels, m.GetLevel().String()) {
+	return New("PrintOnlyAtLevel", func(m message.IMessage) error {
+		if _, ok := levelSet[m.GetLevel()]; !ok {
 			m.SetFlag(flag.Mute)
 		}
 
