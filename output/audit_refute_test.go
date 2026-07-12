@@ -5,6 +5,7 @@
 package output
 
 import (
+	"fmt"
 	"io"
 	"reflect"
 	"testing"
@@ -13,6 +14,10 @@ import (
 	"github.com/thalesfsp/sypl/message"
 	"github.com/thalesfsp/sypl/processor"
 )
+
+// An output VALUE must satisfy fmt.Stringer, as on master. The mutex is
+// held by pointer, so copies are vet-copylocks clean.
+var _ fmt.Stringer = output{}
 
 // The factory must not alias the caller's processors slice: two outputs
 // built from the same spare-capacity slice would otherwise share the backing

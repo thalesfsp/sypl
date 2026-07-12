@@ -51,7 +51,12 @@ type Sypl struct {
 
 	// mu guards the mutable state below, allowing the logger to be
 	// safely reconfigured while logging.
-	mu sync.RWMutex
+	//
+	// NOTE: Held by POINTER so a Sypl VALUE satisfies fmt.Stringer (master
+	// surface), and consumer copies of Sypl values stay vet-copylocks
+	// clean. Always set by the factory; a zero-value Sypl (usable, no-op)
+	// is tolerated via the nil-guarded lock helpers below.
+	mu *sync.RWMutex
 
 	// NOTE: Changes here may reflect in the `New(name string)` method (Child).
 	defaultIoWriterLevel level.Level
@@ -62,8 +67,43 @@ type Sypl struct {
 }
 
 // String interface implementation.
-func (sypl *Sypl) String() string {
+//
+// NOTE: Value receiver on purpose - a Sypl VALUE satisfies fmt.Stringer, as
+// on master.
+func (sypl Sypl) String() string {
 	return sypl.GetName()
+}
+
+//////
+// Lock helpers.
+//
+// NOTE: They no-op on a zero-value Sypl (nil mutex), which - as on master -
+// remains usable: empty name, no outputs, silent logging. Every factory
+// initializes the mutex.
+//////
+
+func (sypl *Sypl) lock() {
+	if sypl.mu != nil {
+		sypl.mu.Lock()
+	}
+}
+
+func (sypl *Sypl) unlock() {
+	if sypl.mu != nil {
+		sypl.mu.Unlock()
+	}
+}
+
+func (sypl *Sypl) rLock() {
+	if sypl.mu != nil {
+		sypl.mu.RLock()
+	}
+}
+
+func (sypl *Sypl) rUnlock() {
+	if sypl.mu != nil {
+		sypl.mu.RUnlock()
+	}
 }
 
 //////
@@ -72,48 +112,48 @@ func (sypl *Sypl) String() string {
 
 // GetName returns the sypl Name.
 func (sypl *Sypl) GetName() string {
-	sypl.mu.RLock()
-	defer sypl.mu.RUnlock()
+	sypl.rLock()
+	defer sypl.rUnlock()
 
 	return sypl.Name
 }
 
 // SetName sets the sypl Name.
 func (sypl *Sypl) SetName(name string) {
-	sypl.mu.Lock()
-	defer sypl.mu.Unlock()
+	sypl.lock()
+	defer sypl.unlock()
 
 	sypl.Name = name
 }
 
 // GetStatus returns the sypl status.
 func (sypl *Sypl) GetStatus() status.Status {
-	sypl.mu.RLock()
-	defer sypl.mu.RUnlock()
+	sypl.rLock()
+	defer sypl.rUnlock()
 
 	return sypl.status
 }
 
 // SetStatus sets the sypl status.
 func (sypl *Sypl) SetStatus(s status.Status) {
-	sypl.mu.Lock()
-	defer sypl.mu.Unlock()
+	sypl.lock()
+	defer sypl.unlock()
 
 	sypl.status = s
 }
 
 // GetDefaultIoWriterLevel returns the sypl status.
 func (sypl *Sypl) GetDefaultIoWriterLevel() level.Level {
-	sypl.mu.RLock()
-	defer sypl.mu.RUnlock()
+	sypl.rLock()
+	defer sypl.rUnlock()
 
 	return sypl.defaultIoWriterLevel
 }
 
 // SetDefaultIoWriterLevel sets the default io.Writer level.
 func (sypl *Sypl) SetDefaultIoWriterLevel(l level.Level) {
-	sypl.mu.Lock()
-	defer sypl.mu.Unlock()
+	sypl.lock()
+	defer sypl.unlock()
 
 	sypl.defaultIoWriterLevel = l
 }
@@ -479,16 +519,16 @@ func (sypl *Sypl) Breakpoint(name string, data ...interface{}) ISypl {
 
 // GetFields returns the global structured fields.
 func (sypl *Sypl) GetFields() fields.Fields {
-	sypl.mu.RLock()
-	defer sypl.mu.RUnlock()
+	sypl.rLock()
+	defer sypl.rUnlock()
 
 	return sypl.fields
 }
 
 // SetFields sets the global structured fields.
 func (sypl *Sypl) SetFields(fields fields.Fields) ISypl {
-	sypl.mu.Lock()
-	defer sypl.mu.Unlock()
+	sypl.lock()
+	defer sypl.unlock()
 
 	sypl.fields = fields
 
@@ -497,16 +537,16 @@ func (sypl *Sypl) SetFields(fields fields.Fields) ISypl {
 
 // GetTags returns the global tags.
 func (sypl *Sypl) GetTags() []string {
-	sypl.mu.RLock()
-	defer sypl.mu.RUnlock()
+	sypl.rLock()
+	defer sypl.rUnlock()
 
 	return sypl.tags
 }
 
 // SetTags adds the global tags.
 func (sypl *Sypl) SetTags(tags ...string) ISypl {
-	sypl.mu.Lock()
-	defer sypl.mu.Unlock()
+	sypl.lock()
+	defer sypl.unlock()
 
 	sypl.tags = append(sypl.tags, tags...)
 
@@ -549,8 +589,8 @@ func (sypl *Sypl) SetMaxLevel(l level.Level) ISypl {
 
 // AddOutputs adds one or more outputs.
 func (sypl *Sypl) AddOutputs(outputs ...output.IOutput) ISypl {
-	sypl.mu.Lock()
-	defer sypl.mu.Unlock()
+	sypl.lock()
+	defer sypl.unlock()
 
 	sypl.outputs = append(sypl.outputs, outputs...)
 
@@ -571,8 +611,8 @@ func (sypl *Sypl) GetOutput(name string) output.IOutput {
 
 // SetOutputs sets one or more outputs. Use to update output(s).
 func (sypl *Sypl) SetOutputs(outputs ...output.IOutput) ISypl {
-	sypl.mu.Lock()
-	defer sypl.mu.Unlock()
+	sypl.lock()
+	defer sypl.unlock()
 
 	// Operates on a fresh copy of the slice so concurrent readers,
 	// iterating over a previously obtained slice, never observe in-place
@@ -595,8 +635,8 @@ func (sypl *Sypl) SetOutputs(outputs ...output.IOutput) ISypl {
 
 // GetOutputs returns registered outputs.
 func (sypl *Sypl) GetOutputs() []output.IOutput {
-	sypl.mu.RLock()
-	defer sypl.mu.RUnlock()
+	sypl.rLock()
+	defer sypl.rUnlock()
 
 	return sypl.outputs
 }
@@ -616,8 +656,8 @@ func (sypl *Sypl) GetOutputsNames() []string {
 // shallow copy of the parent logger. Changes to internals, such as the state of
 // outputs, and processors, are reflected cross all other loggers.
 func (sypl *Sypl) New(name string) *Sypl {
-	sypl.mu.RLock()
-	defer sypl.mu.RUnlock()
+	sypl.rLock()
+	defer sypl.rUnlock()
 
 	// The slice/map CONTAINERS are cloned - each logger has its own mutex,
 	// so sharing a backing array (or map) would allow unsynchronized
@@ -823,6 +863,8 @@ func (sypl *Sypl) processOutputs(m message.IMessage, outputsNames []string) {
 func New(name string, outputs ...output.IOutput) *Sypl {
 	s := &Sypl{
 		Name: name,
+
+		mu: &sync.RWMutex{},
 
 		defaultIoWriterLevel: level.None,
 		fields:               fields.Fields{},

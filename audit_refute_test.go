@@ -260,3 +260,44 @@ func TestAudit_NewDefaultNoProcessorAliasing(t *testing.T) {
 		t.Fatalf("stderr side printed error %d time(s), expected exactly once: %q", got, bufErr.String())
 	}
 }
+
+//////
+// F5 - Value-receiver Stringer compatibility (master surface).
+//////
+
+// A Sypl VALUE must satisfy fmt.Stringer, as on master. The mutex is held
+// by pointer, so consumer copies of Sypl values are vet-copylocks clean.
+var _ fmt.Stringer = sypl.Sypl{}
+
+func TestAudit_SyplValueStringer(t *testing.T) {
+	l := sypl.New("value-stringer")
+
+	if got := fmt.Sprintf("%s", *l); got != "value-stringer" {
+		t.Fatalf(`Sprintf of a Sypl value = %q, expected "value-stringer"`, got)
+	}
+
+	// Consumer copies of a Sypl value are legal again (no copylocks).
+	cp := *l
+
+	if got := cp.String(); got != "value-stringer" {
+		t.Fatalf(`copied value String() = %q, expected "value-stringer"`, got)
+	}
+
+	// A zero-value Sypl stays usable, as on master (and as with the
+	// by-value mutex): empty name, no-op logging, reconfigurable.
+	var zero sypl.Sypl
+
+	if got := zero.String(); got != "" {
+		t.Fatalf(`zero-value String() = %q, expected ""`, got)
+	}
+
+	zero.SetName("zeroed")
+	zero.SetTags("zt")
+
+	if got := fmt.Sprintf("%s", zero); got != "zeroed" {
+		t.Fatalf(`zero-value Sprintf after SetName = %q, expected "zeroed"`, got)
+	}
+
+	// No outputs: must be a silent no-op, not a panic.
+	zero.Infoln("goes nowhere")
+}

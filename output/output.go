@@ -37,7 +37,11 @@ type output struct {
 	//
 	// NOTE: Never held across the actual write - the builtin logger has
 	// its own mutex serializing writes.
-	mu sync.RWMutex
+	//
+	// NOTE: Held by POINTER so an output VALUE satisfies fmt.Stringer
+	// (master surface), and copies stay vet-copylocks clean. Always set by
+	// the factory - the struct is unexported, and only constructed there.
+	mu *sync.RWMutex
 
 	// Golang's builtin logger.
 	builtinLogger *builtin.Builtin
@@ -62,7 +66,10 @@ type output struct {
 }
 
 // String interface implementation.
-func (o *output) String() string {
+//
+// NOTE: Value receiver on purpose - an output VALUE satisfies fmt.Stringer,
+// as on master.
+func (o output) String() string {
 	return o.GetName()
 }
 
@@ -401,6 +408,7 @@ func New(name string,
 	return &output{
 		builtinLogger: builtin.NewBuiltin(w, "", 0),
 		maxLevel:      maxLevel,
+		mu:            &sync.RWMutex{},
 
 		name: name,
 		// Defensively cloned: a caller passing `mySlice...` shares the
