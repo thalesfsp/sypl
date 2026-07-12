@@ -628,7 +628,7 @@ func (sypl *Sypl) process(messages ...message.IMessage) {
 				m.AddTags(finalTags...)
 			}
 
-			sypl.processOutputs(m, strings.Join(outputsNames, ","))
+			sypl.processOutputs(m, outputsNames)
 
 			if m.GetLevel() == level.Fatal {
 				shouldExit = true
@@ -684,8 +684,20 @@ func mergeOptions(m message.IMessage, o *options.Options) message.IMessage {
 	return m
 }
 
+// contains checks if `list` contains - exact, case-insensitive match - the
+// specified `name`.
+func contains(list []string, name string) bool {
+	for _, item := range list {
+		if strings.EqualFold(item, name) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Outputs logic of the Process method.
-func (sypl *Sypl) processOutputs(m message.IMessage, outputsNames string) {
+func (sypl *Sypl) processOutputs(m message.IMessage, outputsNames []string) {
 	g := new(errgroup.Group)
 
 	for _, o := range sypl.outputs {
@@ -693,11 +705,11 @@ func (sypl *Sypl) processOutputs(m message.IMessage, outputsNames string) {
 		o := o
 		m := m
 
-		// Message is isolated per `Output`.
-		msg := message.Copy(m)
-
 		// Should only use enabled Outputs, and named (listed) ones.
-		if o.GetStatus() == status.Enabled && strings.Contains(outputsNames, o.GetName()) {
+		if o.GetStatus() == status.Enabled && contains(outputsNames, o.GetName()) {
+			// Message is isolated per `Output`.
+			msg := message.Copy(m)
+
 			msg.SetComponentName(sypl.GetName())
 			msg.SetOutputName(o.GetName())
 

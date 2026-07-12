@@ -201,7 +201,7 @@ func (o *output) Write(m message.IMessage) error {
 	m.Strip()
 
 	// Executes processors in series.
-	o.processProcessors(m, strings.Join(processorsNames, ","))
+	o.processProcessors(m, processorsNames)
 
 	// Should print the message - regardless of the level, if flagged
 	// with `Force`.
@@ -248,8 +248,20 @@ func (o *output) Write(m message.IMessage) error {
 // Helpers.
 //////
 
+// contains checks if `list` contains - exact, case-insensitive match - the
+// specified `name`.
+func contains(list []string, name string) bool {
+	for _, item := range list {
+		if strings.EqualFold(item, name) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Processors logic of the Write method.
-func (o *output) processProcessors(m message.IMessage, processorsNames string) {
+func (o *output) processProcessors(m message.IMessage, processorsNames []string) {
 	// Should not process if message is flagged with `Skip`, `SkipAndForce`,
 	// or `SkipAndMute`.
 	if m.GetFlag() != flag.Skip &&
@@ -259,7 +271,7 @@ func (o *output) processProcessors(m message.IMessage, processorsNames string) {
 			// Should only use enabled Processors, and named (listed) ones.
 			//
 			// NOTE: `Enabled` status is checked in the `Run` method.
-			if strings.Contains(processorsNames, p.GetName()) {
+			if contains(processorsNames, p.GetName()) {
 				m.SetProcessorName(p.GetName())
 
 				if err := p.Run(m); err != nil {
