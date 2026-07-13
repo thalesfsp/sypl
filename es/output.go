@@ -2,15 +2,15 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-package output
+package es
 
 import (
 	"fmt"
 	"slices"
 
-	"github.com/thalesfsp/sypl/v2/elasticsearch"
 	"github.com/thalesfsp/sypl/v2/formatter"
 	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/output"
 	"github.com/thalesfsp/sypl/v2/processor"
 )
 
@@ -18,32 +18,31 @@ import (
 // Consts, vars, and types.
 //////
 
-// ElasticSearchConfig is the ElasticSearch configuration.
-type ElasticSearchConfig = elasticsearch.Config
-
-// ElasticSearchDynamicIndexFunc is a function which defines the name of the
-// index and is evaluated at the index time.
-type ElasticSearchDynamicIndexFunc = elasticsearch.DynamicIndexFunc
-
-// ElasticSearchTagMapItem is an item of the ElasticSearch tag map.
-type ElasticSearchTagMapItem struct {
-	DynamicIndexFunc ElasticSearchDynamicIndexFunc
+// TagMapItem is an item of the ElasticSearch tag map.
+//
+// NOTE: Formerly `output.ElasticSearchTagMapItem`.
+type TagMapItem struct {
+	DynamicIndexFunc DynamicIndexFunc
 	Level            level.Level
 }
 
-// ElasticSearchTagMap is a map of tags to index names.
-type ElasticSearchTagMap = map[string]ElasticSearchTagMapItem
+// TagMap is a map of tags to index names.
+//
+// NOTE: Formerly `output.ElasticSearchTagMap`.
+type TagMap = map[string]TagMapItem
 
 //////
 // Helpers.
 //////
 
-// NewElasticSearchTagMapItem is a helper to create `ElasticSearchTagMapItem`.
-func NewElasticSearchTagMapItem(
+// NewTagMapItem is a helper to create `TagMapItem`.
+//
+// NOTE: Formerly `output.NewElasticSearchTagMapItem`.
+func NewTagMapItem(
 	l level.Level,
-	dynamicIndexFunc ElasticSearchDynamicIndexFunc,
-) ElasticSearchTagMapItem {
-	return ElasticSearchTagMapItem{
+	dynamicIndexFunc DynamicIndexFunc,
+) TagMapItem {
+	return TagMapItem{
 		DynamicIndexFunc: dynamicIndexFunc,
 		Level:            l,
 	}
@@ -53,17 +52,17 @@ func NewElasticSearchTagMapItem(
 // Factory.
 //////
 
-// elasticSearchFactory builds ElasticSearch outputs.
-func elasticSearchFactory(
+// outputFactory builds ElasticSearch outputs.
+func outputFactory(
 	outputName string,
-	dynamicIndexFunc ElasticSearchDynamicIndexFunc,
-	esConfig ElasticSearchConfig,
+	dynamicIndexFunc DynamicIndexFunc,
+	esConfig Config,
 	maxLevel level.Level,
 	processors ...processor.IProcessor,
-) IOutput {
-	o := New(outputName,
+) output.IOutput {
+	o := output.New(outputName,
 		maxLevel,
-		elasticsearch.NewWithDynamicIndex(dynamicIndexFunc, esConfig),
+		NewWithDynamicIndex(dynamicIndexFunc, esConfig),
 		processors...,
 	).SetFormatter(formatter.JSONPretty())
 
@@ -74,19 +73,20 @@ func elasticSearchFactory(
 // Builtins.
 //////
 
-// ElasticSearch is a built-in `output` - named `ElasticSearch`, that writes to
+// Output is a built-in `output` - named `ElasticSearch`, that writes to
 // ElasticSearch.
 //
+// NOTE: Formerly `output.ElasticSearch`.
 // NOTE: By default, data is JSON-formatted.
 // NOTE: It's the caller's responsibility to create the index, define its
 // mapping, and settings.
-func ElasticSearch(
+func Output(
 	indexName string,
-	esConfig ElasticSearchConfig,
+	esConfig Config,
 	maxLevel level.Level,
 	processors ...processor.IProcessor,
-) IOutput {
-	return elasticSearchFactory(
+) output.IOutput {
+	return outputFactory(
 		"ElasticSearch",
 		func() string { return indexName },
 		esConfig,
@@ -95,7 +95,7 @@ func ElasticSearch(
 	)
 }
 
-// ElasticSearchWithTagMap is a built-in `output` - named
+// OutputWithTagMap is a built-in `output` - named
 // `ElasticSearchWithTagMap-{tag}` that writes to ElasticSearch. It allows to
 // define a map of tags and indexes. The index name is a function which defines
 // the name of the index and is evaluated at the index time.
@@ -103,28 +103,29 @@ func ElasticSearch(
 // IT'S THE CALLER'S RESPONSIBILITY TO DEFINE A CATCH-ALL INDEX - IF DESIRED.
 // TO ACHIEVE THIS, USE `*` AS THE TAG NAME.
 //
+// NOTE: Formerly `output.ElasticSearchWithTagMap`.
 // NOTE: By default, data is JSON-formatted.
 // NOTE: It's the caller's responsibility to create the index, define its
 // mapping, and settings.
-func ElasticSearchWithTagMap(
-	tagMap ElasticSearchTagMap,
-	esConfig ElasticSearchConfig,
+func OutputWithTagMap(
+	tagMap TagMap,
+	esConfig Config,
 	processors ...processor.IProcessor,
-) []IOutput {
-	outputs := make([]IOutput, 0, len(tagMap))
+) []output.IOutput {
+	outputs := make([]output.IOutput, 0, len(tagMap))
 	tags := make([]string, 0, len(tagMap))
 
-	var eSTMI ElasticSearchTagMapItem
+	var eSTMI TagMapItem
 
-	for tag, elasticSearchTagMapItem := range tagMap {
+	for tag, tagMapItem := range tagMap {
 		if tag == "*" {
-			eSTMI = elasticSearchTagMapItem
+			eSTMI = tagMapItem
 		} else {
-			outputs = append(outputs, elasticSearchFactory(
+			outputs = append(outputs, outputFactory(
 				fmt.Sprintf("ElasticSearchWithTagMap-%s", tag),
-				elasticSearchTagMapItem.DynamicIndexFunc,
+				tagMapItem.DynamicIndexFunc,
 				esConfig,
-				elasticSearchTagMapItem.Level,
+				tagMapItem.Level,
 				// NOTE: Clone before appending - `append(processors, ...)`
 				// would alias the caller's backing array when it has spare
 				// capacity, so later iterations would overwrite earlier
@@ -137,7 +138,7 @@ func ElasticSearchWithTagMap(
 	}
 
 	if eSTMI.DynamicIndexFunc != nil {
-		outputs = append(outputs, elasticSearchFactory(
+		outputs = append(outputs, outputFactory(
 			"ElasticSearchWithTagMap-*",
 			eSTMI.DynamicIndexFunc,
 			esConfig,
@@ -149,21 +150,22 @@ func ElasticSearchWithTagMap(
 	return outputs
 }
 
-// ElasticSearchWithDynamicIndex is a built-in `output` - named
+// OutputWithDynamicIndex is a built-in `output` - named
 // `ElasticSearchWithDynamicIndex` that writes to ElasticSearch. It allows to
 // define a function that returns the index name to be used, evaluated at the
 // index time.
 //
+// NOTE: Formerly `output.ElasticSearchWithDynamicIndex`.
 // NOTE: By default, data is JSON-formatted.
 // NOTE: It's the caller's responsibility to create the index, define its
 // mapping, and settings.
-func ElasticSearchWithDynamicIndex(
-	dynamicIndexFunc ElasticSearchDynamicIndexFunc,
-	esConfig ElasticSearchConfig,
+func OutputWithDynamicIndex(
+	dynamicIndexFunc DynamicIndexFunc,
+	esConfig Config,
 	maxLevel level.Level,
 	processors ...processor.IProcessor,
-) IOutput {
-	return elasticSearchFactory(
+) output.IOutput {
+	return outputFactory(
 		fmt.Sprintf("ElasticSearchWithDynamicIndex-%s", dynamicIndexFunc()),
 		dynamicIndexFunc,
 		esConfig,

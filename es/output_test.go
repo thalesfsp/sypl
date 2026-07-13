@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-package output
+package es
 
 import (
 	"encoding/json"
@@ -17,12 +17,23 @@ import (
 	"github.com/thalesfsp/sypl/v2/flag"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/output"
 	"github.com/thalesfsp/sypl/v2/processor"
 )
 
 //////
 // Test helpers.
 //////
+
+// prefixerName is the name of the shared Prefixer processor used across
+// tests.
+const prefixerName = "Prefixer"
+
+// Dynamic-index test days - shared across the factory, and client tests.
+const (
+	testDay1 = "2026-07-12"
+	testDay2 = "2026-07-13"
+)
 
 // esInfoBody is a minimal Elasticsearch Info (ping) response - the v8
 // client validates it on the first request.
@@ -115,7 +126,7 @@ func newFakeESServer(t *testing.T) (*httptest.Server, *esRecorder) {
 //////
 
 func TestNewElasticSearchTagMapItem(t *testing.T) {
-	item := NewElasticSearchTagMapItem(level.Debug, func() string { return "idx-item" })
+	item := NewTagMapItem(level.Debug, func() string { return "idx-item" })
 
 	if item.Level != level.Debug {
 		t.Errorf("Level = %v, want %v", item.Level, level.Debug)
@@ -137,7 +148,7 @@ func TestNewElasticSearchTagMapItem(t *testing.T) {
 func TestElasticSearchOutput(t *testing.T) {
 	srv, recorder := newFakeESServer(t)
 
-	o := ElasticSearch("idx-plain", ElasticSearchConfig{
+	o := Output("idx-plain", Config{
 		Addresses: []string{srv.URL},
 	}, level.Trace)
 
@@ -185,9 +196,9 @@ func TestElasticSearchWithDynamicIndexOutput(t *testing.T) {
 
 	day := "2026-07-11"
 
-	o := ElasticSearchWithDynamicIndex(
+	o := OutputWithDynamicIndex(
 		func() string { return "idx-" + day },
-		ElasticSearchConfig{Addresses: []string{srv.URL}},
+		Config{Addresses: []string{srv.URL}},
 		level.Trace,
 	)
 
@@ -201,7 +212,7 @@ func TestElasticSearchWithDynamicIndexOutput(t *testing.T) {
 
 	// The index name is evaluated at index time - a change must be
 	// reflected on the next write.
-	day = "2026-07-12"
+	day = testDay1
 
 	if err := o.Write(message.New(level.Info, "second")); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
@@ -218,21 +229,21 @@ func TestElasticSearchWithDynamicIndexOutput(t *testing.T) {
 // ElasticSearchWithTagMap.
 //////
 
-func tagMapForTest(withCatchAll bool) ElasticSearchTagMap {
-	tagMap := ElasticSearchTagMap{
-		"alpha": NewElasticSearchTagMapItem(level.Trace, func() string { return "idx-alpha" }),
-		"beta":  NewElasticSearchTagMapItem(level.Trace, func() string { return "idx-beta" }),
+func tagMapForTest(withCatchAll bool) TagMap {
+	tagMap := TagMap{
+		"alpha": NewTagMapItem(level.Trace, func() string { return "idx-alpha" }),
+		"beta":  NewTagMapItem(level.Trace, func() string { return "idx-beta" }),
 	}
 
 	if withCatchAll {
-		tagMap["*"] = NewElasticSearchTagMapItem(level.Trace, func() string { return "idx-catchall" })
+		tagMap["*"] = NewTagMapItem(level.Trace, func() string { return "idx-catchall" })
 	}
 
 	return tagMap
 }
 
 // findOutput returns the output with the given name - nil if absent.
-func findOutput(outputs []IOutput, name string) IOutput {
+func findOutput(outputs []output.IOutput, name string) output.IOutput {
 	for _, o := range outputs {
 		if o.GetName() == name {
 			return o
@@ -245,9 +256,9 @@ func findOutput(outputs []IOutput, name string) IOutput {
 func TestElasticSearchWithTagMapOutput_Naming(t *testing.T) {
 	srv, _ := newFakeESServer(t)
 
-	outputs := ElasticSearchWithTagMap(
+	outputs := OutputWithTagMap(
 		tagMapForTest(true),
-		ElasticSearchConfig{Addresses: []string{srv.URL}},
+		Config{Addresses: []string{srv.URL}},
 	)
 
 	if len(outputs) != 3 {
@@ -286,9 +297,9 @@ func TestElasticSearchWithTagMapOutput_Naming(t *testing.T) {
 func TestElasticSearchWithTagMapOutput_Routing(t *testing.T) {
 	srv, recorder := newFakeESServer(t)
 
-	outputs := ElasticSearchWithTagMap(
+	outputs := OutputWithTagMap(
 		tagMapForTest(true),
-		ElasticSearchConfig{Addresses: []string{srv.URL}},
+		Config{Addresses: []string{srv.URL}},
 	)
 
 	// Emulates the logger: every output gets its own copy of the event.
@@ -369,9 +380,9 @@ func TestElasticSearchWithTagMapOutput_NoProcessorsAliasing(t *testing.T) {
 
 	processors[0] = processor.Prefixer("shared-prefix: ")
 
-	outputs := ElasticSearchWithTagMap(
+	outputs := OutputWithTagMap(
 		tagMapForTest(false),
-		ElasticSearchConfig{Addresses: []string{srv.URL}},
+		Config{Addresses: []string{srv.URL}},
 		processors...,
 	)
 

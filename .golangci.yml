@@ -38,6 +38,14 @@ linters-settings:
     lines: 150
     statements: 45
 
+  # The nested es/ module intentionally carries a development-time
+  # `replace github.com/thalesfsp/sypl/v2 => ../` so both modules are
+  # buildable, and testable from the working tree - see MIGRATION-V2.md
+  # (release tagging drops nothing: the replace only affects builds FROM
+  # this repository, never consumers).
+  gomoddirectives:
+    replace-local: true
+
 issues:
   exclude-rules:
     - path: cmd/

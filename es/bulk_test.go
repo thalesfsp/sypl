@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-package elasticsearch
+package es
 
 import (
 	"bytes"
@@ -364,7 +364,7 @@ func TestElasticSearchBulk_DynamicIndexRouting(t *testing.T) {
 		bulkOKHandler(w, r)
 	})
 
-	day := "2026-07-12"
+	day := testDay1
 
 	es := NewBulkWithDynamicIndex(
 		func() string { return "idx-" + day },
@@ -377,7 +377,7 @@ func TestElasticSearchBulk_DynamicIndexRouting(t *testing.T) {
 	}
 
 	// The index name is evaluated at WRITE time.
-	day = "2026-07-13"
+	day = testDay2
 
 	if _, err := es.Write([]byte(`{"message":"second"}`)); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)

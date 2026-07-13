@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-package output
+package es
 
 import (
 	"encoding/json"
@@ -14,9 +14,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/thalesfsp/sypl/v2/elasticsearch"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/output"
 	"github.com/thalesfsp/sypl/v2/processor"
 )
 
@@ -102,13 +102,13 @@ func newFakeBulkESServer(t *testing.T) (*httptest.Server, *bulkRecorder) {
 }
 
 // singleWorker keeps batching deterministic.
-func singleWorker() []ElasticSearchBulkOption {
-	return []ElasticSearchBulkOption{elasticsearch.BulkWithNumWorkers(1)}
+func singleWorker() []BulkOption {
+	return []BulkOption{BulkWithNumWorkers(1)}
 }
 
 // flushOutput flushes `o` via the Flush capability, failing the test if the
 // capability is missing.
-func flushOutput(t *testing.T, o IOutput) error {
+func flushOutput(t *testing.T, o output.IOutput) error {
 	t.Helper()
 
 	f, ok := o.(interface{ Flush() error })
@@ -122,7 +122,7 @@ func flushOutput(t *testing.T, o IOutput) error {
 
 // closeOutput closes `o` via the Close capability, failing the test if the
 // capability is missing.
-func closeOutput(t *testing.T, o IOutput) error {
+func closeOutput(t *testing.T, o output.IOutput) error {
 	t.Helper()
 
 	c, ok := o.(interface{ Close() error })
@@ -141,7 +141,7 @@ func closeOutput(t *testing.T, o IOutput) error {
 func TestElasticSearchBulkOutput(t *testing.T) {
 	srv, recorder := newFakeBulkESServer(t)
 
-	o := ElasticSearchBulk("idx-bulk", ElasticSearchConfig{
+	o := BulkOutput("idx-bulk", Config{
 		Addresses: []string{srv.URL},
 	}, level.Trace, singleWorker())
 
@@ -197,7 +197,7 @@ func TestElasticSearchBulkOutput(t *testing.T) {
 func TestElasticSearchBulkOutput_LevelGating(t *testing.T) {
 	srv, recorder := newFakeBulkESServer(t)
 
-	o := ElasticSearchBulk("idx-bulk", ElasticSearchConfig{
+	o := BulkOutput("idx-bulk", Config{
 		Addresses: []string{srv.URL},
 	}, level.Info, singleWorker())
 
@@ -223,11 +223,11 @@ func TestElasticSearchBulkOutput_LevelGating(t *testing.T) {
 func TestElasticSearchBulkWithDynamicIndexOutput(t *testing.T) {
 	srv, recorder := newFakeBulkESServer(t)
 
-	day := "2026-07-12"
+	day := testDay1
 
-	o := ElasticSearchBulkWithDynamicIndex(
+	o := BulkOutputWithDynamicIndex(
 		func() string { return "idx-" + day },
-		ElasticSearchConfig{Addresses: []string{srv.URL}},
+		Config{Addresses: []string{srv.URL}},
 		level.Trace,
 		singleWorker(),
 	)
@@ -243,7 +243,7 @@ func TestElasticSearchBulkWithDynamicIndexOutput(t *testing.T) {
 
 	// The index name is evaluated at write time - a change must be
 	// reflected on the next write.
-	day = "2026-07-13"
+	day = testDay2
 
 	if err := o.Write(message.New(level.Info, "second")); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
@@ -288,7 +288,7 @@ func TestElasticSearchBulkOutput_NoProcessorsAliasing(t *testing.T) {
 
 	backing[1] = sentinel
 
-	o := ElasticSearchBulk("idx-bulk", ElasticSearchConfig{
+	o := BulkOutput("idx-bulk", Config{
 		Addresses: []string{srv.URL},
 	}, level.Trace, singleWorker(), backing[:1]...)
 

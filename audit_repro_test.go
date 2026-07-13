@@ -14,7 +14,6 @@ import (
 
 	"github.com/thalesfsp/sypl/v2"
 	"github.com/thalesfsp/sypl/v2/debug"
-	"github.com/thalesfsp/sypl/v2/elasticsearch"
 	"github.com/thalesfsp/sypl/v2/fields"
 	"github.com/thalesfsp/sypl/v2/flag"
 	"github.com/thalesfsp/sypl/v2/formatter"
@@ -185,25 +184,6 @@ func TestAudit_CopyDeepCopiesFields(t *testing.T) {
 	if _, leaked := m.GetFields()["b"]; leaked {
 		t.Fatal("message.Copy shares the fields map with the original")
 	}
-}
-
-// The ES output must return an error, not panic, when the document "id" is
-// not a string. The panic fires before any network call.
-func TestAudit_ESWriteNonStringIDNoPanic(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Fatalf("ES Write panicked on non-string id: %v", r)
-		}
-	}()
-
-	es := &elasticsearch.ElasticSearch{
-		DynamicIndex: func() string { return "idx" },
-	}
-
-	// Client is nil: the call may error, but it must not panic on the
-	// unchecked type assertion.
-	//nolint:errcheck
-	es.Write([]byte(`{"id":123}`))
 }
 
 // JSONPretty must register under its own name, not shadow JSON.

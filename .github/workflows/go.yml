@@ -31,5 +31,15 @@ jobs:
           version: v1.61.0
           args: --timeout 10m -v -c .golangci.yml
 
+      - name: Lint es module
+        uses: golangci/golangci-lint-action@v6.1.0
+        with:
+          version: v1.61.0
+          working-directory: es
+          args: --timeout 10m -v -c ../.golangci.yml
+
       - name: Test
         run: make test coverage
+
+      - name: Test es module
+        run: cd es && go test -timeout 60s -short -v -race -cover ./...

@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 //
 //nolint:exhaustruct,revive
-package sypl
+package es_test
 
 import (
 	"fmt"
@@ -12,14 +12,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/thalesfsp/sypl/v2/elasticsearch"
+	"github.com/thalesfsp/sypl/v2"
+	"github.com/thalesfsp/sypl/v2/es"
 	"github.com/thalesfsp/sypl/v2/level"
-	"github.com/thalesfsp/sypl/v2/output"
 	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 var (
-	esConfig = output.ElasticSearchConfig{
+	esConfig = es.Config{
 		Addresses: []string{os.Getenv("SYPL_ELASTICSEARCH_TEST_ADDRESS")},
 	}
 	commonPrefix       = "test"
@@ -49,7 +49,7 @@ func TestNewIntegration(t *testing.T) {
 		maxLevel:  level.Trace,
 		run: func(a args) string {
 			// Creates logger, and name it.
-			l := New(shared.DefaultComponentNameOutput, output.ElasticSearch(
+			l := sypl.New(shared.DefaultComponentNameOutput, es.Output(
 				esIndexName,
 				esConfig,
 				level.Trace,
@@ -61,18 +61,18 @@ func TestNewIntegration(t *testing.T) {
 		},
 	}
 
-	ElasticSearchTagMapOutput := args{
+	elasticSearchTagMapOutput := args{
 		component: shared.DefaultComponentNameOutput,
 		content:   shared.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
 			// Creates logger, and name it.
-			l := New(shared.DefaultComponentNameOutput, output.ElasticSearchWithTagMap(
-				map[string]output.ElasticSearchTagMapItem{
-					esTagName1TagMap: output.NewElasticSearchTagMapItem(a.maxLevel, func() string { return esIndexName1TagMap }),
-					esTagName2TagMap: output.NewElasticSearchTagMapItem(a.maxLevel, func() string { return esIndexName2TagMap }),
-					esTagName3TagMap: output.NewElasticSearchTagMapItem(a.maxLevel, func() string { return esIndexName3TagMap }),
+			l := sypl.New(shared.DefaultComponentNameOutput, es.OutputWithTagMap(
+				es.TagMap{
+					esTagName1TagMap: es.NewTagMapItem(a.maxLevel, func() string { return esIndexName1TagMap }),
+					esTagName2TagMap: es.NewTagMapItem(a.maxLevel, func() string { return esIndexName2TagMap }),
+					esTagName3TagMap: es.NewTagMapItem(a.maxLevel, func() string { return esIndexName3TagMap }),
 				},
 				esConfig,
 			)...)
@@ -80,13 +80,13 @@ func TestNewIntegration(t *testing.T) {
 			l.PrintWithOptions(
 				level.Info,
 				shared.DefaultContentOutput,
-				WithTags(esTagName1TagMap),
+				sypl.WithTags(esTagName1TagMap),
 			)
 
 			l.PrintWithOptions(
 				level.Info,
 				shared.DefaultContentOutput,
-				WithTags(esTagName2TagMap),
+				sypl.WithTags(esTagName2TagMap),
 			)
 
 			l.Infoln(shared.DefaultContentOutput)
@@ -111,8 +111,8 @@ func TestNewIntegration(t *testing.T) {
 			},
 		},
 		{
-			name: "Should print - ElasticSearchTagMapOutput",
-			args: ElasticSearchTagMapOutput,
+			name: "Should print - elasticSearchTagMapOutput",
+			args: elasticSearchTagMapOutput,
 			want: func(a args) string {
 				return shared.DefaultContentOutput
 			},
@@ -144,7 +144,7 @@ func TestNewIntegration(t *testing.T) {
 
 		time.Sleep(1 * time.Second)
 
-		_, err := elasticsearch.
+		_, err := es.
 			New(esIndexName, esConfig).
 			Client.Indices.
 			Delete([]string{esIndexName, esIndexName1TagMap, esIndexName2TagMap, esIndexName3TagMap})
