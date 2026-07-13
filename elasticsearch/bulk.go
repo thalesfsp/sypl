@@ -97,9 +97,12 @@ type ElasticSearchBulk struct {
 	onError       func(error)
 
 	// mu guards the indexer - swapped on Flush - and the closed flag.
-	mu      sync.Mutex
-	closed  bool
-	indexer esutil.BulkIndexer
+	// closeErr records the first Close outcome - making Close idempotent:
+	// subsequent calls return it without re-closing.
+	mu       sync.Mutex
+	closed   bool
+	closeErr error
+	indexer  esutil.BulkIndexer
 }
 
 //////
@@ -241,13 +244,15 @@ func (es *ElasticSearchBulk) Flush() error {
 
 // Close drains the bulk indexer - waiting, bounded by the close timeout
 // (default: 30s, see `BulkWithCloseTimeout`) - and shuts it down. It's
-// idempotent. Writes after Close return `ErrBulkClosed` - never panic.
+// idempotent: subsequent calls return the FIRST call's outcome without
+// re-closing - parity with the async output. Writes after Close return
+// `ErrBulkClosed` - never panic.
 func (es *ElasticSearchBulk) Close() error {
 	es.mu.Lock()
 	defer es.mu.Unlock()
 
 	if es.closed {
-		return nil
+		return es.closeErr
 	}
 
 	es.closed = true
@@ -262,10 +267,10 @@ func (es *ElasticSearchBulk) Close() error {
 	defer cancel()
 
 	if err := es.indexer.Close(ctx); err != nil {
-		return fmt.Errorf("failed closing the bulk indexer: %w", err)
+		es.closeErr = fmt.Errorf("failed closing the bulk indexer: %w", err)
 	}
 
-	return nil
+	return es.closeErr
 }
 
 //////

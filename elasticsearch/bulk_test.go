@@ -926,6 +926,46 @@ func TestElasticSearchBulk_CloseDrainsIsIdempotentAndGuardsWrites(t *testing.T) 
 	}
 }
 
+// Close memoizes its FIRST outcome - parity with the async output: a
+// second Close returns the same result, without re-closing. Both orders:
+// failure-then-repeat, and success-then-repeat.
+func TestElasticSearchBulk_CloseIdempotencyBothOrders(t *testing.T) {
+	// Failure first: the error is memoized - the second Close returns it,
+	// not nil.
+	es, _ := newTestBulk(t, nil)
+
+	es.mu.Lock()
+	old := es.indexer
+	es.indexer = &stubIndexer{closeErr: errors.New("close failed")}
+	es.mu.Unlock()
+
+	first := es.Close()
+
+	if first == nil || !strings.Contains(first.Error(), "close failed") {
+		t.Fatalf("Close() error = %v, want the close failure", first)
+	}
+
+	second := es.Close()
+
+	if !errors.Is(second, first) {
+		t.Fatalf("Second Close() = %v, want the memoized first outcome (%v)", second, first)
+	}
+
+	// Release the real indexer's goroutines.
+	_ = old.Close(context.Background())
+
+	// Success first: the nil outcome is memoized too.
+	es2, _ := newTestBulk(t, nil)
+
+	if err := es2.Close(); err != nil {
+		t.Fatalf("Close() error = %v, want nil", err)
+	}
+
+	if err := es2.Close(); err != nil {
+		t.Fatalf("Second Close() error = %v, want nil", err)
+	}
+}
+
 func TestElasticSearchBulk_CloseErrorSurfaces(t *testing.T) {
 	es, _ := newTestBulk(t, nil)
 
