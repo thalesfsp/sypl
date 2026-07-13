@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/thalesfsp/sypl/v2/internal/builtin"
 	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
@@ -56,7 +55,6 @@ func TestNewOutput(t *testing.T) {
 			}
 
 			if err := output.GetBuiltinLogger().OutputBuiltin(
-				builtin.DefaultCallDepth,
 				message.GetContent().GetProcessed(),
 			); err != nil {
 				t.Errorf("Failed to log to output: %+v", err)

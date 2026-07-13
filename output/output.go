@@ -341,7 +341,6 @@ func (o *output) write(m message.IMessage) error {
 
 	// Write to writer.
 	if err := o.GetBuiltinLogger().OutputBuiltin(
-		builtin.DefaultCallDepth,
 		m.GetContent().GetProcessed(),
 	); err != nil {
 		// It means application using Sypl was piped, but the pipe was broken so
@@ -378,7 +377,7 @@ func New(name string,
 	processors ...processor.IProcessor,
 ) IOutput {
 	return &output{
-		builtinLogger: builtin.NewBuiltin(w, "", 0),
+		builtinLogger: builtin.NewBuiltin(w),
 		maxLevel:      maxLevel,
 		mu:            &sync.RWMutex{},
 
