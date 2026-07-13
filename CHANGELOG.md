@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Roadmap
 
 - Add LowerCase processor
-- Fix possible race condition on `sypl.SetMaxLevel`
 - Add badges to README.md:
   - GoDoc
   - Go Report Card
@@ -25,6 +24,43 @@ Refs. for badges:
 
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
+
+## [1.20.0] - 2026-07-12
+### Fixed
+- Data race: `Sypl` and `output` are now safe for concurrent reconfiguration
+  (`SetMaxLevel`, `SetTags`, `SetFields`, `AddOutputs`, `SetStatus`, ...) while
+  logging. Includes the parent/child logger family: child loggers created via
+  `New(name)` no longer share tag/field/output containers with the parent.
+- Data race: `message.Copy` now deep-copies fields; per-output goroutines no
+  longer share one map. Double-`Fatal` no longer races on the exit flag.
+- `flag.SkipAndMute` is now honored: the message is neither processed nor
+  printed, matching its documentation (was fully inert for non-empty messages).
+- CRLF (`\r\n`) line endings survive `Strip`/`Restore` (were restored as `\n\r`).
+- Output and processor dispatch match names exactly (case-insensitive) instead
+  of by substring: targeting output `es-backup` no longer also writes to `es`.
+  `SYPL_FILTER` entries likewise match component names exactly.
+- `ChangeFirstCharCase` no longer corrupts multi-byte first characters (`élan`
+  → `Élan`, was mojibake).
+- `SYPL_DEBUG` entries no longer leak level filters across components/outputs
+  via prefix matches (e.g. `infosvc:...` no longer acts as global `info`).
+- ElasticSearch output returns errors instead of panicking on non-string
+  document IDs and unexpected response shapes.
+- `WithField` no longer panics after `WithFields(nil)`.
+- `ElasticSearchWithTagMap` and `NewDefault` no longer alias caller-provided
+  processors slices (spare-capacity slices corrupted output filtering).
+- `JSONPretty` formatter registers under its own name (was `JSON`).
+
+### Changed
+- Performance: messages are copied only for outputs that will actually write;
+  copies skip UUID/SHA-1 regeneration; tags use a plain map instead of a
+  red-black tree; level-filter sets are precomputed; PID is cached; `SYPL_DEBUG`
+  regexes are compiled once per component/output pair (bounded cache).
+
+### Removed
+- Dependencies: `emirpasic/gods`, `golang.org/x/sync`, `spf13/afero`,
+  `go-test/deep` (direct deps 8 → 4, zero behavior change).
+- Dead package-level functions in `internal/builtin` (not importable
+  externally).
 
 ## [1.9.14] - 2023-03-23
 ### Changed
