@@ -13,9 +13,11 @@ import (
 	"github.com/thalesfsp/sypl"
 	"github.com/thalesfsp/sypl/fields"
 	"github.com/thalesfsp/sypl/level"
+	"github.com/thalesfsp/sypl/message"
 	"github.com/thalesfsp/sypl/output"
 	"github.com/thalesfsp/sypl/processor"
 	"github.com/thalesfsp/sypl/safebuffer"
+	"github.com/thalesfsp/sypl/shared"
 )
 
 //////
@@ -300,4 +302,107 @@ func TestAudit_SyplValueStringer(t *testing.T) {
 
 	// No outputs: must be a silent no-op, not a panic.
 	zero.Infoln("goes nowhere")
+}
+
+//////
+// F3 - SYPL_FILTER semantics: sanctioned drift from v1.9.17.
+//////
+
+// SYPL_FILTER is an exact, case-insensitive component-name match per
+// comma-separated entry. Both cases below are DELIBERATE behavior changes
+// from v1.9.17, which used a case-SENSITIVE substring match
+// (strings.Contains(filter, name)):
+//
+//  1. Filter "svc-worker" with component "svc": v1.9.17 PRINTED (the
+//     component was a substring of the filter, the accidental direction).
+//     Now: SILENT - a filter entry only matches the exact component name.
+//  2. Filter "SVC" with component "svc": v1.9.17 was SILENT (case
+//     mismatch). Now: PRINTS - case-insensitive is the chosen semantic,
+//     consistent with GetOutput's EqualFold precedent.
+func TestAudit_FilterSemanticsDrift(t *testing.T) {
+	t.Run("filter superstring of component is silent", func(t *testing.T) {
+		t.Setenv(shared.FilterEnvVar, "svc-worker")
+
+		buf, o := output.SafeBuffer(level.Trace)
+
+		l := sypl.New("svc", o)
+
+		l.Infoln("should-not-print")
+
+		if buf.String() != "" {
+			t.Fatalf(`filter "svc-worker" must not match component "svc": %q`, buf.String())
+		}
+	})
+
+	t.Run("filter matches case-insensitively", func(t *testing.T) {
+		t.Setenv(shared.FilterEnvVar, "SVC")
+
+		buf, o := output.SafeBuffer(level.Trace)
+
+		l := sypl.New("svc", o)
+
+		l.Infoln("should-print")
+
+		if !strings.Contains(buf.String(), "should-print") {
+			t.Fatalf(`filter "SVC" must match component "svc" (EqualFold): %q`, buf.String())
+		}
+	})
+}
+
+//////
+// F4 - Output/processor dispatch: exact, case-insensitive (EqualFold).
+//////
+
+// Output dispatch by name is an exact, case-insensitive match - deliberate,
+// consistent with GetOutput's EqualFold precedent: WithOutputsNames
+// ("console") targets the output named "Console".
+func TestAudit_OutputDispatchCaseInsensitive(t *testing.T) {
+	bufConsole, oConsole := output.SafeBuffer(level.Trace)
+	oConsole.SetName("Console")
+
+	bufOther, oOther := output.SafeBuffer(level.Trace)
+	oOther.SetName("Other")
+
+	l := sypl.New("dispatch-case", oConsole, oOther)
+
+	l.PrintWithOptions(level.Info, "cased\n", sypl.WithOutputsNames("console"))
+
+	if !strings.Contains(bufConsole.String(), "cased") {
+		t.Fatalf(`WithOutputsNames("console") must match output "Console": %q`, bufConsole.String())
+	}
+
+	if bufOther.String() != "" {
+		t.Fatalf(`output "Other" received a message targeted at "console": %q`, bufOther.String())
+	}
+}
+
+// Processor dispatch by name follows the same exact, case-insensitive
+// semantic: WithProcessorsNames("prefixer") runs the processor named
+// "Prefixer".
+func TestAudit_ProcessorDispatchCaseInsensitive(t *testing.T) {
+	prefixer := processor.New("Prefixer", func(m message.IMessage) error {
+		m.GetContent().SetProcessed("PREFIXER-" + m.GetContent().GetProcessed())
+
+		return nil
+	})
+
+	suffixer := processor.New("Suffixer", func(m message.IMessage) error {
+		m.GetContent().SetProcessed(m.GetContent().GetProcessed() + "-SUFFIXER")
+
+		return nil
+	})
+
+	buf, o := output.SafeBuffer(level.Trace, prefixer, suffixer)
+
+	l := sypl.New("dispatch-case", o)
+
+	l.PrintWithOptions(level.Info, "x\n", sypl.WithProcessorsNames("prefixer"))
+
+	if !strings.Contains(buf.String(), "PREFIXER-x") {
+		t.Fatalf(`WithProcessorsNames("prefixer") must run processor "Prefixer": %q`, buf.String())
+	}
+
+	if strings.Contains(buf.String(), "SUFFIXER") {
+		t.Fatalf(`processor "Suffixer" ran though only "prefixer" was requested: %q`, buf.String())
+	}
 }
