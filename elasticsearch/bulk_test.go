@@ -820,6 +820,73 @@ func TestElasticSearchBulk_FlushErrorSurfacesAndRecovers(t *testing.T) {
 	}
 }
 
+// Flush's indexer swap is a RUNTIME path: a failure rebuilding the indexer
+// must surface as an error - never log.Fatalf, which would kill the host
+// process - and the output must keep working once construction recovers.
+func TestElasticSearchBulk_FlushSwapFailureSurvives(t *testing.T) {
+	es, _ := newTestBulk(t, nil)
+
+	// Fail the swap-path construction through the seam.
+	originalNew := newBulkIndexer
+
+	newBulkIndexer = func(esutil.BulkIndexerConfig) (esutil.BulkIndexer, error) {
+		return nil, errors.New("indexer construction denied")
+	}
+
+	t.Cleanup(func() { newBulkIndexer = originalNew })
+
+	err := es.Flush()
+
+	if err == nil || !strings.Contains(err.Error(), "indexer construction denied") {
+		t.Fatalf("Flush() error = %v, want the rebuild failure", err)
+	}
+
+	// The output survives - degraded: writes report the uninitialized
+	// indexer instead of panicking.
+	if _, err := es.Write([]byte(`{"message":"degraded"}`)); err == nil ||
+		!strings.Contains(err.Error(), "bulk indexer isn't initialized") {
+		t.Fatalf("Write() error = %v, want the uninitialized-indexer guard", err)
+	}
+
+	// Construction recovers: the next Flush rebuilds a fresh indexer, and
+	// the output keeps working.
+	newBulkIndexer = originalNew
+
+	if err := es.Flush(); err != nil {
+		t.Fatalf("Flush() error = %v, want nil - the indexer should rebuild", err)
+	}
+
+	if _, err := es.Write([]byte(`{"message":"recovered"}`)); err != nil {
+		t.Fatalf("Write() error = %v, want nil after the rebuild", err)
+	}
+
+	if err := es.Close(); err != nil {
+		t.Fatalf("Close() error = %v, want nil", err)
+	}
+}
+
+// Close with a nil indexer - a previous swap failed - is clean: there is
+// nothing to drain.
+func TestElasticSearchBulk_CloseWithNilIndexer(t *testing.T) {
+	es, _ := newTestBulk(t, nil)
+
+	originalNew := newBulkIndexer
+
+	newBulkIndexer = func(esutil.BulkIndexerConfig) (esutil.BulkIndexer, error) {
+		return nil, errors.New("indexer construction denied")
+	}
+
+	t.Cleanup(func() { newBulkIndexer = originalNew })
+
+	if err := es.Flush(); err == nil {
+		t.Fatal("Flush() error = nil, want the rebuild failure")
+	}
+
+	if err := es.Close(); err != nil {
+		t.Errorf("Close() error = %v, want nil - nothing to drain", err)
+	}
+}
+
 func TestElasticSearchBulk_CloseDrainsIsIdempotentAndGuardsWrites(t *testing.T) {
 	es, recorder := newTestBulk(t, nil)
 

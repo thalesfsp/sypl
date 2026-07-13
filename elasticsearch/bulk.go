@@ -195,6 +195,11 @@ func (es *ElasticSearchBulk) Write(data []byte) (int, error) {
 // (default: 30s, see `BulkWithCloseTimeout`), until every enqueued document
 // is sent - then swaps in a fresh indexer, so the output keeps working.
 // After Close it's a no-op.
+//
+// When REBUILDING the indexer fails, the error is returned - never
+// log.Fatalf: this is a runtime path, and a logging library must not kill
+// the host. Writes then degrade to the uninitialized-indexer guard until a
+// later Flush rebuilds it.
 func (es *ElasticSearchBulk) Flush() error {
 	es.mu.Lock()
 	defer es.mu.Unlock()
@@ -206,18 +211,32 @@ func (es *ElasticSearchBulk) Flush() error {
 	ctx, cancel := context.WithTimeout(context.Background(), es.closeTimeout)
 	defer cancel()
 
-	// esutil's BulkIndexer has no flush primitive: closing it drains it. A
-	// fresh indexer is swapped in EVEN on failure - the old one is closed,
-	// and would panic on Add.
-	err := es.indexer.Close(ctx)
+	errs := []error{}
 
-	es.indexer = es.newIndexer()
-
-	if err != nil {
-		return fmt.Errorf("failed flushing the bulk indexer: %w", err)
+	// esutil's BulkIndexer has no flush primitive: closing it drains it.
+	// The indexer may be nil - a previous rebuild failed - nothing to
+	// drain then.
+	if es.indexer != nil {
+		if err := es.indexer.Close(ctx); err != nil {
+			errs = append(errs, fmt.Errorf("failed flushing the bulk indexer: %w", err))
+		}
 	}
 
-	return nil
+	// A fresh indexer is swapped in EVEN when the drain failed - the old
+	// one is closed, and would panic on Add.
+	fresh, err := es.newIndexer()
+	if err != nil {
+		// Defensive: never keep the drained (closed) indexer around.
+		es.indexer = nil
+
+		errs = append(errs, fmt.Errorf("failed rebuilding the bulk indexer after the flush: %w", err))
+
+		return errors.Join(errs...)
+	}
+
+	es.indexer = fresh
+
+	return errors.Join(errs...)
 }
 
 // Close drains the bulk indexer - waiting, bounded by the close timeout
@@ -232,6 +251,12 @@ func (es *ElasticSearchBulk) Close() error {
 	}
 
 	es.closed = true
+
+	// The indexer may be nil - a previous rebuild failed - nothing to
+	// drain then.
+	if es.indexer == nil {
+		return nil
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), es.closeTimeout)
 	defer cancel()
@@ -280,9 +305,12 @@ func (es *ElasticSearchBulk) reportItemFailure(
 	))
 }
 
-// newIndexer builds a bulk indexer from the stored configuration.
-func (es *ElasticSearchBulk) newIndexer() esutil.BulkIndexer {
-	bi, err := newBulkIndexer(esutil.BulkIndexerConfig{
+// newIndexer builds a bulk indexer from the stored configuration -
+// returning the construction failure instead of exiting: it's reachable at
+// RUNTIME through Flush's indexer swap, where a kill-switch is
+// unacceptable.
+func (es *ElasticSearchBulk) newIndexer() (esutil.BulkIndexer, error) {
+	return newBulkIndexer(esutil.BulkIndexerConfig{
 		Client:        es.Client,
 		FlushBytes:    es.flushBytes,
 		FlushInterval: es.flushInterval,
@@ -293,6 +321,13 @@ func (es *ElasticSearchBulk) newIndexer() esutil.BulkIndexer {
 			}
 		},
 	})
+}
+
+// mustNewIndexer is the CONSTRUCTION-TIME variant of `newIndexer`: it
+// mirrors the sync factory's log.Fatalf failure behavior. Never call it
+// past construction.
+func (es *ElasticSearchBulk) mustNewIndexer() esutil.BulkIndexer {
+	bi, err := es.newIndexer()
 	if err != nil {
 		log.Fatalf("Error creating the ElasticSearch bulk indexer: %s", err)
 	}
@@ -348,7 +383,7 @@ func NewBulkWithDynamicIndex(
 		opt(es)
 	}
 
-	es.indexer = es.newIndexer()
+	es.indexer = es.mustNewIndexer()
 
 	return es
 }
