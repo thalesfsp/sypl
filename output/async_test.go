@@ -917,7 +917,7 @@ func TestAsync_ConcurrentWritersFlushersAndClose(t *testing.T) {
 	a := Async(inner, AsyncWithBufferSize(8))
 
 	const (
-		writers          = 8
+		writers           = 8
 		messagesPerWriter = 50
 	)
 

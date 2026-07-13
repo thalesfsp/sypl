@@ -122,8 +122,8 @@ type stubIndexer struct {
 }
 
 func (s *stubIndexer) Add(context.Context, esutil.BulkIndexerItem) error { return s.addErr }
-func (s *stubIndexer) Close(context.Context) error                      { return s.closeErr }
-func (s *stubIndexer) Stats() esutil.BulkIndexerStats                   { return esutil.BulkIndexerStats{} }
+func (s *stubIndexer) Close(context.Context) error                       { return s.closeErr }
+func (s *stubIndexer) Stats() esutil.BulkIndexerStats                    { return esutil.BulkIndexerStats{} }
 
 //////
 // Factories.
