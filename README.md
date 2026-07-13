@@ -8,7 +8,7 @@
 
 `$ go get github.com/thalesfsp/sypl/v2`
 
-Logging to ElasticSearch? It's a separate module: `$ go get github.com/thalesfsp/sypl/v2/es`
+Logging to ElasticSearch? It's a separate module: `$ go get github.com/thalesfsp/sypl/es/v2`
 
 > Upgrading from v1? See [MIGRATION-V2.md](MIGRATION-V2.md) — three breaking changes, mostly mechanical.
 

@@ -18,8 +18,8 @@ v2 ships exactly three breaking changes:
 |---|---|
 | `github.com/thalesfsp/sypl` | `github.com/thalesfsp/sypl/v2` |
 | `github.com/thalesfsp/sypl/level` (and every other non-ES subpackage) | `github.com/thalesfsp/sypl/v2/level` (same name, `/v2/` inserted) |
-| `github.com/thalesfsp/sypl/elasticsearch` | `github.com/thalesfsp/sypl/v2/es` (separate Go module — `go get github.com/thalesfsp/sypl/v2/es`) |
-| `github.com/thalesfsp/sypl/output` *(only the `ElasticSearch*` symbols)* | `github.com/thalesfsp/sypl/v2/es` |
+| `github.com/thalesfsp/sypl/elasticsearch` | `github.com/thalesfsp/sypl/es/v2` (separate Go module — `go get github.com/thalesfsp/sypl/es/v2`) |
+| `github.com/thalesfsp/sypl/output` *(only the `ElasticSearch*` symbols)* | `github.com/thalesfsp/sypl/es/v2` |
 
 ES symbols: old → new (runtime output **names** — `GetName()`/`GetOutput(...)` — are unchanged):
 
@@ -50,7 +50,7 @@ The near-universal v1 wiring (`sypl.NewDefault` + tag-mapped ES outputs):
 -	"github.com/thalesfsp/sypl/output"
 -	"github.com/thalesfsp/sypl/processor"
 +	"github.com/thalesfsp/sypl/v2"
-+	"github.com/thalesfsp/sypl/v2/es"
++	"github.com/thalesfsp/sypl/es/v2"
 +	"github.com/thalesfsp/sypl/v2/level"
 +	"github.com/thalesfsp/sypl/v2/processor"
  )
@@ -83,7 +83,7 @@ And in `go.mod` (the es module is versioned, and tagged separately):
 ```
 require (
 	github.com/thalesfsp/sypl/v2 v2.0.0
-	github.com/thalesfsp/sypl/v2/es v2.0.0
+	github.com/thalesfsp/sypl/es/v2 v2.0.0
 )
 ```
 
@@ -191,7 +191,7 @@ Run from a consumer repo root (GNU sed; on macOS use `sed -i ''`):
 find . -name '*.go' -exec sed -i 's|github.com/thalesfsp/sypl|github.com/thalesfsp/sypl/v2|g' {} +
 
 # 2. ES imports: the old elasticsearch package -> the es module.
-find . -name '*.go' -exec sed -i 's|github.com/thalesfsp/sypl/v2/elasticsearch|github.com/thalesfsp/sypl/v2/es|g; s|elasticsearch\.|es.|g' {} +
+find . -name '*.go' -exec sed -i 's|github.com/thalesfsp/sypl/v2/elasticsearch|github.com/thalesfsp/sypl/es/v2|g; s|elasticsearch\.|es.|g' {} +
 
 # 3. ES output factories, and types: output.ElasticSearch* -> es.*.
 find . -name '*.go' -exec sed -i 's|output\.NewElasticSearchTagMapItem|es.NewTagMapItem|g; s|output\.ElasticSearchTagMapItem|es.TagMapItem|g; s|output\.ElasticSearchTagMap|es.TagMap|g; s|output\.ElasticSearchConfig|es.Config|g; s|output\.ElasticSearchDynamicIndexFunc|es.DynamicIndexFunc|g; s|output\.ElasticSearchBulkOption|es.BulkOption|g' {} +
@@ -203,7 +203,7 @@ find . -name '*.go' -exec sed -i 's|output\.ElasticSearchBulkWithDynamicIndex(|e
 find . -name '*.go' -exec sed -i 's|\.SetBuiltinLogger(builtin\.NewBuiltin(\(&[A-Za-z0-9_]*\), "", 0))|.GetBuiltinLogger().SetOutput(\1)|g' {} +
 
 # 6. Then fetch the new modules, and tidy.
-go get github.com/thalesfsp/sypl/v2@v2.0.0 github.com/thalesfsp/sypl/v2/es@v2.0.0 && go mod tidy
+go get github.com/thalesfsp/sypl/v2@v2.0.0 github.com/thalesfsp/sypl/es/v2@v2.0.0 && go mod tidy
 ```
 
 What the seds do **not** cover (audit by hand):

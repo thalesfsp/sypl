@@ -35,7 +35,7 @@ and the mechanical sed one-liners.
 - **Module path is now `github.com/thalesfsp/sypl/v2`** (Go semantic import
   versioning). Every import gains the `/v2` segment.
 - **ElasticSearch support moved into the nested `es/` submodule**
-  (`github.com/thalesfsp/sypl/v2/es`): the former `elasticsearch` package
+  (`github.com/thalesfsp/sypl/es/v2`): the former `elasticsearch` package
   (client, bulk, utils) plus the ES output factories formerly in `output`
   (`ElasticSearch` → `es.Output`, `ElasticSearchWithDynamicIndex` →
   `es.OutputWithDynamicIndex`, `ElasticSearchWithTagMap` →
@@ -59,7 +59,7 @@ and the mechanical sed one-liners.
 - `output.Proxy`/`output.NewProxy`: the forwarding proxy (self-returning
   chainable setters) is exported, so external packages — like `es` — can
   build capability-carrying output wrappers.
-- `es/` ships as its own Go module: `go get github.com/thalesfsp/sypl/v2/es`
+- `es/` ships as its own Go module: `go get github.com/thalesfsp/sypl/es/v2`
   only when you log to ElasticSearch. CI lints, and tests it separately;
   releases tag both `v2.x.y`, and `es/v2.x.y`.
 - MIGRATION-V2.md: complete old→new mapping, level table, `AnyMaxLevel`

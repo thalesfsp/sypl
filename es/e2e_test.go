@@ -18,8 +18,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/thalesfsp/sypl/es/v2"
 	"github.com/thalesfsp/sypl/v2"
-	"github.com/thalesfsp/sypl/v2/es"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/output"
 )

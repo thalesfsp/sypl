@@ -1,6 +1,6 @@
 // Package es provides Sypl's ElasticSearch support: the low-level client,
 // and the ready-to-use `output.IOutput` factories. It lives in its own Go
-// module (github.com/thalesfsp/sypl/v2/es) so the core sypl module carries
+// module (github.com/thalesfsp/sypl/es/v2) so the core sypl module carries
 // no ElasticSearch dependency - import this module only if you log to
 // ElasticSearch.
 //

@@ -15,7 +15,7 @@
 //
 //   - The module path is github.com/thalesfsp/sypl/v2, and ElasticSearch
 //     support lives in the nested es module
-//     (github.com/thalesfsp/sypl/v2/es) - the core module carries no
+//     (github.com/thalesfsp/sypl/es/v2) - the core module carries no
 //     ElasticSearch dependency.
 //   - Levels follow the conventional order: None(0) Fatal(1) Error(2)
 //     Warn(3) Info(4) Debug(5) Trace(6) - `SetMaxLevel(level.Info)` now
