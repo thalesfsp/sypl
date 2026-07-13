@@ -728,6 +728,176 @@ func TestRotatingFile_CloseFailureMidRotateSurfacesError(t *testing.T) {
 	}
 }
 
+//////
+// Self-healing.
+//////
+
+// A failed rename must NOT leave the writer on a closed file: the original
+// path is reopened, the triggering write lands, and subsequent writes keep
+// landing - with the size still counting, so rotation retries, and succeeds
+// once the filesystem heals.
+func TestRotatingFile_RenameFailureSelfHealsKeepsWriting(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("Running as root - permission-based failures can't be simulated")
+	}
+
+	dir := t.TempDir()
+
+	path := filepath.Join(dir, "rotate.log")
+
+	o := newRotatingFile(t, path, RotationConfig{MaxSizeBytes: 4})
+
+	writeString(t, o, "b0b0")
+
+	// A read-only directory: rotation can't rename the live file away.
+	if err := os.Chmod(dir, 0o555); err != nil {
+		t.Fatalf("Chmod failed: %v", err)
+	}
+
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o755) })
+
+	// The rotation fails - the error is surfaced - but the write itself
+	// lands in the reopened original file: no message loss.
+	err := o.Write(message.New(level.Info, "b1b1"))
+
+	if err == nil || !strings.Contains(err.Error(), "failed renaming the log file") {
+		t.Fatalf("Write() error = %v, want the rename failure", err)
+	}
+
+	if got := readFile(t, path); got != "b0b0b1b1" {
+		t.Errorf("Live file = %q, want %q - the write must land despite the failed rotation",
+			got, "b0b0b1b1")
+	}
+
+	// Subsequent writes keep landing in the original file - the size keeps
+	// counting, so rotation is retried (and keeps failing) on each.
+	if err := o.Write(message.New(level.Info, "b2b2")); err == nil {
+		t.Error("Write() error = nil, want the retried rotation failure")
+	}
+
+	if got := readFile(t, path); got != "b0b0b1b1b2b2" {
+		t.Errorf("Live file = %q, want %q", got, "b0b0b1b1b2b2")
+	}
+
+	// The filesystem heals: the next size-threshold write rotates - the
+	// accumulated content becomes the backup, the live file starts fresh.
+	if err := os.Chmod(dir, 0o755); err != nil {
+		t.Fatalf("Chmod failed: %v", err)
+	}
+
+	writeString(t, o, "b3b3")
+
+	backups := listBackups(t, path)
+
+	if len(backups) != 1 {
+		t.Fatalf("Expected 1 backup after healing, got %v", backups)
+	}
+
+	if got := readFile(t, backups[0]); got != "b0b0b1b1b2b2" {
+		t.Errorf("Backup = %q, want the accumulated content %q", got, "b0b0b1b1b2b2")
+	}
+
+	if got := readFile(t, path); got != "b3b3" {
+		t.Errorf("Live file = %q, want %q", got, "b3b3")
+	}
+}
+
+// When BOTH the post-rotation reopen, and the recovery reopen fail, the
+// writer has no live file: writes return the TYPED unavailability error -
+// never an `os.ErrClosed`-classed one, which the output layer silently
+// swallows - and each write retries the reopen first, self-healing once
+// the filesystem recovers.
+func TestRotatingFile_NoLiveFileTypedErrorAndSelfHeal(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "rotate.log")
+
+	o := newRotatingFile(t, path, RotationConfig{MaxSizeBytes: 4})
+
+	writeString(t, o, "b0b0")
+
+	// Every reopen - post-rotation, recovery, and self-heal - fails.
+	originalOpen := rotateOpenFile
+
+	rotateOpenFile = func(string) (*os.File, error) {
+		return nil, errors.New("reopen denied")
+	}
+
+	t.Cleanup(func() { rotateOpenFile = originalOpen })
+
+	// The rotation-triggering write: the rename succeeds, both reopens
+	// fail - the writer is left with NO live file.
+	err := o.Write(message.New(level.Info, "b1b1"))
+
+	if err == nil || !strings.Contains(err.Error(), "failed reopening the log file after rotation") {
+		t.Fatalf("Write() error = %v, want the reopen failure", err)
+	}
+
+	if !strings.Contains(err.Error(), "failed reopening the original log file") {
+		t.Errorf("Write() error = %v, want the recovery failure joined in", err)
+	}
+
+	// Subsequent writes return the TYPED error - visible to callers, and
+	// error handlers - and attempt a reopen first.
+	err = o.Write(message.New(level.Info, "b2b2"))
+
+	if !errors.Is(err, ErrRotatingFileUnavailable) {
+		t.Fatalf("Write() error = %v, want ErrRotatingFileUnavailable", err)
+	}
+
+	if errors.Is(err, os.ErrClosed) {
+		t.Error("Write() error must NOT be os.ErrClosed-classed - it would be silently swallowed")
+	}
+
+	// Flush has no live file to sync either.
+	if err := o.(interface{ Flush() error }).Flush(); !errors.Is(err, ErrRotatingFileUnavailable) {
+		t.Errorf("Flush() error = %v, want ErrRotatingFileUnavailable", err)
+	}
+
+	// The filesystem recovers: the next write self-heals - reopening a
+	// fresh live file (the original was renamed away) - and lands.
+	rotateOpenFile = originalOpen
+
+	writeString(t, o, "b3b3")
+
+	if got := readFile(t, path); got != "b3b3" {
+		t.Errorf("Live file = %q, want %q after self-healing", got, "b3b3")
+	}
+
+	if err := o.(interface{ Close() error }).Close(); err != nil {
+		t.Fatalf("Close() error = %v, want nil", err)
+	}
+}
+
+// Close on a writer left with no live file is clean, and the closed guard
+// still wins over the self-heal path afterward.
+func TestRotatingFile_CloseWithNoLiveFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "rotate.log")
+
+	o := newRotatingFile(t, path, RotationConfig{MaxSizeBytes: 2})
+
+	writeString(t, o, "b0")
+
+	originalOpen := rotateOpenFile
+
+	rotateOpenFile = func(string) (*os.File, error) {
+		return nil, errors.New("reopen denied")
+	}
+
+	t.Cleanup(func() { rotateOpenFile = originalOpen })
+
+	if err := o.Write(message.New(level.Info, "b1")); err == nil {
+		t.Fatal("Write() error = nil, want the mid-rotation failure")
+	}
+
+	// Close with no live file: clean, idempotent.
+	if err := o.(interface{ Close() error }).Close(); err != nil {
+		t.Errorf("Close() error = %v, want nil", err)
+	}
+
+	if err := o.Write(message.New(level.Info, "late")); !errors.Is(err, ErrRotatingFileClosed) {
+		t.Errorf("Write() after Close error = %v, want ErrRotatingFileClosed", err)
+	}
+}
+
 func TestRotatingFile_RenameFailureMidRotateSurfacesError(t *testing.T) {
 	if os.Geteuid() == 0 {
 		t.Skip("Running as root - permission-based failures can't be simulated")

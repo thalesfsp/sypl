@@ -6,6 +6,8 @@ package sypl_test
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -210,6 +212,84 @@ func TestErrorHandler_NotCalledHoldingMutex(t *testing.T) {
 
 	if !reconfigured {
 		t.Fatal("handler did not run")
+	}
+}
+
+// A RotatingFile left without a live file (mid-rotation failure, reopen
+// failed too) must surface a TYPED error through the sypl error handler -
+// closing the review's silent-loss hole: an `os.ErrClosed`-classed error
+// is swallowed by the output layer, so the handler would never know.
+func TestErrorHandler_RotatingFileUnavailableSurfaces(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("Running as root - permission-based failures can't be simulated")
+	}
+
+	dir := t.TempDir()
+
+	path := filepath.Join(dir, "rotate.log")
+
+	o, err := output.RotatingFile("Rotating", path, level.Trace,
+		output.RotationConfig{MaxSizeBytes: 4})
+	if err != nil {
+		t.Fatalf("RotatingFile() error = %v, want nil", err)
+	}
+
+	collector := &errCollector{}
+
+	l := sypl.New("errorhandler-rotating", o)
+	l.SetErrorHandler(collector.handler())
+
+	l.Print(level.Info, "b0b0")
+
+	// Sabotage: the live file disappears, and the directory becomes
+	// read-only - the next rotation can neither rename, nor reopen.
+	if err := os.Remove(path); err != nil {
+		t.Fatalf("Remove failed: %v", err)
+	}
+
+	if err := os.Chmod(dir, 0o555); err != nil {
+		t.Fatalf("Chmod failed: %v", err)
+	}
+
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o755) })
+
+	// The rotation-triggering write: rename, and reopen both fail.
+	l.Print(level.Info, "b1b1")
+
+	// A subsequent write: no live file - the TYPED error reaches the
+	// handler instead of being swallowed.
+	l.Print(level.Info, "b2b2")
+
+	errs := collector.snapshot()
+
+	if len(errs) < 2 {
+		t.Fatalf("handler called %d times, want at least 2: %v", len(errs), errs)
+	}
+
+	if !errors.Is(errs[len(errs)-1], output.ErrRotatingFileUnavailable) {
+		t.Fatalf("handler error %v should wrap ErrRotatingFileUnavailable", errs[len(errs)-1])
+	}
+
+	// Recovery: the filesystem heals - writes land again, silently.
+	if err := os.Chmod(dir, 0o755); err != nil {
+		t.Fatalf("Chmod failed: %v", err)
+	}
+
+	before := len(collector.snapshot())
+
+	l.Print(level.Info, "b3b3")
+
+	content, readErr := os.ReadFile(path)
+	if readErr != nil {
+		t.Fatalf("reading the healed log: %v", readErr)
+	}
+
+	if !strings.Contains(string(content), "b3b3") {
+		t.Fatalf("healed write did not land; file = %q", string(content))
+	}
+
+	if after := collector.snapshot(); len(after) != before {
+		t.Fatalf("healed write still errored: %v", after[before:])
 	}
 }
 

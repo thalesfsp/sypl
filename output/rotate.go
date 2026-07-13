@@ -36,6 +36,17 @@ const (
 // output.
 var ErrRotatingFileClosed = errors.New("rotating file output is closed")
 
+// ErrRotatingFileUnavailable is returned - wrapped with the underlying
+// cause - while the rotating writer has no open live file: a mid-rotation
+// failure closed it, and reopening the original path failed too. Every
+// write (and Flush) retries the reopen first, so the output self-heals
+// once the filesystem recovers. Check it with `errors.Is`.
+//
+// NOTE: Deliberately NOT `os.ErrClosed`-classed: the output layer treats
+// `os.ErrClosed` as a benign closed-writer condition, and swallows it -
+// this error must surface (e.g. through `Sypl.SetErrorHandler`).
+var ErrRotatingFileUnavailable = errors.New("rotating file output has no open live file")
+
 // Seams for deterministic tests.
 var (
 	// rotateNow returns the current time - backup naming, and age pruning.
@@ -84,6 +95,15 @@ type rotatingWriter struct {
 // Write appends to the live file - rotating first when the write would push
 // it beyond `MaxSizeBytes`.
 //
+// Resilience:
+//   - With NO open live file (a prior mid-rotation failure), a reopen is
+//     attempted first - self-healing - and, when it fails, the write
+//     returns `ErrRotatingFileUnavailable` wrapped with the cause.
+//   - When the rotation itself fails but a live file was recovered at the
+//     original path, the write still lands there - a failed rotation must
+//     not lose messages - and the rotation failure is returned alongside.
+//     Rotation retries naturally on the next size-threshold write.
+//
 // io.Writer interface implementation.
 func (w *rotatingWriter) Write(p []byte) (int, error) {
 	w.mu.Lock()
@@ -93,11 +113,33 @@ func (w *rotatingWriter) Write(p []byte) (int, error) {
 		return 0, ErrRotatingFileClosed
 	}
 
+	// Self-heal: a prior mid-rotation failure left no open live file - try
+	// reopening (the filesystem may have recovered) before refusing the
+	// write with the TYPED error - never an `os.ErrClosed`-classed one,
+	// which the output layer silently swallows.
+	if w.file == nil {
+		if err := w.reopenLiveFile(); err != nil {
+			return 0, fmt.Errorf("%w: %w", ErrRotatingFileUnavailable, err)
+		}
+	}
+
 	// The `size > 0` guard keeps a single oversized write on a fresh file
 	// from rotating forever.
 	if w.size > 0 && w.size+int64(len(p)) > w.cfg.MaxSizeBytes {
-		if err := w.rotate(); err != nil {
-			return 0, err
+		if rotateErr := w.rotate(); rotateErr != nil {
+			// `rotate` already tried recovering a live file at the
+			// original path: with none, the write is refused; with one,
+			// the write proceeds into the un-rotated file - surfacing the
+			// rotation failure alongside.
+			if w.file == nil {
+				return 0, rotateErr
+			}
+
+			n, err := w.file.Write(p)
+
+			w.size += int64(n)
+
+			return n, errors.Join(rotateErr, err)
 		}
 	}
 
@@ -109,12 +151,18 @@ func (w *rotatingWriter) Write(p []byte) (int, error) {
 }
 
 // Sync flushes the live file to stable storage. After Close it's a no-op.
+// With no open live file - a prior mid-rotation failure - it returns
+// `ErrRotatingFileUnavailable`.
 func (w *rotatingWriter) Sync() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
 	if w.closed {
 		return nil
+	}
+
+	if w.file == nil {
+		return ErrRotatingFileUnavailable
 	}
 
 	return w.file.Sync()
@@ -132,29 +180,82 @@ func (w *rotatingWriter) Close() error {
 
 	w.closed = true
 
+	// No open live file - a prior mid-rotation failure - nothing to close.
+	if w.file == nil {
+		return nil
+	}
+
 	return w.file.Close()
 }
 
 // rotate closes the live file, renames it to a timestamped backup, reopens
 // a fresh live file, and prunes backups. The caller must hold `mu`.
+//
+// On failure past the close attempt, `recoverLiveFile` reopens the
+// original path - so subsequent writes keep landing there - and the
+// returned error carries the rotation failure (joined with the recovery
+// failure, when that fails too). The close step also recovers: per POSIX,
+// the descriptor is released even when close errors, so a fresh handle
+// beats a maybe-closed one.
 func (w *rotatingWriter) rotate() error {
 	if err := w.file.Close(); err != nil {
-		return fmt.Errorf("failed closing the log file for rotation: %w", err)
+		return w.recoverLiveFile(fmt.Errorf("failed closing the log file for rotation: %w", err))
 	}
 
 	if err := os.Rename(w.path, w.backupPath()); err != nil {
-		return fmt.Errorf("failed renaming the log file for rotation: %w", err)
+		return w.recoverLiveFile(fmt.Errorf("failed renaming the log file for rotation: %w", err))
 	}
 
 	f, err := rotateOpenFile(w.path)
 	if err != nil {
-		return fmt.Errorf("failed reopening the log file after rotation: %w", err)
+		return w.recoverLiveFile(fmt.Errorf("failed reopening the log file after rotation: %w", err))
 	}
 
 	w.file = f
 	w.size = 0
 
 	return w.prune()
+}
+
+// reopenLiveFile (re)opens the original path in append mode, resyncing the
+// size counter from the actual file - pre-existing content (e.g. the
+// un-rotated live file) keeps counting toward the rotation threshold, so
+// rotation naturally retries on the next size-threshold write. The caller
+// must hold `mu`.
+func (w *rotatingWriter) reopenLiveFile() error {
+	f, err := rotateOpenFile(w.path)
+	if err != nil {
+		return err
+	}
+
+	w.file = f
+	w.size = 0
+
+	if info, err := f.Stat(); err == nil {
+		w.size = info.Size()
+	}
+
+	return nil
+}
+
+// recoverLiveFile restores a usable live file after a mid-rotation failure
+// - the live file is already closed - by reopening the original path, so
+// subsequent writes keep working. When the reopen fails too, the writer is
+// left with NO open file (`w.file` is nil): subsequent writes return
+// `ErrRotatingFileUnavailable`, each retrying the reopen first
+// (self-healing). Returns `cause` - joined with the reopen failure, when
+// it fails. The caller must hold `mu`.
+func (w *rotatingWriter) recoverLiveFile(cause error) error {
+	w.file = nil
+
+	if err := w.reopenLiveFile(); err != nil {
+		return errors.Join(
+			cause,
+			fmt.Errorf("failed reopening the original log file after the rotation failure: %w", err),
+		)
+	}
+
+	return cause
 }
 
 // backupPath returns a free backup path: `<path>.<UTC timestamp>` - with a
@@ -251,6 +352,8 @@ type rotatingFileOutput struct {
 }
 
 // Flush syncs the live file to stable storage. After Close it's a no-op.
+// With no open live file - a prior mid-rotation failure - it returns
+// `ErrRotatingFileUnavailable`.
 func (o *rotatingFileOutput) Flush() error {
 	return o.writer.Sync()
 }
@@ -291,6 +394,12 @@ func openLogFile(path string) (*os.File, error) {
 // - Unlike `File`, it returns an error - it never calls log.Fatalf.
 // - Missing parent directories are created.
 // - Any file named `<path>.*` is treated as a backup by pruning.
+// - SELF-HEALING: a mid-rotation failure (e.g. the rename was denied)
+// reopens the original path, so writes keep landing there - the failure is
+// surfaced through the write's error, and rotation retries on the next
+// size-threshold write. When even the reopen fails, writes return
+// `ErrRotatingFileUnavailable` - retrying the reopen each time - until the
+// filesystem recovers.
 func RotatingFile(
 	name, path string,
 	maxLevel level.Level,
