@@ -380,7 +380,7 @@ func TestElasticSearchWithTagMapOutput_NoProcessorsAliasing(t *testing.T) {
 	}
 
 	// The caller's slice must be untouched.
-	if len(processors) != 1 || processors[0].GetName() != "Prefixer" {
+	if len(processors) != 1 || processors[0].GetName() != prefixerName {
 		t.Errorf("The caller's processors slice was mutated: %v", processors)
 	}
 
@@ -395,7 +395,7 @@ func TestElasticSearchWithTagMapOutput_NoProcessorsAliasing(t *testing.T) {
 		}
 
 		// The shared processor must also be there.
-		if o.GetProcessor("Prefixer") == nil {
+		if o.GetProcessor(prefixerName) == nil {
 			t.Errorf("Output %q should carry the shared Prefixer", o.GetName())
 		}
 
