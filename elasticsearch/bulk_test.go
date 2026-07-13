@@ -422,6 +422,45 @@ func TestElasticSearchBulk_FlushBytesAutoFlushes(t *testing.T) {
 	}
 }
 
+func TestElasticSearchBulk_Write_TrimsTrailingLinebreaks(t *testing.T) {
+	es, recorder := newTestBulk(t, nil)
+
+	// Sypl restores the message's trailing linebreak AFTER formatting: the
+	// payload arrives as `{...}\n`. Verbatim, it would inject a blank line
+	// into the NDJSON body - malformed for the _bulk protocol.
+	doc := `{"message":"newline"}` + "\r\n"
+
+	n, err := es.Write([]byte(doc))
+	if err != nil {
+		t.Fatalf("Write() error = %v, want nil", err)
+	}
+
+	// The full input is reported as consumed - io.Writer contract.
+	if n != len(doc) {
+		t.Errorf("Write() = %d, want %d", n, len(doc))
+	}
+
+	if err := es.Close(); err != nil {
+		t.Fatalf("Close() error = %v, want nil", err)
+	}
+
+	requests := recorder.all()
+
+	if len(requests) != 1 {
+		t.Fatalf("Expected 1 _bulk request, got %d", len(requests))
+	}
+
+	lines := strings.Split(strings.TrimSuffix(requests[0].Body, "\n"), "\n")
+
+	if len(lines) != 2 {
+		t.Fatalf("Expected 2 NDJSON lines - no blank lines, got %d: %q", len(lines), requests[0].Body)
+	}
+
+	if lines[1] != `{"message":"newline"}` {
+		t.Errorf("Source line = %q, want the trimmed document", lines[1])
+	}
+}
+
 //////
 // Write - bad paths.
 //////

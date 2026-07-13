@@ -115,9 +115,19 @@ func (es *ElasticSearchBulk) Write(data []byte) (int, error) {
 		return 0, err
 	}
 
+	// Trailing linebreaks - e.g. restored by Sypl's pipeline after
+	// formatting - would inject blank lines into the NDJSON body,
+	// malformed for the _bulk protocol.
+	//
+	// CLONED: the indexer retains, and reads the payload AFTER this call
+	// returns, but the `io.Writer` contract forbids retaining `p` - the
+	// builtin logger reuses its write buffer, so aliasing it is a data
+	// race, and corrupts in-flight documents.
+	doc := bytes.Clone(bytes.TrimRight(data, "\r\n"))
+
 	item := esutil.BulkIndexerItem{
 		Action:    "index",
-		Body:      bytes.NewReader(data),
+		Body:      bytes.NewReader(doc),
 		Index:     es.DynamicIndex(),
 		OnFailure: es.reportItemFailure,
 	}
