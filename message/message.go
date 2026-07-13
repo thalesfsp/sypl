@@ -64,14 +64,16 @@ type message struct {
 	// Debug capabilities.
 	debug *debug.Debug
 
+	// A randomly generated UUIDv4 that uniquely identifies the message -
+	// computed lazily, and memoized on first `GetID` call. `SetID` pins it.
+	id *lazyString
+
+	// A hash of the message's content - computed lazily, and memoized on
+	// first `GetContentBasedHashID` call. `SetContentBasedHashID` pins it.
+	contentBasedHashID *lazyString
+
 	// Content that should be written to `Output`.
 	Content content.IContent
-
-	// A randomly generated UUIDv4 that uniquely identifies the message.
-	ID string
-
-	// ContentBasedHashID is a hash of the message's content.
-	ContentBasedHashID string
 
 	// Message's level.
 	Level level.Level
@@ -195,16 +197,18 @@ func (m *message) GetContent() content.IContent {
 	return m.Content
 }
 
-// SetContentBasedHashID sets a hash of the message's content.
+// SetContentBasedHashID sets a hash of the message's content - pinning it,
+// no generation will run.
 func (m *message) SetContentBasedHashID(hash string) IMessage {
-	m.ContentBasedHashID = hash
+	m.contentBasedHashID = resolvedLazyString(hash)
 
 	return m
 }
 
-// GetContentBasedHashID returns the hash of the message's content.
+// GetContentBasedHashID returns the hash of the message's content - computed
+// lazily, and memoized on first call.
 func (m *message) GetContentBasedHashID() string {
-	return m.ContentBasedHashID
+	return m.contentBasedHashID.get()
 }
 
 // SetContent sets the content.
@@ -250,14 +254,14 @@ func (m *message) SetFlag(flag flag.Flag) IMessage {
 	return m
 }
 
-// GetID returns the id.
+// GetID returns the id - computed lazily, and memoized on first call.
 func (m *message) GetID() string {
-	return m.ID
+	return m.id.get()
 }
 
-// SetID sets the id.
+// SetID sets the id - pinning it, no generation will run.
 func (m *message) SetID(id string) {
-	m.ID = id
+	m.id = resolvedLazyString(id)
 }
 
 // GetLevel returns the level.
@@ -368,7 +372,13 @@ func Copy(m IMessage) IMessage {
 		msg.GetMessage().Tags = tags
 	}
 
-	msg.SetContentBasedHashID(m.GetContentBasedHashID())
+	// Identity is SHARED, not forced: source, and copy point at the same
+	// lazy cells, so the UUID, and content hash are computed at most once
+	// per message family - by whoever reads first - and every member
+	// observes the same values. `SetID`/`SetContentBasedHashID` on any
+	// member replaces only that member's cell (snapshot semantics).
+	msg.id = m.GetMessage().id
+	msg.contentBasedHashID = m.GetMessage().contentBasedHashID
 
 	// Adds tags to `message.tags`.
 	msg.AddTags(m.GetTags()...)
@@ -380,7 +390,6 @@ func Copy(m IMessage) IMessage {
 	// concurrently.
 	msg.SetFields(fields.Copy(m.GetFields(), fields.Fields{}))
 	msg.SetFlag(m.GetFlag())
-	msg.SetID(m.GetID())
 
 	gLB := *m.getLineBreaker()
 	msg.setLineBreaker(&gLB)
@@ -404,10 +413,12 @@ func newMessage(l level.Level, ct string) *message {
 	return &message{
 		Options: options.New(),
 
-		Content:     content.New(ct),
-		Level:       l,
-		lineBreaker: newLineBreaker("\n", "\r"),
-		tags:        map[string]struct{}{},
+		Content:            content.New(ct),
+		contentBasedHashID: resolvedLazyString(""),
+		id:                 resolvedLazyString(""),
+		Level:              l,
+		lineBreaker:        newLineBreaker("\n", "\r"),
+		tags:               map[string]struct{}{},
 	}
 }
 
@@ -417,8 +428,12 @@ func newMessage(l level.Level, ct string) *message {
 func New(l level.Level, ct string) IMessage {
 	m := newMessage(l, ct)
 
-	m.ContentBasedHashID = generateID(ct)
-	m.ID = generateUUID()
+	// The UUID (crypto/rand), and the content hash (SHA-1) are EXPENSIVE
+	// relative to the rest of the hot path, and most consumers (e.g. the
+	// Text formatter) never read them - so they are computed lazily, and
+	// memoized on the first `GetID`/`GetContentBasedHashID` call.
+	m.contentBasedHashID = newLazyString(func() string { return generateID(ct) })
+	m.id = newLazyString(generateUUID)
 	m.Timestamp = time.Now()
 
 	return m

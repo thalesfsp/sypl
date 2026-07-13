@@ -9,10 +9,54 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/thalesfsp/sypl/shared"
 )
+
+// lazyString memoizes a string computed on first `get` - thread-safe, the
+// message is used across output goroutines. Copies of a message SHARE the
+// cell (see `Copy`), so the value is computed at most once per message
+// family, and every member observes the same value.
+type lazyString struct {
+	mu  sync.Mutex
+	gen func() string
+	set bool
+	val string
+}
+
+// get returns the memoized value, computing it on first call.
+func (ls *lazyString) get() string {
+	ls.mu.Lock()
+	defer ls.mu.Unlock()
+
+	if !ls.set {
+		ls.val = ls.gen()
+		ls.gen = nil
+		ls.set = true
+	}
+
+	return ls.val
+}
+
+// isResolved returns whether the value has already been computed, or pinned.
+func (ls *lazyString) isResolved() bool {
+	ls.mu.Lock()
+	defer ls.mu.Unlock()
+
+	return ls.set
+}
+
+// newLazyString is the lazyString factory: `gen` runs on first `get`.
+func newLazyString(gen func() string) *lazyString {
+	return &lazyString{gen: gen}
+}
+
+// resolvedLazyString pins the cell to `v` - no generation will ever run.
+func resolvedLazyString(v string) *lazyString {
+	return &lazyString{set: true, val: v}
+}
 
 // generateUUID generates UUIDv4 for message ID.
 func generateUUID() string {
