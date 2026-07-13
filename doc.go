@@ -41,4 +41,44 @@
 //
 // The possibilities are endless! Checkout the [`debugAndFilter`](example_test.go)
 // for more.
+//
+// # Hot-path performance
+//
+// Two OPT-IN mechanisms keep the cost of dropped messages near zero:
+//
+//   - Fast level gate (`SetFastGate(true)`): option-less Print-family calls
+//     whose level no enabled output can write return BEFORE any message
+//     construction. Processors cannot resurrect a gated-out message - the
+//     same contract as slog/zap. Fatal is never gated, and the gate defers
+//     to the slow path while `SYPL_DEBUG`/`SYPL_FILTER` are set.
+//   - Lazy message identity: the message UUID, and the content-based hash
+//     are computed - and memoized - only when first read (e.g. by the JSON
+//     formatter). Per-output copies share the computation, observing one
+//     identity per message.
+//
+// Additionally, a message going to a SINGLE output is written inline on the
+// calling goroutine - multiple outputs keep the concurrent fan-out.
+//
+// # Structured logging conveniences
+//
+//   - `With(fields)` returns a derived logger sharing the parent's outputs,
+//     with its own merged copy of the fields, and tags - reconfiguring one
+//     never leaks into the other.
+//   - `Infow`/`Debugw`/`Tracew`/`Warnw`/`Errorw`/`Fatalw`/`Logw` accept
+//     alternating key-value pairs, slog/zap-style - malformed pairs are
+//     tolerated, never panicking.
+//   - `NewContext`/`FromContext`/`FromContextOrDefault` carry a logger
+//     through a `context.Context`; `SetContextExtractor` +
+//     `PrintWithContext` (and the leveled `*WithContext` variants) pull
+//     structured fields out of one - sypl imports no tracing library, the
+//     application wires its own extractor.
+//
+// # Lifecycle
+//
+//   - `SetErrorHandler` receives every output write error - wrapped with the
+//     failing output's name - instead of the default silent swallow.
+//   - `Flush`/`Close` walk the outputs in registration order, calling the
+//     ones implementing `interface{ Flush() error }`/`io.Closer`, and
+//     aggregate all errors via `errors.Join`. Fatal flushes (best-effort)
+//     before exiting.
 package sypl
