@@ -82,6 +82,22 @@ func BenchmarkPrint_MutedLevel_FastGate(b *testing.B) {
 	}
 }
 
+// BenchmarkWith measures derived-logger construction (fields merge + state
+// copy).
+func BenchmarkWith(b *testing.B) {
+	l := sypl.New("bench", discardOutput("Discard", level.Info))
+	l.SetFields(fields.Fields{"parent": "value"})
+
+	f := fields.Fields{"child": "value"}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for range b.N {
+		_ = l.With(f)
+	}
+}
+
 // BenchmarkPrintWithOptions_Fields measures the structured-fields path.
 func BenchmarkPrintWithOptions_Fields(b *testing.B) {
 	l := sypl.New("bench", discardOutput("Discard", level.Info))
