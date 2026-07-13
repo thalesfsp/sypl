@@ -60,6 +60,7 @@ type Sypl struct {
 
 	// NOTE: Changes here may reflect in the `New(name string)` method (Child).
 	defaultIoWriterLevel level.Level
+	fastGate             bool
 	fields               fields.Fields
 	outputs              []output.IOutput
 	status               status.Status
@@ -193,6 +194,12 @@ func (sypl *Sypl) PrintMessage(messages ...message.IMessage) ISypl {
 // a few message's options in a functional way. For full-control over the
 // message is possible via `PrintMessage`.
 func (sypl *Sypl) PrintWithOptions(l level.Level, ct string, o ...OptionFunc) ISypl {
+	// Options can alter the message's flag (e.g. `WithFlag(flag.Force)`), so
+	// only an option-less call can be gated. See `fastGated`.
+	if len(o) == 0 && sypl.fastGated(l) {
+		return sypl
+	}
+
 	m := message.New(l, ct)
 
 	// Iterate over the options.
@@ -216,22 +223,42 @@ func (sypl *Sypl) PrintlnWithOptions(l level.Level, ct string, o ...OptionFunc) 
 
 // Print just prints.
 func (sypl *Sypl) Print(l level.Level, args ...interface{}) ISypl {
+	// Gated BEFORE content formatting - see `fastGated`.
+	if sypl.fastGated(l) {
+		return sypl
+	}
+
 	return sypl.PrintWithOptions(l, fmt.Sprint(args...))
 }
 
 // Printf prints according with the specified format.
 func (sypl *Sypl) Printf(l level.Level, format string, args ...interface{}) ISypl {
+	// Gated BEFORE content formatting - see `fastGated`.
+	if sypl.fastGated(l) {
+		return sypl
+	}
+
 	return sypl.PrintWithOptions(l, fmt.Sprintf(format, args...))
 }
 
 // Printlnf prints according with the specified format, also adding a new line
 // to the end.
 func (sypl *Sypl) Printlnf(l level.Level, format string, args ...interface{}) ISypl {
+	// Gated BEFORE content formatting - see `fastGated`.
+	if sypl.fastGated(l) {
+		return sypl
+	}
+
 	return sypl.PrintWithOptions(l, fmt.Sprintf(format+"\n", args...))
 }
 
 // Println prints, also adding a new line to the end.
 func (sypl *Sypl) Println(l level.Level, args ...interface{}) ISypl {
+	// Gated BEFORE content formatting - see `fastGated`.
+	if sypl.fastGated(l) {
+		return sypl
+	}
+
 	return sypl.PrintWithOptions(l, fmt.Sprintln(args...))
 }
 
