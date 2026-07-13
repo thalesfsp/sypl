@@ -224,8 +224,10 @@ func (a *asyncOutput) Write(m message.IMessage) error {
 // so Flush returns even under sustained concurrent writes. After Close
 // it's a no-op: Close already drained, and flushed everything.
 //
-// NOTE: Flush waits - unbounded - for the wrapped output's in-flight
-// write: a sink that never returns blocks Flush forever.
+// NOTE: Flush waits - UNBOUNDED - for the wrapped output's in-flight
+// write: a sink that never returns blocks Flush forever. Only the Fatal
+// path's pre-exit flush is time-bounded - see `Async` for the recommended
+// guards.
 func (a *asyncOutput) Flush() error {
 	a.mu.Lock()
 
@@ -252,6 +254,10 @@ func (a *asyncOutput) Flush() error {
 // closes the wrapped output, if it implements `io.Closer`. It's idempotent:
 // subsequent calls return the first call's outcome without re-closing.
 // Writes after Close return `ErrAsyncClosed` - never panic.
+//
+// NOTE: Close waits - UNBOUNDED - for the worker to drain the buffer: a
+// sink that never returns blocks Close forever. Only the Fatal path's
+// pre-exit flush is time-bounded - see `Async` for the recommended guards.
 func (a *asyncOutput) Close() error {
 	a.closeOnce.Do(func() {
 		a.mu.Lock()
@@ -461,6 +467,14 @@ func (a *asyncOutput) flusher() {
 // - `Close() error`: flushes, stops the worker, and closes `o` - if `o`
 // implements `io.Closer`. Idempotent. Writes after Close return
 // `ErrAsyncClosed`.
+//
+// Hung sinks: direct Flush, and Close calls wait - UNBOUNDED - on the
+// wrapped output's in-flight write, so a sink that never returns blocks
+// them forever. The Fatal path's pre-exit flush is time-bounded (the
+// process exits regardless), but direct Flush/Close are NOT: prefer
+// bounded sinks (e.g. writers carrying I/O deadlines/timeouts), and
+// `AsyncWithFlushInterval` for time-buffered inner outputs, so draining
+// never depends on a single unbounded call.
 //
 // See the `Async*` options for buffer size, full-buffer policy, error
 // handling, and periodic flushing.
