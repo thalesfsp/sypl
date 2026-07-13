@@ -277,19 +277,25 @@ func TestElasticSearchBulkWithDynamicIndexOutput(t *testing.T) {
 func TestElasticSearchBulkOutput_NoProcessorsAliasing(t *testing.T) {
 	srv, _ := newFakeBulkESServer(t)
 
-	// Spare capacity is the trigger: len 1, cap 8.
-	processors := make([]processor.IProcessor, 1, 8)
+	// Spare capacity is the trigger: the passed slice (len 1) shares its
+	// backing array with `backing` (len 2) - a sentinel occupies the very
+	// slot a spare-capacity append would overwrite.
+	backing := make([]processor.IProcessor, 2, 8)
 
-	processors[0] = processor.Prefixer("shared-prefix: ")
+	backing[0] = processor.Prefixer("shared-prefix: ")
+
+	sentinel := processor.Prefixer("sentinel: ")
+
+	backing[1] = sentinel
 
 	o := ElasticSearchBulk("idx-bulk", ElasticSearchConfig{
 		Addresses: []string{srv.URL},
-	}, level.Trace, singleWorker(), processors...)
+	}, level.Trace, singleWorker(), backing[:1]...)
 
-	defer closeOutput(t, o)
+	defer func() { _ = closeOutput(t, o) }()
 
 	// The output carries the caller's processor.
-	if o.GetProcessor("Prefixer") == nil {
+	if o.GetProcessor(prefixerName) == nil {
 		t.Error("The bulk output should carry the given processors")
 	}
 
@@ -297,15 +303,11 @@ func TestElasticSearchBulkOutput_NoProcessorsAliasing(t *testing.T) {
 	// backing array.
 	o.AddProcessors(processor.Suffixer(" s"))
 
-	if len(processors) != 1 || processors[0].GetName() != "Prefixer" {
-		t.Errorf("The caller's processors slice was mutated: %v", processors)
+	if backing[0].GetName() != prefixerName {
+		t.Errorf("The caller's processors slice was mutated: %v", backing)
 	}
 
-	if cap(processors) == 8 {
-		spare := processors[:2]
-
-		if spare[1] != nil && spare[1].GetName() == "Suffixer" {
-			t.Error("The output aliased the caller's backing array")
-		}
+	if backing[1] != sentinel {
+		t.Error("The output aliased the caller's backing array - the sentinel was overwritten")
 	}
 }

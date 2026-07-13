@@ -17,21 +17,31 @@ import (
 )
 
 //////
+// Test helpers.
+//////
+
+// Recurring test literals.
+const (
+	recorderName  = "Recorder"
+	tamperedValue = "tampered"
+)
+
+//////
 // Capture.
 //////
 
 func TestRecorder_CapturesStructuredSnapshots(t *testing.T) {
 	recorder, o := Recorder(level.Trace, processor.Prefixer("p: "))
 
-	if o.GetName() != "Recorder" {
-		t.Errorf("GetName() = %q, want %q", o.GetName(), "Recorder")
+	if o.GetName() != recorderName {
+		t.Errorf("GetName() = %q, want %q", o.GetName(), recorderName)
 	}
 
 	m := message.New(level.Info, "hello\n")
 
 	m.SetFields(fields.Fields{"fkey": "fval"})
 	m.AddTags("tag-b", "tag-a")
-	m.SetOutputName("Recorder")
+	m.SetOutputName(recorderName)
 
 	before := time.Now()
 
@@ -73,8 +83,8 @@ func TestRecorder_CapturesStructuredSnapshots(t *testing.T) {
 		t.Errorf("Tags = %v, want [tag-a tag-b]", record.Tags)
 	}
 
-	if record.OutputName != "Recorder" {
-		t.Errorf("OutputName = %q, want %q", record.OutputName, "Recorder")
+	if record.OutputName != recorderName {
+		t.Errorf("OutputName = %q, want %q", record.OutputName, recorderName)
 	}
 
 	if len(record.ProcessorsNames) != 1 || record.ProcessorsNames[0] != "Prefixer" {
@@ -95,8 +105,8 @@ func TestRecorder_FallsBackToTheOutputName(t *testing.T) {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
-	if records := recorder.Messages(); records[0].OutputName != "Recorder" {
-		t.Errorf("OutputName = %q, want %q", records[0].OutputName, "Recorder")
+	if records := recorder.Messages(); records[0].OutputName != recorderName {
+		t.Errorf("OutputName = %q, want %q", records[0].OutputName, recorderName)
 	}
 }
 
@@ -162,10 +172,10 @@ func TestRecorder_MessagesReturnsDefensiveCopies(t *testing.T) {
 	// Mutate everything mutable on the returned records.
 	tampered := recorder.Messages()
 
-	tampered[0].Fields["fkey"] = "tampered"
-	tampered[0].Tags[0] = "tampered"
-	tampered[0].ProcessorsNames = append(tampered[0].ProcessorsNames, "tampered")
-	tampered[0].ProcessedContent = "tampered"
+	tampered[0].Fields["fkey"] = tamperedValue
+	tampered[0].Tags[0] = tamperedValue
+	tampered[0].ProcessorsNames = append(tampered[0].ProcessorsNames, tamperedValue)
+	tampered[0].ProcessedContent = tamperedValue
 
 	fresh := recorder.Messages()
 

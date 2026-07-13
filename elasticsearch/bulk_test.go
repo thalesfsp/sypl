@@ -25,6 +25,9 @@ import (
 // Test helpers.
 //////
 
+// bulkTestIndex is the recurring static test index name.
+const bulkTestIndex = "test-index"
+
 // bulkOKHandler answers a _bulk request reporting every item as created.
 func bulkOKHandler(w http.ResponseWriter, r *http.Request) {
 	var body bytes.Buffer
@@ -64,20 +67,20 @@ func newTestBulk(
 
 		if handler != nil {
 			// The recorder consumed the body - hand the handler a copy.
-			r.Body = nopReadCloser{bytes.NewReader([]byte(body.String()))}
+			r.Body = nopReadCloser{bytes.NewReader(body.Bytes())}
 
 			handler(w, r)
 
 			return
 		}
 
-		r.Body = nopReadCloser{bytes.NewReader([]byte(body.String()))}
+		r.Body = nopReadCloser{bytes.NewReader(body.Bytes())}
 
 		bulkOKHandler(w, r)
 	})
 
 	es := NewBulk(
-		"test-index",
+		bulkTestIndex,
 		Config{Addresses: []string{srv.URL}},
 		append([]BulkOption{BulkWithNumWorkers(1)}, opts...)...,
 	)
@@ -142,8 +145,8 @@ func TestNewBulk(t *testing.T) {
 		t.Fatal("NewBulk() should set a non-nil DynamicIndex")
 	}
 
-	if got := es.DynamicIndex(); got != "test-index" {
-		t.Errorf("DynamicIndex() = %q, want %q", got, "test-index")
+	if got := es.DynamicIndex(); got != bulkTestIndex {
+		t.Errorf("DynamicIndex() = %q, want %q", got, bulkTestIndex)
 	}
 }
 
@@ -356,7 +359,7 @@ func TestElasticSearchBulk_DynamicIndexRouting(t *testing.T) {
 
 		recorder.add(capturedRequest{Method: r.Method, Path: r.URL.Path, Body: body.String()})
 
-		r.Body = nopReadCloser{bytes.NewReader([]byte(body.String()))}
+		r.Body = nopReadCloser{bytes.NewReader(body.Bytes())}
 
 		bulkOKHandler(w, r)
 	})
@@ -490,7 +493,7 @@ func TestElasticSearchBulk_Write_NonJSONData(t *testing.T) {
 
 func TestElasticSearchBulk_Write_UninitializedIndexer(t *testing.T) {
 	es := &ElasticSearchBulk{
-		DynamicIndex: func() string { return "test-index" },
+		DynamicIndex: func() string { return bulkTestIndex },
 	}
 
 	n, err := es.Write([]byte(`{"message":"hello"}`))
@@ -566,6 +569,45 @@ func TestElasticSearchBulk_PerItemFailuresReachCallback(t *testing.T) {
 	}
 }
 
+func TestElasticSearchBulk_ReportItemFailure(t *testing.T) {
+	// No callback configured: never a panic.
+	es := &ElasticSearchBulk{}
+
+	es.reportItemFailure(
+		context.Background(),
+		esutil.BulkIndexerItem{},
+		esutil.BulkIndexerResponseItem{},
+		errors.New("ignored"),
+	)
+
+	// Transport-level failures - esutil delivers them as a non-nil error,
+	// with an empty response item - must reach the callback wrapped.
+	collector := &bulkErrorCollector{}
+
+	es = &ElasticSearchBulk{onError: collector.callback()}
+
+	es.reportItemFailure(
+		context.Background(),
+		esutil.BulkIndexerItem{Index: "idx-t", DocumentID: "doc-t"},
+		esutil.BulkIndexerResponseItem{},
+		errors.New("connection reset"),
+	)
+
+	callbackErrors := collector.all()
+
+	if len(callbackErrors) != 1 {
+		t.Fatalf("Expected 1 callback error, got %d", len(callbackErrors))
+	}
+
+	msg := callbackErrors[0].Error()
+
+	for _, want := range []string{"idx-t", "doc-t", "connection reset"} {
+		if !strings.Contains(msg, want) {
+			t.Errorf("Callback error %q should contain %q", msg, want)
+		}
+	}
+}
+
 func TestElasticSearchBulk_ServerDownReachesCallback(t *testing.T) {
 	collector := &bulkErrorCollector{}
 
@@ -576,7 +618,7 @@ func TestElasticSearchBulk_ServerDownReachesCallback(t *testing.T) {
 	})
 
 	es := NewBulk(
-		"test-index",
+		bulkTestIndex,
 		Config{Addresses: []string{srv.URL}},
 		BulkWithNumWorkers(1),
 		BulkWithOnError(collector.callback()),

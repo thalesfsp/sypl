@@ -27,6 +27,13 @@ import (
 // Test helpers.
 //////
 
+// Recurring test literals.
+const (
+	asyncMsg0    = "m0\n"
+	prefixerName = "Prefixer"
+	renamedName  = "Renamed"
+)
+
 // gatedWriter blocks each Write until released, signaling when a Write
 // starts - it makes the async worker's progress deterministic in tests.
 type gatedWriter struct {
@@ -177,7 +184,7 @@ func TestAsync_ProxiesIOutput(t *testing.T) {
 
 	a := Async(inner)
 
-	defer asyncClose(t, a)
+	defer func() { _ = asyncClose(t, a) }()
 
 	// String, and IMeta.
 	if a.String() != "Inner" {
@@ -188,9 +195,9 @@ func TestAsync_ProxiesIOutput(t *testing.T) {
 		t.Errorf("GetName() = %q, want %q", a.GetName(), "Inner")
 	}
 
-	a.SetName("Renamed")
+	a.SetName(renamedName)
 
-	if a.GetName() != "Renamed" || inner.GetName() != "Renamed" {
+	if a.GetName() != renamedName || inner.GetName() != renamedName {
 		t.Error("SetName should reach the inner output")
 	}
 
@@ -252,7 +259,7 @@ func TestAsync_ProxiesIOutput(t *testing.T) {
 
 	names := a.GetProcessorsNames()
 
-	if len(names) != 2 || names[0] != "Prefixer" || names[1] != "Suffixer" {
+	if len(names) != 2 || names[0] != prefixerName || names[1] != "Suffixer" {
 		t.Errorf("GetProcessorsNames() = %v, want [Prefixer Suffixer]", names)
 	}
 
@@ -343,7 +350,7 @@ func TestAsync_BlockPolicyBackpressure(t *testing.T) {
 	a := Async(inner, AsyncWithBufferSize(2), AsyncWithPolicy(AsyncPolicyBlock))
 
 	// First message: picked up by the worker, blocked in the gate.
-	if err := a.Write(message.New(level.Info, "m0\n")); err != nil {
+	if err := a.Write(message.New(level.Info, asyncMsg0)); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
@@ -423,35 +430,7 @@ func TestAsync_DropPolicies(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gate := newGatedWriter()
-
-			collector := newErrorCollector()
-
-			inner := New("Inner", level.Trace, gate)
-
-			a := Async(inner,
-				AsyncWithBufferSize(1),
-				AsyncWithPolicy(tt.policy),
-				AsyncWithErrorHandler(collector.handler()),
-			)
-
-			// m0: picked up by the worker, blocked in the gate. m1:
-			// fills the buffer.
-			if err := a.Write(message.New(level.Info, "m0\n")); err != nil {
-				t.Fatalf("Write() error = %v, want nil", err)
-			}
-
-			<-gate.started
-
-			if err := a.Write(message.New(level.Info, "m1\n")); err != nil {
-				t.Fatalf("Write() error = %v, want nil", err)
-			}
-
-			// Buffer full - m2 triggers the drop policy. Never an error:
-			// drops are reported through the handler.
-			if err := a.Write(message.New(level.Info, "m2\n")); err != nil {
-				t.Fatalf("Write() error = %v, want nil", err)
-			}
+			gate, collector, a := primeDropScenario(t, tt.policy)
 
 			// The drop notification carries the typed sentinel.
 			select {
@@ -476,24 +455,72 @@ func TestAsync_DropPolicies(t *testing.T) {
 			}
 
 			// Drain, and verify WHICH message was dropped.
-			go func() {
-				for range 2 {
-					gate.release <- struct{}{}
-				}
-			}()
-
-			if err := asyncFlush(t, a); err != nil {
-				t.Fatalf("Flush() error = %v, want nil", err)
-			}
+			drainFlushClose(t, gate, a, 2)
 
 			if got := gate.buf.String(); got != tt.wantOutput {
 				t.Errorf("Drained %q, want %q", got, tt.wantOutput)
 			}
-
-			if err := asyncClose(t, a); err != nil {
-				t.Fatalf("Close() error = %v, want nil", err)
-			}
 		})
+	}
+}
+
+// primeDropScenario builds a gated async output with a single-slot buffer,
+// and fills it past capacity: m0 in-flight (blocked in the gate), m1
+// buffered - so m2 triggers the drop policy.
+func primeDropScenario(
+	t *testing.T,
+	policy AsyncPolicy,
+) (*gatedWriter, *errorCollector, IOutput) {
+	t.Helper()
+
+	gate := newGatedWriter()
+
+	collector := newErrorCollector()
+
+	inner := New("Inner", level.Trace, gate)
+
+	a := Async(inner,
+		AsyncWithBufferSize(1),
+		AsyncWithPolicy(policy),
+		AsyncWithErrorHandler(collector.handler()),
+	)
+
+	if err := a.Write(message.New(level.Info, asyncMsg0)); err != nil {
+		t.Fatalf("Write() error = %v, want nil", err)
+	}
+
+	<-gate.started
+
+	if err := a.Write(message.New(level.Info, "m1\n")); err != nil {
+		t.Fatalf("Write() error = %v, want nil", err)
+	}
+
+	// Buffer full - this write triggers the drop policy. Never an error:
+	// drops are reported through the handler.
+	if err := a.Write(message.New(level.Info, "m2\n")); err != nil {
+		t.Fatalf("Write() error = %v, want nil", err)
+	}
+
+	return gate, collector, a
+}
+
+// drainFlushClose releases the gate for `n` writes, then flushes, and
+// closes the async output.
+func drainFlushClose(t *testing.T, gate *gatedWriter, a IOutput, n int) {
+	t.Helper()
+
+	go func() {
+		for range n {
+			gate.release <- struct{}{}
+		}
+	}()
+
+	if err := asyncFlush(t, a); err != nil {
+		t.Fatalf("Flush() error = %v, want nil", err)
+	}
+
+	if err := asyncClose(t, a); err != nil {
+		t.Fatalf("Close() error = %v, want nil", err)
 	}
 }
 
@@ -508,7 +535,7 @@ func TestAsync_FlushProxiesInnerFlush(t *testing.T) {
 
 	a := Async(inner)
 
-	if err := a.Write(message.New(level.Info, "m0\n")); err != nil {
+	if err := a.Write(message.New(level.Info, asyncMsg0)); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
@@ -516,8 +543,8 @@ func TestAsync_FlushProxiesInnerFlush(t *testing.T) {
 		t.Fatalf("Flush() error = %v, want nil", err)
 	}
 
-	if buf.String() != "m0\n" {
-		t.Errorf("Buffer = %q, want %q", buf.String(), "m0\n")
+	if buf.String() != asyncMsg0 {
+		t.Errorf("Buffer = %q, want %q", buf.String(), asyncMsg0)
 	}
 
 	flushes, _ := inner.counts()
@@ -609,7 +636,7 @@ func TestAsync_CloseFlushesClosesAndIsIdempotent(t *testing.T) {
 
 	a := Async(inner)
 
-	if err := a.Write(message.New(level.Info, "m0\n")); err != nil {
+	if err := a.Write(message.New(level.Info, asyncMsg0)); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
@@ -618,8 +645,8 @@ func TestAsync_CloseFlushesClosesAndIsIdempotent(t *testing.T) {
 	}
 
 	// Close drains pending messages, flushes, and closes the inner output.
-	if buf.String() != "m0\n" {
-		t.Errorf("Buffer = %q, want %q - Close should drain first", buf.String(), "m0\n")
+	if buf.String() != asyncMsg0 {
+		t.Errorf("Buffer = %q, want %q - Close should drain first", buf.String(), asyncMsg0)
 	}
 
 	flushes, closes := inner.counts()
@@ -697,7 +724,7 @@ func TestAsync_CloseWithoutInnerCapabilities(t *testing.T) {
 
 	a := Async(inner)
 
-	if err := a.Write(message.New(level.Info, "m0\n")); err != nil {
+	if err := a.Write(message.New(level.Info, asyncMsg0)); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
@@ -709,8 +736,8 @@ func TestAsync_CloseWithoutInnerCapabilities(t *testing.T) {
 		t.Fatalf("Close() error = %v, want nil", err)
 	}
 
-	if buf.String() != "m0\n" {
-		t.Errorf("Buffer = %q, want %q", buf.String(), "m0\n")
+	if buf.String() != asyncMsg0 {
+		t.Errorf("Buffer = %q, want %q", buf.String(), asyncMsg0)
 	}
 }
 
@@ -722,7 +749,7 @@ func TestAsync_BlockedWriterUnblocksOnCloseWithTypedError(t *testing.T) {
 	a := Async(inner, AsyncWithBufferSize(1))
 
 	// Worker in flight, buffer full.
-	if err := a.Write(message.New(level.Info, "m0\n")); err != nil {
+	if err := a.Write(message.New(level.Info, asyncMsg0)); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
@@ -777,6 +804,40 @@ func TestAsync_BlockedWriterUnblocksOnCloseWithTypedError(t *testing.T) {
 	}
 }
 
+func TestAsync_DropWithoutHandlerDoesNotPanic(t *testing.T) {
+	gate := newGatedWriter()
+
+	inner := New("Inner", level.Trace, gate)
+
+	a := Async(inner, AsyncWithBufferSize(1), AsyncWithPolicy(AsyncPolicyDropNewest))
+
+	if err := a.Write(message.New(level.Info, asyncMsg0)); err != nil {
+		t.Fatalf("Write() error = %v, want nil", err)
+	}
+
+	<-gate.started
+
+	if err := a.Write(message.New(level.Info, "m1\n")); err != nil {
+		t.Fatalf("Write() error = %v, want nil", err)
+	}
+
+	// Buffer full, NO handler configured: the drop must be silent - never
+	// a panic.
+	if err := a.Write(message.New(level.Info, "m2\n")); err != nil {
+		t.Fatalf("Write() error = %v, want nil", err)
+	}
+
+	go func() {
+		for range 2 {
+			gate.release <- struct{}{}
+		}
+	}()
+
+	if err := asyncClose(t, a); err != nil {
+		t.Fatalf("Close() error = %v, want nil", err)
+	}
+}
+
 //////
 // Error handling.
 //////
@@ -788,7 +849,7 @@ func TestAsync_InnerWriteErrorsReachHandler(t *testing.T) {
 
 	a := Async(inner, AsyncWithErrorHandler(collector.handler()))
 
-	if err := a.Write(message.New(level.Info, "m0\n")); err != nil {
+	if err := a.Write(message.New(level.Info, asyncMsg0)); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
@@ -812,7 +873,7 @@ func TestAsync_InnerWriteErrorsWithoutHandlerDoNotPanic(t *testing.T) {
 
 	a := Async(inner)
 
-	if err := a.Write(message.New(level.Info, "m0\n")); err != nil {
+	if err := a.Write(message.New(level.Info, asyncMsg0)); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
@@ -857,7 +918,7 @@ func TestAsync_BufferSizeDefaults(t *testing.T) {
 
 			a := Async(inner, tt.opts...)
 
-			defer asyncClose(t, a)
+			defer func() { _ = asyncClose(t, a) }()
 
 			concrete, ok := a.(*asyncOutput)
 
@@ -884,7 +945,7 @@ func TestAsync_NoGoroutineLeak(t *testing.T) {
 
 		a := Async(inner, AsyncWithFlushInterval(time.Millisecond))
 
-		if err := a.Write(message.New(level.Info, "m0\n")); err != nil {
+		if err := a.Write(message.New(level.Info, asyncMsg0)); err != nil {
 			t.Fatalf("Write() error = %v, want nil", err)
 		}
 

@@ -463,6 +463,83 @@ func TestRotatingFile_PruneRemoveError(t *testing.T) {
 	}
 }
 
+func TestRotatingFile_PruneListError(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("Running as root - permission-based failures can't be simulated")
+	}
+
+	dir := t.TempDir()
+
+	path := filepath.Join(dir, "rotate.log")
+
+	o := newRotatingFile(t, path, RotationConfig{MaxSizeBytes: 2, MaxBackups: 1})
+
+	concrete, ok := o.(*rotatingFileOutput)
+
+	if !ok {
+		t.Fatal("RotatingFile should return a *rotatingFileOutput")
+	}
+
+	// An unlistable directory: prune can't enumerate the backups.
+	if err := os.Chmod(dir, 0o000); err != nil {
+		t.Fatalf("Chmod failed: %v", err)
+	}
+
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o755) })
+
+	err := concrete.writer.prune()
+
+	if err == nil || !strings.Contains(err.Error(), "failed listing backups") {
+		t.Errorf("prune() error = %v, want a listing failure", err)
+	}
+}
+
+func TestRotatingFile_PruneByAgeRemoveError(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("Running as root - permission-based failures can't be simulated")
+	}
+
+	dir := t.TempDir()
+
+	path := filepath.Join(dir, "rotate.log")
+
+	o := newRotatingFile(t, path, RotationConfig{MaxSizeBytes: 2, MaxAgeDays: 1})
+
+	writeString(t, o, "b0")
+	writeString(t, o, "b1") // Rotation 1: backup "b0".
+
+	backups := listBackups(t, path)
+
+	if len(backups) != 1 {
+		t.Fatalf("Expected 1 backup, got %v", backups)
+	}
+
+	// Make the backup old enough to prune - then make it undeletable.
+	old := time.Now().Add(-3 * 24 * time.Hour)
+
+	if err := os.Chtimes(backups[0], old, old); err != nil {
+		t.Fatalf("Chtimes failed: %v", err)
+	}
+
+	concrete, ok := o.(*rotatingFileOutput)
+
+	if !ok {
+		t.Fatal("RotatingFile should return a *rotatingFileOutput")
+	}
+
+	if err := os.Chmod(dir, 0o555); err != nil {
+		t.Fatalf("Chmod failed: %v", err)
+	}
+
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o755) })
+
+	err := concrete.writer.prune()
+
+	if err == nil || !strings.Contains(err.Error(), "failed pruning backup") {
+		t.Errorf("prune() error = %v, want an age-prune failure", err)
+	}
+}
+
 //////
 // Flush, and Close.
 //////
