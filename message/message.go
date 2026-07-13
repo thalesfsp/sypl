@@ -410,15 +410,17 @@ func Copy(m IMessage) IMessage {
 // newMessage creates a bare message, skipping ID, content-based hash, and
 // timestamp generation. Used by `Copy` - which overwrites them anyway.
 func newMessage(l level.Level, ct string) *message {
+	// NOTE: The `id`, and `contentBasedHashID` lazy cells are NOT allocated
+	// here - BOTH construction sites assign them: `New` installs lazy
+	// generators, and `Copy` shares the source's cells. A message never
+	// leaves this package without them.
 	return &message{
 		Options: options.New(),
 
-		Content:            content.New(ct),
-		contentBasedHashID: resolvedLazyString(""),
-		id:                 resolvedLazyString(""),
-		Level:              l,
-		lineBreaker:        newLineBreaker("\n", "\r"),
-		tags:               map[string]struct{}{},
+		Content:     content.New(ct),
+		Level:       l,
+		lineBreaker: newLineBreaker("\n", "\r"),
+		tags:        map[string]struct{}{},
 	}
 }
 
