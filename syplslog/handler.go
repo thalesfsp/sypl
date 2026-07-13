@@ -9,10 +9,10 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/thalesfsp/sypl"
-	"github.com/thalesfsp/sypl/fields"
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/status"
+	"github.com/thalesfsp/sypl/v2"
+	"github.com/thalesfsp/sypl/v2/fields"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/status"
 )
 
 // groupKeySeparator joins group names, and attr keys into flattened field

@@ -7,7 +7,7 @@ package options
 import (
 	"testing"
 
-	"github.com/thalesfsp/sypl/flag"
+	"github.com/thalesfsp/sypl/v2/flag"
 )
 
 const testValue = "value"

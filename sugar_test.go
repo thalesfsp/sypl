@@ -13,11 +13,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/thalesfsp/sypl"
-	"github.com/thalesfsp/sypl/formatter"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/output"
-	"github.com/thalesfsp/sypl/safebuffer"
+	"github.com/thalesfsp/sypl/v2"
+	"github.com/thalesfsp/sypl/v2/formatter"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/output"
+	"github.com/thalesfsp/sypl/v2/safebuffer"
 )
 
 // sugarLogger builds a Trace-capped, JSON-formatted logger over a SafeBuffer

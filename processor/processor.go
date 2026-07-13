@@ -5,8 +5,8 @@
 package processor
 
 import (
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/status"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/status"
 )
 
 // RunFunc specifies the function used to process a message.

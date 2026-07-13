@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/thalesfsp/sypl"
-	"github.com/thalesfsp/sypl/fields"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/output"
-	"github.com/thalesfsp/sypl/processor"
+	"github.com/thalesfsp/sypl/v2"
+	"github.com/thalesfsp/sypl/v2/fields"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/output"
+	"github.com/thalesfsp/sypl/v2/processor"
 )
 
 // exampleTraceKey is the application's own context key - sypl imports no

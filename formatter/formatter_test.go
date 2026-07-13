@@ -4,10 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/thalesfsp/sypl/fields"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/shared"
+	"github.com/thalesfsp/sypl/v2/fields"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 func TestText(t *testing.T) {

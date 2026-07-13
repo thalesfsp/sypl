@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/shared"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 // The matchers cache is keyed by component+output name, and child loggers

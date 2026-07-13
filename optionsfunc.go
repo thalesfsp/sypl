@@ -1,9 +1,9 @@
 package sypl
 
 import (
-	"github.com/thalesfsp/sypl/fields"
-	"github.com/thalesfsp/sypl/flag"
-	"github.com/thalesfsp/sypl/message"
+	"github.com/thalesfsp/sypl/v2/fields"
+	"github.com/thalesfsp/sypl/v2/flag"
+	"github.com/thalesfsp/sypl/v2/message"
 )
 
 // OptionFunc allows to specify message's options.

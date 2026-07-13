@@ -10,10 +10,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/output"
-	"github.com/thalesfsp/sypl/processor"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/output"
+	"github.com/thalesfsp/sypl/v2/processor"
 )
 
 // forwardedMark marks content the bridge formatter already forwarded to

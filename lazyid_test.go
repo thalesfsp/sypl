@@ -13,11 +13,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/thalesfsp/sypl"
-	"github.com/thalesfsp/sypl/formatter"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/output"
+	"github.com/thalesfsp/sypl/v2"
+	"github.com/thalesfsp/sypl/v2/formatter"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/output"
 )
 
 var uuidV4E2ERegex = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$`)

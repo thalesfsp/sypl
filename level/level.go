@@ -9,7 +9,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/thalesfsp/sypl/shared"
+	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 // Level specification.

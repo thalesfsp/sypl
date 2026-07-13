@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/thalesfsp/sypl/message"
+	"github.com/thalesfsp/sypl/v2/message"
 )
 
 // ProcessingError is thrown when a processor fails.

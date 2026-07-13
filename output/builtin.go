@@ -14,10 +14,10 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/processor"
-	"github.com/thalesfsp/sypl/safebuffer"
-	"github.com/thalesfsp/sypl/shared"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/processor"
+	"github.com/thalesfsp/sypl/v2/safebuffer"
+	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 // Handles the common used "-" making the output behave as a Console writing to

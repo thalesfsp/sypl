@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/processor"
-	"github.com/thalesfsp/sypl/shared"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/processor"
+	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 //////

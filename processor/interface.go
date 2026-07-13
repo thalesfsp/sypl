@@ -5,8 +5,8 @@
 package processor
 
 import (
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/meta"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/meta"
 )
 
 // IProcessor specifies what a processor does.

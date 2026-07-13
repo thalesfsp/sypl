@@ -12,7 +12,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/thalesfsp/sypl/shared"
+	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 // lazyString memoizes a string computed on first `get` - thread-safe, the

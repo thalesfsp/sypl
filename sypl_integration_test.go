@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/thalesfsp/sypl/elasticsearch"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/output"
-	"github.com/thalesfsp/sypl/shared"
+	"github.com/thalesfsp/sypl/v2/elasticsearch"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/output"
+	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 var (

@@ -1,4 +1,4 @@
-module github.com/thalesfsp/sypl
+module github.com/thalesfsp/sypl/v2
 
 go 1.23
 

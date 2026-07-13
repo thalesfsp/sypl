@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/thalesfsp/sypl"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/output"
-	"github.com/thalesfsp/sypl/processor"
+	"github.com/thalesfsp/sypl/v2"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/output"
+	"github.com/thalesfsp/sypl/v2/processor"
 )
 
 // countLines returns the number of non-empty lines in `s`.

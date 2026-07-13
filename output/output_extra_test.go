@@ -14,15 +14,15 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/thalesfsp/sypl/debug"
-	"github.com/thalesfsp/sypl/flag"
-	"github.com/thalesfsp/sypl/formatter"
-	"github.com/thalesfsp/sypl/internal/builtin"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/processor"
-	"github.com/thalesfsp/sypl/shared"
-	"github.com/thalesfsp/sypl/status"
+	"github.com/thalesfsp/sypl/v2/debug"
+	"github.com/thalesfsp/sypl/v2/flag"
+	"github.com/thalesfsp/sypl/v2/formatter"
+	"github.com/thalesfsp/sypl/v2/internal/builtin"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/processor"
+	"github.com/thalesfsp/sypl/v2/shared"
+	"github.com/thalesfsp/sypl/v2/status"
 )
 
 //////

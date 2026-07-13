@@ -4,7 +4,7 @@
 
 package meta
 
-import "github.com/thalesfsp/sypl/status"
+import "github.com/thalesfsp/sypl/v2/status"
 
 // IMeta specifies how to get/set information about a component.
 type IMeta interface {

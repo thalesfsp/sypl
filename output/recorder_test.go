@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/thalesfsp/sypl/fields"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/processor"
+	"github.com/thalesfsp/sypl/v2/fields"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/processor"
 )
 
 //////

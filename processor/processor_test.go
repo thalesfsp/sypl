@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/thalesfsp/sypl/flag"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/shared"
-	"github.com/thalesfsp/sypl/status"
+	"github.com/thalesfsp/sypl/v2/flag"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/shared"
+	"github.com/thalesfsp/sypl/v2/status"
 )
 
 func Test_generateDefaultPrefix(t *testing.T) {

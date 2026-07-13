@@ -5,12 +5,12 @@
 package sypl
 
 import (
-	"github.com/thalesfsp/sypl/fields"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/meta"
-	"github.com/thalesfsp/sypl/options"
-	"github.com/thalesfsp/sypl/output"
+	"github.com/thalesfsp/sypl/v2/fields"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/meta"
+	"github.com/thalesfsp/sypl/v2/options"
+	"github.com/thalesfsp/sypl/v2/output"
 )
 
 // IBasePrinter specifies the foundation for other printers.

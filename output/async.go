@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thalesfsp/sypl/message"
+	"github.com/thalesfsp/sypl/v2/message"
 )
 
 //////

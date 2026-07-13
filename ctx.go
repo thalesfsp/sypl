@@ -8,8 +8,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/thalesfsp/sypl/fields"
-	"github.com/thalesfsp/sypl/level"
+	"github.com/thalesfsp/sypl/v2/fields"
+	"github.com/thalesfsp/sypl/v2/level"
 )
 
 //////

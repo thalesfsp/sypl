@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/thalesfsp/sypl/elasticsearch"
-	"github.com/thalesfsp/sypl/formatter"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/processor"
+	"github.com/thalesfsp/sypl/v2/elasticsearch"
+	"github.com/thalesfsp/sypl/v2/formatter"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/processor"
 )
 
 //////

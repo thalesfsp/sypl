@@ -12,10 +12,10 @@ import (
 	"testing/slogtest"
 	"time"
 
-	"github.com/thalesfsp/sypl"
-	"github.com/thalesfsp/sypl/formatter"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/output"
+	"github.com/thalesfsp/sypl/v2"
+	"github.com/thalesfsp/sypl/v2/formatter"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/output"
 )
 
 // syplJSONBuiltins are the keys sypl's JSON formatter emits on its own -

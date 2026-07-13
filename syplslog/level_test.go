@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/thalesfsp/sypl/level"
+	"github.com/thalesfsp/sypl/v2/level"
 )
 
 // The slog -> sypl mapping table, including the boundaries between the

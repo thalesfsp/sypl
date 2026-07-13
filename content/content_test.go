@@ -7,7 +7,7 @@ package content
 import (
 	"testing"
 
-	"github.com/thalesfsp/sypl/shared"
+	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 func TestNew(t *testing.T) {

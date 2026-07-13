@@ -14,13 +14,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/thalesfsp/sypl/formatter"
-	"github.com/thalesfsp/sypl/internal/builtin"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/processor"
-	"github.com/thalesfsp/sypl/safebuffer"
-	"github.com/thalesfsp/sypl/status"
+	"github.com/thalesfsp/sypl/v2/formatter"
+	"github.com/thalesfsp/sypl/v2/internal/builtin"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/processor"
+	"github.com/thalesfsp/sypl/v2/safebuffer"
+	"github.com/thalesfsp/sypl/v2/status"
 )
 
 //////

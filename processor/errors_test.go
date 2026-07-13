@@ -8,8 +8,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/message"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/message"
 )
 
 func TestNewProcessingError(t *testing.T) {

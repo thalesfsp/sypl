@@ -9,9 +9,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/thalesfsp/sypl/flag"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/shared"
+	"github.com/thalesfsp/sypl/v2/flag"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 func TestNewMessage(t *testing.T) {

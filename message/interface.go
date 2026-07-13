@@ -7,11 +7,11 @@ package message
 import (
 	"time"
 
-	"github.com/thalesfsp/sypl/content"
-	"github.com/thalesfsp/sypl/debug"
-	"github.com/thalesfsp/sypl/fields"
-	"github.com/thalesfsp/sypl/flag"
-	"github.com/thalesfsp/sypl/level"
+	"github.com/thalesfsp/sypl/v2/content"
+	"github.com/thalesfsp/sypl/v2/debug"
+	"github.com/thalesfsp/sypl/v2/fields"
+	"github.com/thalesfsp/sypl/v2/flag"
+	"github.com/thalesfsp/sypl/v2/level"
 )
 
 // ILineBreaker specifies what a LineBreaker does.

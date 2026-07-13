@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thalesfsp/sypl/flag"
-	"github.com/thalesfsp/sypl/message"
+	"github.com/thalesfsp/sypl/v2/flag"
+	"github.com/thalesfsp/sypl/v2/message"
 )
 
 // dedupMaxKeys bounds the deduper's internal key map, protecting against

@@ -7,7 +7,7 @@ package sypl
 import (
 	"slices"
 
-	"github.com/thalesfsp/sypl/fields"
+	"github.com/thalesfsp/sypl/v2/fields"
 )
 
 // With returns a DERIVED logger: it shares the parent's output INSTANCES,

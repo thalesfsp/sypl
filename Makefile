@@ -20,7 +20,7 @@ doc:
 ifndef HAS_GODOC
 	$(error You must install godoc, run "go get golang.org/x/tools/cmd/godoc")
 endif
-	@echo "Open localhost:6060/pkg/github.com/thalesfsp/sypl/ in your browser\n"
+	@echo "Open localhost:6060/pkg/github.com/thalesfsp/sypl/v2/ in your browser\n"
 	@godoc -http :6060
 
 ci: lint test coverage

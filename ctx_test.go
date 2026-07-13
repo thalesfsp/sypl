@@ -9,11 +9,11 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/thalesfsp/sypl"
-	"github.com/thalesfsp/sypl/fields"
-	"github.com/thalesfsp/sypl/formatter"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/output"
+	"github.com/thalesfsp/sypl/v2"
+	"github.com/thalesfsp/sypl/v2/fields"
+	"github.com/thalesfsp/sypl/v2/formatter"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/output"
 )
 
 // traceIDKey is this test's private context key for the fake trace ID.

@@ -8,11 +8,11 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/thalesfsp/sypl"
-	"github.com/thalesfsp/sypl/fields"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/output"
-	"github.com/thalesfsp/sypl/syplslog"
+	"github.com/thalesfsp/sypl/v2"
+	"github.com/thalesfsp/sypl/v2/fields"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/output"
+	"github.com/thalesfsp/sypl/v2/syplslog"
 )
 
 // ExampleNewHandler demonstrates the slog -> sypl direction: code using the

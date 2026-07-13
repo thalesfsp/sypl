@@ -5,8 +5,8 @@
 package options
 
 import (
-	"github.com/thalesfsp/sypl/fields"
-	"github.com/thalesfsp/sypl/flag"
+	"github.com/thalesfsp/sypl/v2/fields"
+	"github.com/thalesfsp/sypl/v2/flag"
 )
 
 // Options extends printer's capabilities.

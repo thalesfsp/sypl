@@ -13,14 +13,14 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/thalesfsp/sypl"
-	"github.com/thalesfsp/sypl/flag"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/output"
-	"github.com/thalesfsp/sypl/processor"
-	"github.com/thalesfsp/sypl/shared"
-	"github.com/thalesfsp/sypl/status"
+	"github.com/thalesfsp/sypl/v2"
+	"github.com/thalesfsp/sypl/v2/flag"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/output"
+	"github.com/thalesfsp/sypl/v2/processor"
+	"github.com/thalesfsp/sypl/v2/shared"
+	"github.com/thalesfsp/sypl/v2/status"
 )
 
 // clearSyplEnvVars isolates the test from ambient SYPL_LEVEL, and SYPL_FILTER

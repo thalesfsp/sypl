@@ -10,13 +10,13 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/thalesfsp/sypl"
-	"github.com/thalesfsp/sypl/fields"
-	"github.com/thalesfsp/sypl/formatter"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/output"
-	"github.com/thalesfsp/sypl/safebuffer"
-	"github.com/thalesfsp/sypl/status"
+	"github.com/thalesfsp/sypl/v2"
+	"github.com/thalesfsp/sypl/v2/fields"
+	"github.com/thalesfsp/sypl/v2/formatter"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/output"
+	"github.com/thalesfsp/sypl/v2/safebuffer"
+	"github.com/thalesfsp/sypl/v2/status"
 )
 
 // Shared expected values - hoisted so repeated literals stay lint-clean.

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/thalesfsp/sypl/shared"
+	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 func TestLevel_String(t *testing.T) {

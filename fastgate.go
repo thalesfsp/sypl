@@ -7,9 +7,9 @@ package sypl
 import (
 	"os"
 
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/shared"
-	"github.com/thalesfsp/sypl/status"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/shared"
+	"github.com/thalesfsp/sypl/v2/status"
 )
 
 //////

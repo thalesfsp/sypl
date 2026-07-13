@@ -7,7 +7,7 @@ package syplslog
 import (
 	"log/slog"
 
-	"github.com/thalesfsp/sypl/level"
+	"github.com/thalesfsp/sypl/v2/level"
 )
 
 // Bridge-specific slog levels, extending the standard ones so every sypl

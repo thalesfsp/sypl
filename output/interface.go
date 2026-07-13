@@ -7,12 +7,12 @@ package output
 import (
 	"io"
 
-	"github.com/thalesfsp/sypl/formatter"
-	"github.com/thalesfsp/sypl/internal/builtin"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/meta"
-	"github.com/thalesfsp/sypl/processor"
+	"github.com/thalesfsp/sypl/v2/formatter"
+	"github.com/thalesfsp/sypl/v2/internal/builtin"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/meta"
+	"github.com/thalesfsp/sypl/v2/processor"
 )
 
 // IOutput specifies what an output does.

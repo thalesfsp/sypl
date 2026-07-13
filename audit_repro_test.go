@@ -12,17 +12,17 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/thalesfsp/sypl"
-	"github.com/thalesfsp/sypl/debug"
-	"github.com/thalesfsp/sypl/elasticsearch"
-	"github.com/thalesfsp/sypl/fields"
-	"github.com/thalesfsp/sypl/flag"
-	"github.com/thalesfsp/sypl/formatter"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/output"
-	"github.com/thalesfsp/sypl/processor"
-	"github.com/thalesfsp/sypl/shared"
+	"github.com/thalesfsp/sypl/v2"
+	"github.com/thalesfsp/sypl/v2/debug"
+	"github.com/thalesfsp/sypl/v2/elasticsearch"
+	"github.com/thalesfsp/sypl/v2/fields"
+	"github.com/thalesfsp/sypl/v2/flag"
+	"github.com/thalesfsp/sypl/v2/formatter"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/output"
+	"github.com/thalesfsp/sypl/v2/processor"
+	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 // SkipAndMute is documented as "message will not be processed, neither

@@ -11,11 +11,11 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/thalesfsp/sypl"
-	"github.com/thalesfsp/sypl/level"
-	"github.com/thalesfsp/sypl/message"
-	"github.com/thalesfsp/sypl/output"
-	"github.com/thalesfsp/sypl/status"
+	"github.com/thalesfsp/sypl/v2"
+	"github.com/thalesfsp/sypl/v2/level"
+	"github.com/thalesfsp/sypl/v2/message"
+	"github.com/thalesfsp/sypl/v2/output"
+	"github.com/thalesfsp/sypl/v2/status"
 )
 
 // spawnedByProcessOutputs reports whether the captured goroutine stack
@@ -23,7 +23,7 @@ import (
 // inline write runs on the caller's goroutine, whose "created by" ancestor is
 // `process` - not `processOutputs`.
 func spawnedByProcessOutputs(stack string) bool {
-	return strings.Contains(stack, "created by github.com/thalesfsp/sypl.(*Sypl).processOutputs")
+	return strings.Contains(stack, "created by github.com/thalesfsp/sypl/v2.(*Sypl).processOutputs")
 }
 
 // stackCapturingOutput wraps a real output, recording the goroutine stack of

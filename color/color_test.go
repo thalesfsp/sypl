@@ -11,7 +11,7 @@ import (
 
 	"github.com/acarl005/stripansi"
 	fatihcolor "github.com/fatih/color"
-	"github.com/thalesfsp/sypl/shared"
+	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 // All built-in colors must satisfy the exported Color specification.
