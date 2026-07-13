@@ -220,6 +220,44 @@ func TestContext_LeveledVariants(t *testing.T) {
 	}
 }
 
+// PrintWithContext respects the fast gate: a gated level returns before
+// extraction, and message construction.
+func TestContext_RespectsFastGate(t *testing.T) {
+	t.Setenv("SYPL_LEVEL", "")
+	t.Setenv("SYPL_FILTER", "")
+
+	buf, o := output.SafeBuffer(level.Info)
+	o.SetFormatter(formatter.JSON())
+
+	extractorRan := false
+
+	l := sypl.New("ctx-gate", o).
+		SetContextExtractor(func(ctx context.Context) fields.Fields {
+			extractorRan = true
+
+			return traceIDExtractor(ctx)
+		}).
+		SetFastGate(true)
+
+	ctx := context.WithValue(context.Background(), traceIDKey{}, "gated")
+
+	l.PrintWithContext(ctx, level.Debug, "gated ctx print")
+
+	if buf.String() != "" {
+		t.Fatalf("gated PrintWithContext produced output: %q", buf.String())
+	}
+
+	if extractorRan {
+		t.Fatal("gated PrintWithContext still ran the extractor")
+	}
+
+	l.PrintWithContext(ctx, level.Info, "allowed ctx print")
+
+	if decoded := sugarLine(t, buf); decoded["trace_id"] != "gated" {
+		t.Fatalf("allowed PrintWithContext lost extraction: %v", decoded)
+	}
+}
+
 // A derived (With) logger inherits the context extractor.
 func TestContext_WithInheritsExtractor(t *testing.T) {
 	buf, o := output.SafeBuffer(level.Trace)
