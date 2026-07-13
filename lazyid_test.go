@@ -78,12 +78,10 @@ func TestLazyID_WithIDStillWorks(t *testing.T) {
 // Two outputs, both JSON: the per-output copies must report the SAME message
 // identity (the copies share the lazy cells).
 func TestLazyID_SameIdentityAcrossOutputs(t *testing.T) {
-	bufA, oA := output.SafeBuffer(level.Trace)
-	oA.SetName("A")
+	bufA, oA := namedSafeBuffer("A", level.Trace)
 	oA.SetFormatter(formatter.JSON())
 
-	bufB, oB := output.SafeBuffer(level.Trace)
-	oB.SetName("B")
+	bufB, oB := namedSafeBuffer("B", level.Trace)
 	oB.SetFormatter(formatter.JSON())
 
 	l := sypl.New("lazyid-fanout", oA, oB)

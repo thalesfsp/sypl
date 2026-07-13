@@ -72,14 +72,11 @@ func (f *flushCloseOutput) Close() error {
 func TestFlush_RegistrationOrderAndSkip(t *testing.T) {
 	log := &callLog{}
 
-	_, oA := output.SafeBuffer(level.Trace)
-	oA.SetName("A")
+	_, oA := namedSafeBuffer("A", level.Trace)
 
-	_, oPlain := output.SafeBuffer(level.Trace)
-	oPlain.SetName("Plain") // No Flush/Close: must be skipped.
+	_, oPlain := namedSafeBuffer("Plain", level.Trace) // No Flush/Close: must be skipped.
 
-	_, oB := output.SafeBuffer(level.Trace)
-	oB.SetName("B")
+	_, oB := namedSafeBuffer("B", level.Trace)
 
 	l := sypl.New(
 		"flush-order",
@@ -103,14 +100,11 @@ func TestFlush_RegistrationOrderAndSkip(t *testing.T) {
 func TestClose_RegistrationOrderAndSkip(t *testing.T) {
 	log := &callLog{}
 
-	_, oA := output.SafeBuffer(level.Trace)
-	oA.SetName("A")
+	_, oA := namedSafeBuffer("A", level.Trace)
 
-	_, oPlain := output.SafeBuffer(level.Trace)
-	oPlain.SetName("Plain")
+	_, oPlain := namedSafeBuffer("Plain", level.Trace)
 
-	_, oB := output.SafeBuffer(level.Trace)
-	oB.SetName("B")
+	_, oB := namedSafeBuffer("B", level.Trace)
 
 	l := sypl.New(
 		"close-order",
@@ -135,11 +129,9 @@ func TestClose_RegistrationOrderAndSkip(t *testing.T) {
 func TestFlushClose_ErrorsAggregate(t *testing.T) {
 	log := &callLog{}
 
-	_, oA := output.SafeBuffer(level.Trace)
-	oA.SetName("A")
+	_, oA := namedSafeBuffer("A", level.Trace)
 
-	_, oB := output.SafeBuffer(level.Trace)
-	oB.SetName("B")
+	_, oB := namedSafeBuffer("B", level.Trace)
 
 	errB2 := fmt.Errorf("wrapped: %w", errCloseBoom)
 
@@ -191,8 +183,7 @@ func TestFlushClose_FatalFlushesBeforeExit(t *testing.T) {
 	if os.Getenv("SYPL_TEST_FATAL_FLUSH") == "1" {
 		log := &callLog{}
 
-		_, o := output.SafeBuffer(level.Trace)
-		o.SetName("FatalFlush")
+		_, o := namedSafeBuffer("FatalFlush", level.Trace)
 
 		stub := &flushCloseOutput{IOutput: o, log: log, flushErr: errFlushBoom}
 
@@ -302,8 +293,7 @@ func TestFlushClose_FatalExitsDespiteHungSink(t *testing.T) {
 func TestFlushClose_ConcurrentWithLogging(t *testing.T) {
 	log := &callLog{}
 
-	_, o := output.SafeBuffer(level.Trace)
-	o.SetName("Concurrent")
+	_, o := namedSafeBuffer("Concurrent", level.Trace)
 
 	l := sypl.New("flushclose-race", &flushCloseOutput{IOutput: o, log: log})
 

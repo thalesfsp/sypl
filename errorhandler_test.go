@@ -82,8 +82,7 @@ func TestErrorHandler_GetSet(t *testing.T) {
 // A failing output must deliver the error to the handler, wrapped with the
 // output's name - on the INLINE (single output) path.
 func TestErrorHandler_SingleOutputDelivery(t *testing.T) {
-	_, o := output.SafeBuffer(level.Trace)
-	o.SetName("FailingSingle")
+	_, o := namedSafeBuffer("FailingSingle", level.Trace)
 
 	collector := &errCollector{}
 
@@ -110,11 +109,9 @@ func TestErrorHandler_SingleOutputDelivery(t *testing.T) {
 // Both failing outputs must deliver on the concurrent fan-out path - one
 // error each, wrapped with their own names.
 func TestErrorHandler_MultiOutputDelivery(t *testing.T) {
-	_, oA := output.SafeBuffer(level.Trace)
-	oA.SetName("FailA")
+	_, oA := namedSafeBuffer("FailA", level.Trace)
 
-	_, oB := output.SafeBuffer(level.Trace)
-	oB.SetName("FailB")
+	_, oB := namedSafeBuffer("FailB", level.Trace)
 
 	collector := &errCollector{}
 

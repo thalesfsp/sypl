@@ -11,9 +11,6 @@ type IMeta interface {
 	// GetName returns the component name.
 	GetName() string
 
-	// SetName sets the component name.
-	SetName(name string)
-
 	// GetStatus returns the component status.
 	GetStatus() status.Status
 

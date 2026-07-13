@@ -10,7 +10,6 @@ import (
 
 	fatihcolor "github.com/fatih/color"
 	"github.com/thalesfsp/sypl/v2/color"
-	"github.com/thalesfsp/sypl/v2/internal/builtin"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
 	"github.com/thalesfsp/sypl/v2/processor"
@@ -60,7 +59,7 @@ func TestConsole_NoColorAndNonTTYProduceUncoloredOutput(t *testing.T) {
 
 	var buf safebuffer.Buffer
 
-	o.SetBuiltinLogger(builtin.NewBuiltin(&buf, "", 0))
+	o.GetBuiltinLogger().SetOutput(&buf)
 
 	if err := o.Write(message.New(level.Info, "colored candidate\n")); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
@@ -92,7 +91,7 @@ func TestConsole_ForcedColorStillColorsOutput(t *testing.T) {
 
 	var buf safebuffer.Buffer
 
-	o.SetBuiltinLogger(builtin.NewBuiltin(&buf, "", 0))
+	o.GetBuiltinLogger().SetOutput(&buf)
 
 	if err := o.Write(message.New(level.Info, "forced\n")); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)

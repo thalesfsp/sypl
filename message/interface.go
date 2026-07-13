@@ -41,9 +41,6 @@ type IMessage interface {
 	// GetContent returns the content.
 	GetContent() content.IContent
 
-	// SetContent sets the content.
-	SetContent(c content.IContent) IMessage
-
 	// SetContentBasedHashID sets a hash of the message's content.
 	GetContentBasedHashID() string
 
@@ -76,9 +73,6 @@ type IMessage interface {
 
 	// GetLevel returns the level.
 	GetLevel() level.Level
-
-	// SetLevel sets the level.
-	SetLevel(l level.Level) IMessage
 
 	// getLineBreaker returns linebreaker.
 	getLineBreaker() *lineBreaker

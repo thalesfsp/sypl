@@ -295,7 +295,7 @@ func TestElasticSearchBulkOutput_NoProcessorsAliasing(t *testing.T) {
 	defer func() { _ = closeOutput(t, o) }()
 
 	// The output carries the caller's processor.
-	if o.GetProcessor(prefixerName) == nil {
+	if findProcessor(o, prefixerName) == nil {
 		t.Error("The bulk output should carry the given processors")
 	}
 

@@ -81,11 +81,9 @@ func TestInlineWrite_SingleOutputWritesInline(t *testing.T) {
 
 // Two, or more receiving outputs keep the concurrent fan-out.
 func TestInlineWrite_MultiOutputKeepsFanOut(t *testing.T) {
-	bufA, oA := output.SafeBuffer(level.Trace)
-	oA.SetName("A")
+	bufA, oA := namedSafeBuffer("A", level.Trace)
 
-	bufB, oB := output.SafeBuffer(level.Trace)
-	oB.SetName("B")
+	bufB, oB := namedSafeBuffer("B", level.Trace)
 
 	stubA := &stackCapturingOutput{IOutput: oA}
 	stubB := &stackCapturingOutput{IOutput: oB}
@@ -114,12 +112,10 @@ func TestInlineWrite_MultiOutputKeepsFanOut(t *testing.T) {
 // A disabled sibling must not disqualify the inline fast path: only ONE
 // output actually receives the message.
 func TestInlineWrite_DisabledSiblingStillInline(t *testing.T) {
-	_, oDisabled := output.SafeBuffer(level.Trace)
-	oDisabled.SetName("Disabled")
+	_, oDisabled := namedSafeBuffer("Disabled", level.Trace)
 	oDisabled.SetStatus(status.Disabled)
 
-	buf, oEnabled := output.SafeBuffer(level.Trace)
-	oEnabled.SetName("Enabled")
+	buf, oEnabled := namedSafeBuffer("Enabled", level.Trace)
 
 	stub := &stackCapturingOutput{IOutput: oEnabled}
 

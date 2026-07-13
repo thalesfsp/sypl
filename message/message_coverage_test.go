@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/thalesfsp/sypl/v2/content"
 	"github.com/thalesfsp/sypl/v2/debug"
 	"github.com/thalesfsp/sypl/v2/fields"
 	"github.com/thalesfsp/sypl/v2/flag"
@@ -59,29 +58,6 @@ func TestMessage_GetTagsSorted(t *testing.T) {
 
 	if got := m.GetTags(); !reflect.DeepEqual(got, []string{"alpha", "middle", "zebra"}) {
 		t.Fatalf("GetTags = %v, expected sorted [alpha middle zebra]", got)
-	}
-}
-
-// SetContent must replace the content.
-func TestMessage_SetContent(t *testing.T) {
-	m := New(level.Info, "old")
-
-	m.SetContent(content.New("new"))
-
-	if m.GetContent().GetOriginal() != "new" || m.GetContent().GetProcessed() != "new" {
-		t.Fatalf("SetContent: original %q, processed %q, expected both %q",
-			m.GetContent().GetOriginal(), m.GetContent().GetProcessed(), "new")
-	}
-}
-
-// SetLevel must replace the level.
-func TestMessage_SetLevel(t *testing.T) {
-	m := New(level.Info, "x")
-
-	m.SetLevel(level.Warn)
-
-	if m.GetLevel() != level.Warn {
-		t.Fatalf("SetLevel: level = %s, expected warn", m.GetLevel())
 	}
 }
 

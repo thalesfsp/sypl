@@ -211,13 +211,6 @@ func (m *message) GetContentBasedHashID() string {
 	return m.contentBasedHashID.get()
 }
 
-// SetContent sets the content.
-func (m *message) SetContent(c content.IContent) IMessage {
-	m.Content = c
-
-	return m
-}
-
 // GetDebugEnvVarRegexeses returns the Debug env var regexes matchers.
 func (m *message) GetDebugEnvVarRegexes() *debug.Debug {
 	return m.debug
@@ -267,13 +260,6 @@ func (m *message) SetID(id string) {
 // GetLevel returns the level.
 func (m *message) GetLevel() level.Level {
 	return m.Level
-}
-
-// SetLevel sets the level.
-func (m *message) SetLevel(l level.Level) IMessage {
-	m.Level = l
-
-	return m
 }
 
 // GetMessage (low-level) returns the message.

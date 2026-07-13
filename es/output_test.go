@@ -242,6 +242,18 @@ func tagMapForTest(withCatchAll bool) TagMap {
 	return tagMap
 }
 
+// findProcessor returns the processor registered under `name` - nil if
+// absent. The v2 replacement for the removed `IOutput.GetProcessor`.
+func findProcessor(o output.IOutput, name string) processor.IProcessor {
+	for _, p := range o.GetProcessors() {
+		if strings.EqualFold(p.GetName(), name) {
+			return p
+		}
+	}
+
+	return nil
+}
+
 // findOutput returns the output with the given name - nil if absent.
 func findOutput(outputs []output.IOutput, name string) output.IOutput {
 	for _, o := range outputs {
@@ -285,11 +297,11 @@ func TestElasticSearchWithTagMapOutput_Naming(t *testing.T) {
 
 	// Tagged outputs filter by tag; the catch-all filters by NOT having
 	// any mapped tag.
-	if findOutput(outputs, "ElasticSearchWithTagMap-alpha").GetProcessor("PrintOnlyIfTagged") == nil {
+	if findProcessor(findOutput(outputs, "ElasticSearchWithTagMap-alpha"), "PrintOnlyIfTagged") == nil {
 		t.Error("Tagged output should have the PrintOnlyIfTagged processor")
 	}
 
-	if findOutput(outputs, "ElasticSearchWithTagMap-*").GetProcessor("PrintOnlyIfNotTaggedWith") == nil {
+	if findProcessor(findOutput(outputs, "ElasticSearchWithTagMap-*"), "PrintOnlyIfNotTaggedWith") == nil {
 		t.Error("Catch-all output should have the PrintOnlyIfNotTaggedWith processor")
 	}
 }
@@ -406,11 +418,11 @@ func TestElasticSearchWithTagMapOutput_NoProcessorsAliasing(t *testing.T) {
 		}
 
 		// The shared processor must also be there.
-		if o.GetProcessor(prefixerName) == nil {
+		if findProcessor(o, prefixerName) == nil {
 			t.Errorf("Output %q should carry the shared Prefixer", o.GetName())
 		}
 
-		filter := o.GetProcessor("PrintOnlyIfTagged")
+		filter := findProcessor(o, "PrintOnlyIfTagged")
 
 		if filter == nil {
 			t.Fatalf("Output %q is missing its tag filter", o.GetName())

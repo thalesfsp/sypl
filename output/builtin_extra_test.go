@@ -15,12 +15,23 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/thalesfsp/sypl/v2/internal/builtin"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
 	"github.com/thalesfsp/sypl/v2/processor"
 	"github.com/thalesfsp/sypl/v2/shared"
 )
+
+// getProcessorByName returns the processor registered under `name` - nil
+// if absent. The v2 replacement for the removed `IOutput.GetProcessor`.
+func getProcessorByName(o IOutput, name string) processor.IProcessor {
+	for _, p := range o.GetProcessors() {
+		if strings.EqualFold(p.GetName(), name) {
+			return p
+		}
+	}
+
+	return nil
+}
 
 //////
 // Console, and StdErr.
@@ -41,7 +52,7 @@ func TestConsole(t *testing.T) {
 		t.Error("Console should write to stdout")
 	}
 
-	if o.GetProcessor("Prefixer") == nil {
+	if getProcessorByName(o, "Prefixer") == nil {
 		t.Error("Console should carry the given processors")
 	}
 }
@@ -62,7 +73,7 @@ func TestStdErr(t *testing.T) {
 	}
 
 	// StdErr auto-appends a level restrictor.
-	if o.GetProcessor("PrintOnlyAtLevel") == nil {
+	if getProcessorByName(o, "PrintOnlyAtLevel") == nil {
 		t.Fatal("StdErr should have the PrintOnlyAtLevel processor")
 	}
 
@@ -70,7 +81,7 @@ func TestStdErr(t *testing.T) {
 	// buffer - the real stderr must stay clean.
 	var buf bytes.Buffer
 
-	o.SetBuiltinLogger(builtin.NewBuiltin(&buf, "", 0))
+	o.GetBuiltinLogger().SetOutput(&buf)
 
 	if err := o.Write(message.New(level.Error, "error message")); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)

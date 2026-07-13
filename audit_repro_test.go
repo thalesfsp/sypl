@@ -60,11 +60,9 @@ func TestAudit_CRLFRoundTrip(t *testing.T) {
 // A message targeted at output "es-backup" must not also be written to an
 // output named "es" (substring of the target).
 func TestAudit_OutputDispatchExactMatch(t *testing.T) {
-	bufES, oES := output.SafeBuffer(level.Trace)
-	oES.SetName("es")
+	bufES, oES := namedSafeBuffer("es", level.Trace)
 
-	bufBackup, oBackup := output.SafeBuffer(level.Trace)
-	oBackup.SetName("es-backup")
+	bufBackup, oBackup := namedSafeBuffer("es-backup", level.Trace)
 
 	l := sypl.New("testing", oES, oBackup)
 

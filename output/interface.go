@@ -25,9 +25,6 @@ type IOutput interface {
 	// GetBuiltinLogger returns the Golang's builtin logger.
 	GetBuiltinLogger() *builtin.Builtin
 
-	// SetBuiltinLogger sets the Golang's builtin logger.
-	SetBuiltinLogger(builtinLogger *builtin.Builtin) IOutput
-
 	// GetFormatter returns the formatter.
 	GetFormatter() formatter.IFormatter
 
@@ -42,9 +39,6 @@ type IOutput interface {
 
 	// AddProcessors adds one or more processors.
 	AddProcessors(processors ...processor.IProcessor) IOutput
-
-	// GetProcessor returns the registered processor by its name. If not found, will be nil.
-	GetProcessor(name string) processor.IProcessor
 
 	// SetProcessors sets one or more processors.
 	SetProcessors(processors ...processor.IProcessor) IOutput

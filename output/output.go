@@ -87,14 +87,6 @@ func (o *output) GetName() string {
 	return o.name
 }
 
-// SetName sets the processor name.
-func (o *output) SetName(name string) {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-
-	o.name = name
-}
-
 // GetStatus returns the processor status.
 func (o *output) GetStatus() status.Status {
 	o.mu.RLock()
@@ -121,16 +113,6 @@ func (o *output) GetBuiltinLogger() *builtin.Builtin {
 	defer o.mu.RUnlock()
 
 	return o.builtinLogger
-}
-
-// SetBuiltinLogger sets the Golang's builtin logger.
-func (o *output) SetBuiltinLogger(builtinLogger *builtin.Builtin) IOutput {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-
-	o.builtinLogger = builtinLogger
-
-	return o
 }
 
 // GetFormatter returns the formatter.
@@ -177,18 +159,6 @@ func (o *output) AddProcessors(processors ...processor.IProcessor) IOutput {
 	o.processors = append(o.processors, processors...)
 
 	return o
-}
-
-// GetProcessor returns the registered processor by its name. If not found, will
-// be nil.
-func (o *output) GetProcessor(name string) processor.IProcessor {
-	for _, p := range o.GetProcessors() {
-		if strings.EqualFold(p.GetName(), name) {
-			return p
-		}
-	}
-
-	return nil
 }
 
 // GetProcessors returns registered processors.

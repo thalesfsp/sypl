@@ -184,18 +184,18 @@ func TestMatchersReturnCleanEntries(t *testing.T) {
 
 	d := New("comp", "console")
 
-	if got := d.MatchL(); got != "info" {
-		t.Fatalf("MatchL; expected %q got %q", "info", got)
+	if got := d.matchL(); got != "info" {
+		t.Fatalf("matchL; expected %q got %q", "info", got)
 	}
 
-	if got := d.MatchCOL(); got != "comp:console:debug" {
-		t.Fatalf("MatchCOL; expected %q got %q", "comp:console:debug", got)
+	if got := d.matchCOL(); got != "comp:console:debug" {
+		t.Fatalf("matchCOL; expected %q got %q", "comp:console:debug", got)
 	}
 
 	d = New("comp", "file")
 
-	if got := d.MatchOL(); got != "file:trace" {
-		t.Fatalf("MatchOL; expected %q got %q", "file:trace", got)
+	if got := d.matchOL(); got != "file:trace" {
+		t.Fatalf("matchOL; expected %q got %q", "file:trace", got)
 	}
 }
 

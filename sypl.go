@@ -133,14 +133,6 @@ func (sypl *Sypl) GetName() string {
 	return sypl.Name
 }
 
-// SetName sets the sypl Name.
-func (sypl *Sypl) SetName(name string) {
-	sypl.lock()
-	defer sypl.unlock()
-
-	sypl.Name = name
-}
-
 // GetStatus returns the sypl status.
 func (sypl *Sypl) GetStatus() status.Status {
 	sypl.rLock()
@@ -603,20 +595,6 @@ func (sypl *Sypl) GetMaxLevel() map[string]level.Level {
 	}
 
 	return levelMap
-}
-
-// AnyMaxLevel returns if any output has the specified `maxLevel`.
-func (sypl *Sypl) AnyMaxLevel(l level.Level) bool {
-	// Check level when set when output is created.
-	for _, output := range sypl.GetOutputs() {
-		if output.GetMaxLevel() == l {
-			return true
-		}
-	}
-
-	// Check level when set output `maxLevel` is modified after creation,
-	// real-time, runtime.
-	return os.Getenv(shared.LevelEnvVar) == l.String()
 }
 
 // SetMaxLevel sets the `maxLevel` of all outputs.

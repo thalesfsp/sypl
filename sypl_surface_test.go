@@ -261,11 +261,9 @@ func TestSypl_LeveledMatrix(t *testing.T) {
 
 // GetMaxLevel/SetMaxLevel must read/write the max level of ALL outputs.
 func TestSypl_GetSetMaxLevel(t *testing.T) {
-	_, oA := output.SafeBuffer(level.Info)
-	oA.SetName("A")
+	_, oA := namedSafeBuffer("A", level.Info)
 
-	_, oB := output.SafeBuffer(level.Debug)
-	oB.SetName("B")
+	_, oB := namedSafeBuffer("B", level.Debug)
 
 	l := sypl.New("maxlevel", oA, oB)
 
@@ -279,29 +277,6 @@ func TestSypl_GetSetMaxLevel(t *testing.T) {
 	want = map[string]level.Level{"A": level.Warn, "B": level.Warn}
 	if got := l.GetMaxLevel(); !reflect.DeepEqual(got, want) {
 		t.Fatalf("after SetMaxLevel, GetMaxLevel = %v, expected %v", got, want)
-	}
-}
-
-// AnyMaxLevel must find levels set at output creation, and honor the
-// SYPL_LEVEL env var for runtime changes.
-func TestSypl_AnyMaxLevel(t *testing.T) {
-	_, o := output.SafeBuffer(level.Info)
-
-	l := sypl.New("anymaxlevel", o)
-
-	if !l.AnyMaxLevel(level.Info) {
-		t.Fatal("AnyMaxLevel(info) = false, expected true (output @ info)")
-	}
-
-	if l.AnyMaxLevel(level.Trace) {
-		t.Fatal("AnyMaxLevel(trace) = true, expected false")
-	}
-
-	// Env var branch: no output @ trace, but SYPL_LEVEL says trace.
-	t.Setenv(shared.LevelEnvVar, "trace")
-
-	if !l.AnyMaxLevel(level.Trace) {
-		t.Fatal("AnyMaxLevel(trace) = false, expected true via SYPL_LEVEL")
 	}
 }
 
@@ -331,17 +306,14 @@ func TestSypl_GetOutput(t *testing.T) {
 
 // SetOutputs must replace outputs by name, and silently ignore unknown names.
 func TestSypl_SetOutputs(t *testing.T) {
-	_, oA := output.SafeBuffer(level.Info)
-	oA.SetName("A")
+	_, oA := namedSafeBuffer("A", level.Info)
 
-	_, oB := output.SafeBuffer(level.Info)
-	oB.SetName("B")
+	_, oB := namedSafeBuffer("B", level.Info)
 
 	l := sypl.New("setoutputs", oA, oB)
 
 	// Replace "A" with an output at a different max level.
-	_, oA2 := output.SafeBuffer(level.Trace)
-	oA2.SetName("A")
+	_, oA2 := namedSafeBuffer("A", level.Trace)
 
 	l.SetOutputs(oA2)
 
@@ -354,8 +326,7 @@ func TestSypl_SetOutputs(t *testing.T) {
 	}
 
 	// Unknown name: ignored, not added.
-	_, oGhost := output.SafeBuffer(level.Info)
-	oGhost.SetName("Ghost")
+	_, oGhost := namedSafeBuffer("Ghost", level.Info)
 
 	l.SetOutputs(oGhost)
 
@@ -370,8 +341,7 @@ func TestSypl_SetOutputs(t *testing.T) {
 
 // GetOutputsNames/AddOutputs must reflect registered outputs.
 func TestSypl_GetOutputsNamesAndAddOutputs(t *testing.T) {
-	_, oA := output.SafeBuffer(level.Info)
-	oA.SetName("A")
+	_, oA := namedSafeBuffer("A", level.Info)
 
 	l := sypl.New("names", oA)
 
@@ -379,8 +349,7 @@ func TestSypl_GetOutputsNamesAndAddOutputs(t *testing.T) {
 		t.Fatalf("GetOutputsNames = %v, expected [A]", got)
 	}
 
-	_, oB := output.SafeBuffer(level.Info)
-	oB.SetName("B")
+	_, oB := namedSafeBuffer("B", level.Info)
 
 	l.AddOutputs(oB)
 
@@ -396,15 +365,10 @@ func TestSypl_GetOutputsNamesAndAddOutputs(t *testing.T) {
 func TestSypl_MetaGettersSetters(t *testing.T) {
 	l := sypl.New("meta")
 
-	// Name + String().
+	// Name + String(). V2: the name is fixed at construction - `SetName`
+	// was removed from IMeta.
 	if l.GetName() != "meta" || l.String() != "meta" {
 		t.Fatalf("GetName/String = %q/%q, expected meta", l.GetName(), l.String())
-	}
-
-	l.SetName("renamed")
-
-	if l.GetName() != "renamed" || l.String() != "renamed" {
-		t.Fatalf("after SetName, GetName/String = %q/%q, expected renamed", l.GetName(), l.String())
 	}
 
 	// Status: factory default is enabled.
@@ -497,11 +461,9 @@ func TestSypl_ChildLogger(t *testing.T) {
 // Each message goes only to its named output; unknown outputs drop the
 // message silently.
 func TestSypl_PrintMessagesToOutputs(t *testing.T) {
-	bufA, oA := output.SafeBuffer(level.Trace)
-	oA.SetName("A")
+	bufA, oA := namedSafeBuffer("A", level.Trace)
 
-	bufB, oB := output.SafeBuffer(level.Trace)
-	oB.SetName("B")
+	bufB, oB := namedSafeBuffer("B", level.Trace)
 
 	l := sypl.New("routing", oA, oB)
 
@@ -524,8 +486,7 @@ func TestSypl_PrintMessagesToOutputs(t *testing.T) {
 // outputs/processors names. An unknown output name drops silently.
 func TestSypl_PrintMessagesToOutputsWithOptions(t *testing.T) {
 	// Force flag: message @ debug against an output @ info must print.
-	bufA, oA := output.SafeBuffer(level.Info)
-	oA.SetName("A")
+	bufA, oA := namedSafeBuffer("A", level.Info)
 
 	l := sypl.New("optrouting", oA)
 
@@ -539,8 +500,7 @@ func TestSypl_PrintMessagesToOutputsWithOptions(t *testing.T) {
 	}
 
 	// Fields + tags + processors names merged - observed via JSON formatter.
-	bufB, oB := output.SafeBuffer(level.Trace, processor.Prefixer("SELECTED-"), processor.Suffixer("-MUSTNOTRUN"))
-	oB.SetName("B")
+	bufB, oB := namedSafeBuffer("B", level.Trace, processor.Prefixer("SELECTED-"), processor.Suffixer("-MUSTNOTRUN"))
 	oB.SetFormatter(formatter.JSON())
 
 	lb := sypl.New("optmerge", oB)
@@ -573,11 +533,9 @@ func TestSypl_PrintMessagesToOutputsWithOptions(t *testing.T) {
 	}
 
 	// Options OutputsNames take precedence over the per-message output name.
-	bufC, oC := output.SafeBuffer(level.Trace)
-	oC.SetName("C")
+	bufC, oC := namedSafeBuffer("C", level.Trace)
 
-	bufD, oD := output.SafeBuffer(level.Trace)
-	oD.SetName("D")
+	bufD, oD := namedSafeBuffer("D", level.Trace)
 
 	lc := sypl.New("optprecedence", oC, oD)
 
@@ -595,8 +553,7 @@ func TestSypl_PrintMessagesToOutputsWithOptions(t *testing.T) {
 	}
 
 	// Unknown output name: dropped silently.
-	bufE, oE := output.SafeBuffer(level.Trace)
-	oE.SetName("E")
+	bufE, oE := namedSafeBuffer("E", level.Trace)
 
 	le := sypl.New("optdrop", oE)
 

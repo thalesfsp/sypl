@@ -57,11 +57,6 @@ func (p *Proxy) GetName() string {
 	return p.inner.GetName()
 }
 
-// SetName sets the inner output name.
-func (p *Proxy) SetName(name string) {
-	p.inner.SetName(name)
-}
-
 // GetStatus returns the inner output status.
 func (p *Proxy) GetStatus() status.Status {
 	return p.inner.GetStatus()
@@ -79,13 +74,6 @@ func (p *Proxy) SetStatus(s status.Status) {
 // GetBuiltinLogger returns the inner output's Golang's builtin logger.
 func (p *Proxy) GetBuiltinLogger() *builtin.Builtin {
 	return p.inner.GetBuiltinLogger()
-}
-
-// SetBuiltinLogger sets the inner output's Golang's builtin logger.
-func (p *Proxy) SetBuiltinLogger(builtinLogger *builtin.Builtin) IOutput {
-	p.inner.SetBuiltinLogger(builtinLogger)
-
-	return p.self
 }
 
 // GetFormatter returns the inner output's formatter.
@@ -117,12 +105,6 @@ func (p *Proxy) AddProcessors(processors ...processor.IProcessor) IOutput {
 	p.inner.AddProcessors(processors...)
 
 	return p.self
-}
-
-// GetProcessor returns the inner output's registered processor by its name.
-// If not found, will be nil.
-func (p *Proxy) GetProcessor(name string) processor.IProcessor {
-	return p.inner.GetProcessor(name)
 }
 
 // SetProcessors sets one or more processors on the inner output.

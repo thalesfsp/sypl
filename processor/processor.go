@@ -38,11 +38,6 @@ func (p *processor) GetName() string {
 	return p.name
 }
 
-// SetName sets the processor name.
-func (p *processor) SetName(name string) {
-	p.name = name
-}
-
 // GetStatus returns the processor status.
 func (p *processor) GetStatus() status.Status {
 	return p.status

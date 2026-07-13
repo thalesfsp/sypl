@@ -17,7 +17,6 @@ import (
 	"github.com/thalesfsp/sypl/v2/debug"
 	"github.com/thalesfsp/sypl/v2/flag"
 	"github.com/thalesfsp/sypl/v2/formatter"
-	"github.com/thalesfsp/sypl/v2/internal/builtin"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
 	"github.com/thalesfsp/sypl/v2/processor"
@@ -428,12 +427,6 @@ func TestOutput_GettersAndSetters(t *testing.T) {
 		t.Errorf("String() = %q, want %q", fmt.Sprint(o), "TestOutput")
 	}
 
-	o.SetName("Renamed")
-
-	if o.GetName() != "Renamed" {
-		t.Errorf("GetName() after SetName = %q, want %q", o.GetName(), "Renamed")
-	}
-
 	// Status.
 	if o.GetStatus() != status.Enabled {
 		t.Errorf("GetStatus() = %v, want %v", o.GetStatus(), status.Enabled)
@@ -486,13 +479,14 @@ func TestOutput_ProcessorManagement(t *testing.T) {
 
 	o := New("TestOutput", level.Info, &buf, processor.Prefixer(shared.DefaultPrefixValue))
 
-	// GetProcessor - case-insensitive hit, and miss.
-	if o.GetProcessor("prefixer") == nil {
-		t.Error(`GetProcessor("prefixer") should find "Prefixer" (case-insensitive)`)
+	// Name-based lookup - case-insensitive hit, and miss (v2: via
+	// GetProcessors - IOutput.GetProcessor was removed).
+	if getProcessorByName(o, "prefixer") == nil {
+		t.Error(`lookup "prefixer" should find "Prefixer" (case-insensitive)`)
 	}
 
-	if o.GetProcessor("nonexistent") != nil {
-		t.Error(`GetProcessor("nonexistent") should be nil`)
+	if getProcessorByName(o, "nonexistent") != nil {
+		t.Error(`lookup "nonexistent" should be nil`)
 	}
 
 	// GetProcessorsNames.
@@ -520,7 +514,7 @@ func TestOutput_ProcessorManagement(t *testing.T) {
 
 	m := message.New(level.Info, shared.DefaultContentOutput)
 
-	if err := o.GetProcessor("Prefixer").Run(m); err != nil {
+	if err := getProcessorByName(o, "Prefixer").Run(m); err != nil {
 		t.Fatalf("Run failed: %s", err)
 	}
 
@@ -540,21 +534,19 @@ func TestOutput_ProcessorManagement(t *testing.T) {
 		t.Errorf("SetProcessors with an unknown name should be a no-op. Got %d processors, want 2", got)
 	}
 
-	if o.GetProcessor("Unknown") != nil {
-		t.Error(`GetProcessor("Unknown") should be nil - SetProcessors must not append`)
+	if getProcessorByName(o, "Unknown") != nil {
+		t.Error(`lookup "Unknown" should be nil - SetProcessors must not append`)
 	}
 }
 
-func TestOutput_SetBuiltinLogger(t *testing.T) {
+func TestOutput_BuiltinLoggerRedirect(t *testing.T) {
 	buf, o := newBufferedOutput(level.Trace)
 
 	var redirected bytes.Buffer
 
-	bl := builtin.NewBuiltin(&redirected, "", 0)
-
-	if o.SetBuiltinLogger(bl); o.GetBuiltinLogger() != bl {
-		t.Fatal("GetBuiltinLogger() should return the logger set via SetBuiltinLogger")
-	}
+	// V2: `SetBuiltinLogger` was removed - redirect the existing builtin
+	// logger's destination instead.
+	o.GetBuiltinLogger().SetOutput(&redirected)
 
 	m := message.New(level.Info, shared.DefaultContentOutput)
 
@@ -562,7 +554,7 @@ func TestOutput_SetBuiltinLogger(t *testing.T) {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
-	// The write must land on the new logger's writer - not the original.
+	// The write must land on the redirected destination - not the original.
 	if redirected.String() != shared.DefaultContentOutput {
 		t.Errorf("Redirected buffer = %q, want %q", redirected.String(), shared.DefaultContentOutput)
 	}

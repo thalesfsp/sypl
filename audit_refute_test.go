@@ -213,15 +213,15 @@ func TestAudit_NewDefaultNoProcessorAliasing(t *testing.T) {
 
 	// Structural: Console keeps MuteBasedOnLevel; PrintOnlyAtLevel belongs
 	// to StdErr only.
-	if consoleOut.GetProcessor("MuteBasedOnLevel") == nil {
+	if findProcessor(consoleOut, "MuteBasedOnLevel") == nil {
 		t.Fatalf("Console lost MuteBasedOnLevel: %v", consoleOut.GetProcessorsNames())
 	}
 
-	if consoleOut.GetProcessor("PrintOnlyAtLevel") != nil {
+	if findProcessor(consoleOut, "PrintOnlyAtLevel") != nil {
 		t.Fatalf("Console gained StdErr's PrintOnlyAtLevel: %v", consoleOut.GetProcessorsNames())
 	}
 
-	if stderrOut.GetProcessor("PrintOnlyAtLevel") == nil {
+	if findProcessor(stderrOut, "PrintOnlyAtLevel") == nil {
 		t.Fatalf("StdErr lost PrintOnlyAtLevel: %v", stderrOut.GetProcessorsNames())
 	}
 
@@ -287,17 +287,19 @@ func TestAudit_SyplValueStringer(t *testing.T) {
 
 	// A zero-value Sypl stays usable, as on master (and as with the
 	// by-value mutex): empty name, no-op logging, reconfigurable.
+	//
+	// V2: `SetName` is gone - the name is fixed at construction - so a
+	// zero-value logger keeps its empty name.
 	var zero sypl.Sypl
 
 	if got := zero.String(); got != "" {
 		t.Fatalf(`zero-value String() = %q, expected ""`, got)
 	}
 
-	zero.SetName("zeroed")
 	zero.SetTags("zt")
 
-	if got := fmt.Sprint(zero); got != "zeroed" {
-		t.Fatalf(`zero-value Sprintf after SetName = %q, expected "zeroed"`, got)
+	if got := fmt.Sprint(zero); got != "" {
+		t.Fatalf(`zero-value Sprintf = %q, expected ""`, got)
 	}
 
 	// No outputs: must be a silent no-op, not a panic.
@@ -357,11 +359,9 @@ func TestAudit_FilterSemanticsDrift(t *testing.T) {
 // consistent with GetOutput's EqualFold precedent: WithOutputsNames
 // ("console") targets the output named "Console".
 func TestAudit_OutputDispatchCaseInsensitive(t *testing.T) {
-	bufConsole, oConsole := output.SafeBuffer(level.Trace)
-	oConsole.SetName("Console")
+	bufConsole, oConsole := namedSafeBuffer("Console", level.Trace)
 
-	bufOther, oOther := output.SafeBuffer(level.Trace)
-	oOther.SetName("Other")
+	bufOther, oOther := namedSafeBuffer("Other", level.Trace)
 
 	l := sypl.New("dispatch-case", oConsole, oOther)
 

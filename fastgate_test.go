@@ -271,8 +271,7 @@ func TestFastGate_Reconfiguration(t *testing.T) {
 	// AddOutputs raises the effective max level.
 	l.SetOutputs(output.New("SafeBuffer", level.None, os.Stderr))
 
-	bufHigh, oHigh := output.SafeBuffer(level.Trace)
-	oHigh.SetName("High")
+	bufHigh, oHigh := namedSafeBuffer("High", level.Trace)
 
 	l.AddOutputs(oHigh)
 
@@ -287,12 +286,10 @@ func TestFastGate_Reconfiguration(t *testing.T) {
 func TestFastGate_DisabledOutputIgnored(t *testing.T) {
 	clearSyplEnvVars(t)
 
-	bufTrace, oTrace := output.SafeBuffer(level.Trace)
-	oTrace.SetName("TraceCapped")
+	bufTrace, oTrace := namedSafeBuffer("TraceCapped", level.Trace)
 	oTrace.SetStatus(status.Disabled)
 
-	bufInfo, oInfo := output.SafeBuffer(level.Info)
-	oInfo.SetName("InfoCapped")
+	bufInfo, oInfo := namedSafeBuffer("InfoCapped", level.Info)
 
 	l := sypl.New("fastgate-disabled", oTrace, oInfo)
 	l.SetFastGate(true)

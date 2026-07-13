@@ -80,7 +80,7 @@ type Debug struct {
 	ComponentOutputLevels *regexp.Regexp
 }
 
-// MatchL uses the `Levels` matcher against any valid level, specified at the
+// matchL uses the `Levels` matcher against any valid level, specified at the
 // beginning of the debug env var, examples:
 // - SYPL_DEBUG="info,componentX:outputY:debug,outputZ:trace" -> `info`
 // - SYPL_DEBUG="componentX:outputY:debug,outputZ:trace,info" -> ` `.
@@ -88,26 +88,26 @@ type Debug struct {
 // Notes:
 // - For this matcher, the order matter!
 // - Prefer to use the `Level` method.
-func (d *Debug) MatchL() string {
+func (d *Debug) matchL() string {
 	return strings.Trim(d.Levels.FindString(d.Content), ",")
 }
 
-// MatchOL uses the `OutputLevels` matcher against a specific output, and
+// matchOL uses the `OutputLevels` matcher against a specific output, and
 // any valid level specified in the debug env var, example:
 // - SYPL_DEBUG="info,componentX:outputY:debug,outputZ:trace" -> `trace`
 //
 // NOTE: Prefer to use the `Level` method.
-func (d *Debug) MatchOL() string {
+func (d *Debug) matchOL() string {
 	return strings.Trim(d.OutputLevels.FindString(d.Content), ",")
 }
 
-// MatchCOL uses the `ComponentOutputLevels` matcher against a specific
+// matchCOL uses the `ComponentOutputLevels` matcher against a specific
 // component and output, and any valid level specified in the debug env var,
 // example:
 // - SYPL_DEBUG="info,componentX:outputY:debug,outputZ:trace" -> `debug`.
 //
 // NOTE: Prefer to use the `Level` method.
-func (d *Debug) MatchCOL() string {
+func (d *Debug) matchCOL() string {
 	return strings.Trim(d.ComponentOutputLevels.FindString(d.Content), ",")
 }
 
@@ -135,17 +135,17 @@ func (d *Debug) Level() (level.Level, Matcher, bool) {
 	)
 
 	// Matches' order matters.
-	if lReMatch := d.MatchL(); lReMatch != "" {
+	if lReMatch := d.matchL(); lReMatch != "" {
 		finalLevelAsString = strings.Split(lReMatch, ":")[0]
 		finalMatcher = L
 	}
 
-	if oLReMatch := d.MatchOL(); oLReMatch != "" {
+	if oLReMatch := d.matchOL(); oLReMatch != "" {
 		finalLevelAsString = strings.Split(oLReMatch, ":")[1]
 		finalMatcher = OL
 	}
 
-	if nOLReMatch := d.MatchCOL(); nOLReMatch != "" {
+	if nOLReMatch := d.matchCOL(); nOLReMatch != "" {
 		finalLevelAsString = strings.Split(nOLReMatch, ":")[2]
 		finalMatcher = COL
 	}

@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/thalesfsp/sypl/v2/formatter"
-	"github.com/thalesfsp/sypl/v2/internal/builtin"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
 	"github.com/thalesfsp/sypl/v2/processor"
@@ -31,7 +30,6 @@ import (
 const (
 	asyncMsg0    = "m0\n"
 	prefixerName = "Prefixer"
-	renamedName  = "Renamed"
 )
 
 // waitForBlockedWriter polls the runtime until some goroutine is parked in
@@ -229,12 +227,6 @@ func TestAsync_ProxiesIOutput(t *testing.T) {
 		t.Errorf("GetName() = %q, want %q", a.GetName(), "Inner")
 	}
 
-	a.SetName(renamedName)
-
-	if a.GetName() != renamedName || inner.GetName() != renamedName {
-		t.Error("SetName should reach the inner output")
-	}
-
 	if a.GetStatus() != status.Enabled {
 		t.Errorf("GetStatus() = %v, want %v", a.GetStatus(), status.Enabled)
 	}
@@ -267,14 +259,8 @@ func TestAsync_ProxiesIOutput(t *testing.T) {
 		t.Error("GetFormatter should proxy the inner output")
 	}
 
-	// Builtin logger.
-	bl := builtin.NewBuiltin(&buf, "", 0)
-
-	if got := a.SetBuiltinLogger(bl); got != a {
-		t.Error("SetBuiltinLogger should return the wrapper - not the inner output")
-	}
-
-	if a.GetBuiltinLogger() != bl || inner.GetBuiltinLogger() != bl {
+	// Builtin logger: the getter proxies the inner output's logger.
+	if a.GetBuiltinLogger() != inner.GetBuiltinLogger() {
 		t.Error("GetBuiltinLogger should proxy the inner output")
 	}
 
@@ -283,8 +269,16 @@ func TestAsync_ProxiesIOutput(t *testing.T) {
 		t.Error("AddProcessors should return the wrapper - not the inner output")
 	}
 
-	if a.GetProcessor("Suffixer") == nil {
-		t.Error("GetProcessor should proxy the inner output")
+	found := false
+
+	for _, p := range a.GetProcessors() {
+		if p.GetName() == "Suffixer" {
+			found = true
+		}
+	}
+
+	if !found {
+		t.Error("GetProcessors should proxy the inner output")
 	}
 
 	if len(a.GetProcessors()) != 2 {

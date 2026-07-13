@@ -27,14 +27,11 @@ import (
 // (a) Multi-output routing: a message targeted at one of three outputs must
 // reach only that output.
 func TestE2E_MultiOutputRouting(t *testing.T) {
-	bufA, oA := output.SafeBuffer(level.Trace)
-	oA.SetName("A")
+	bufA, oA := namedSafeBuffer("A", level.Trace)
 
-	bufB, oB := output.SafeBuffer(level.Trace)
-	oB.SetName("B")
+	bufB, oB := namedSafeBuffer("B", level.Trace)
 
-	bufC, oC := output.SafeBuffer(level.Trace)
-	oC.SetName("C")
+	bufC, oC := namedSafeBuffer("C", level.Trace)
 
 	l := sypl.New("e2e-routing", oA, oB, oC)
 

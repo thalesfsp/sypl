@@ -569,14 +569,4 @@ func TestProcessor_NameAndString(t *testing.T) {
 	if fmt.Sprint(p) != "Original" {
 		t.Errorf("String() = %q, want %q", fmt.Sprint(p), "Original")
 	}
-
-	p.SetName("Renamed")
-
-	if p.GetName() != "Renamed" {
-		t.Errorf("GetName() after SetName = %q, want %q", p.GetName(), "Renamed")
-	}
-
-	if fmt.Sprint(p) != "Renamed" {
-		t.Errorf("String() after SetName = %q, want %q", fmt.Sprint(p), "Renamed")
-	}
 }
