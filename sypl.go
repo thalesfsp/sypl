@@ -848,7 +848,6 @@ func (sypl *Sypl) processOutputs(m message.IMessage, outputsNames []string) {
 			go func() {
 				defer wg.Done()
 
-				//nolint:errcheck
 				_ = o.Write(msg)
 			}()
 		}

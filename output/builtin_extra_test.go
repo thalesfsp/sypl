@@ -98,7 +98,6 @@ func TestStdErr(t *testing.T) {
 func TestFileBased(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "filebased.log")
 
-	//nolint:gosec // Test-owned path.
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, shared.DefaultFileMode)
 	if err != nil {
 		t.Fatalf("Failed to create the test file: %v", err)
@@ -116,7 +115,7 @@ func TestFileBased(t *testing.T) {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
-	content, err := os.ReadFile(path) //nolint:gosec // Test-owned path.
+	content, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("Failed to read the log file: %v", err)
 	}
@@ -141,7 +140,7 @@ func TestFile(t *testing.T) {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
-	content, err := os.ReadFile(path) //nolint:gosec // Test-owned path.
+	content, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("Failed to read the log file: %v", err)
 	}
@@ -162,7 +161,7 @@ func TestFile_CreatesMissingDirectories(t *testing.T) {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
-	content, err := os.ReadFile(path) //nolint:gosec // Test-owned path.
+	content, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("Failed to read the log file: %v", err)
 	}
@@ -216,7 +215,7 @@ func TestFile_EmptyPathCreatesTempFile(t *testing.T) {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
-	content, err := os.ReadFile(path) //nolint:gosec // Test-owned path.
+	content, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("Failed to read the log file: %v", err)
 	}
@@ -243,8 +242,8 @@ func TestFile_FatalPaths(t *testing.T) {
 				os.Exit(43)
 			}
 
-			defer os.RemoveAll(dir)
-
+			// No cleanup: File is expected to log.Fatalf, which skips
+			// defers anyway; the OS reclaims the temp dir.
 			File("File", dir, level.Trace)
 		case "mkdirfail":
 			// The parent dir is read-only - the MkdirAll retry fails.
@@ -252,8 +251,6 @@ func TestFile_FatalPaths(t *testing.T) {
 			if err != nil {
 				os.Exit(43)
 			}
-
-			defer os.RemoveAll(parent)
 
 			if err := os.Chmod(parent, 0o555); err != nil {
 				os.Exit(43)

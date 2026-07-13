@@ -123,7 +123,8 @@ func TestGenerateUUID_WellFormedAndErrorPath(t *testing.T) {
 	}
 
 	// Two calls must differ (random-based).
-	if generateUUID() == generateUUID() {
+	first, second := generateUUID(), generateUUID()
+	if first == second {
 		t.Fatal("generateUUID() returned the same value twice")
 	}
 

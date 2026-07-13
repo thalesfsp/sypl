@@ -93,12 +93,12 @@ func newFakeES(t *testing.T, handler http.HandlerFunc) *httptest.Server {
 
 // newTestES creates an `ElasticSearch` against the fake server, exercising
 // the `New` factory - Info ping included.
-func newTestES(t *testing.T, indexName string, handler http.HandlerFunc) *ElasticSearch {
+func newTestES(t *testing.T, handler http.HandlerFunc) *ElasticSearch {
 	t.Helper()
 
 	srv := newFakeES(t, handler)
 
-	return New(indexName, Config{Addresses: []string{srv.URL}})
+	return New("test-index", Config{Addresses: []string{srv.URL}})
 }
 
 //////
@@ -106,7 +106,7 @@ func newTestES(t *testing.T, indexName string, handler http.HandlerFunc) *Elasti
 //////
 
 func TestNew(t *testing.T) {
-	es := newTestES(t, "test-index", nil)
+	es := newTestES(t, nil)
 
 	if es.Client == nil {
 		t.Fatal("New() should set a non-nil client")
@@ -178,9 +178,10 @@ func TestNew_FatalPaths(t *testing.T) {
 
 				_, _ = w.Write([]byte("{"))
 			}))
-			defer srv.Close()
-
 			New("idx", Config{Addresses: []string{srv.URL}})
+
+			// Only reached if New fails to exit; the sentinel below reports it.
+			srv.Close()
 		}
 
 		os.Exit(42)
@@ -257,7 +258,7 @@ func TestElasticSearch_Write(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			es := newTestES(t, "test-index", func(w http.ResponseWriter, r *http.Request) {
+			es := newTestES(t, func(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprint(w, tt.response)
 			})
 
@@ -304,7 +305,7 @@ func TestElasticSearch_Write_DocumentID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			recorder := &requestRecorder{}
 
-			es := newTestES(t, "test-index", func(w http.ResponseWriter, r *http.Request) {
+			es := newTestES(t, func(w http.ResponseWriter, r *http.Request) {
 				recorder.add(capturedRequest{Method: r.Method, Path: r.URL.Path})
 
 				fmt.Fprint(w, `{"result":"created"}`)
@@ -338,7 +339,7 @@ func TestElasticSearch_Write_DocumentID(t *testing.T) {
 func TestElasticSearch_Write_NonJSONData(t *testing.T) {
 	recorder := &requestRecorder{}
 
-	es := newTestES(t, "test-index", func(w http.ResponseWriter, r *http.Request) {
+	es := newTestES(t, func(w http.ResponseWriter, r *http.Request) {
 		recorder.add(capturedRequest{Method: r.Method, Path: r.URL.Path})
 
 		fmt.Fprint(w, `{"result":"created"}`)
@@ -445,7 +446,7 @@ func TestElasticSearch_Write_ErrorResponses(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			es := newTestES(t, "test-index", func(w http.ResponseWriter, r *http.Request) {
+			es := newTestES(t, func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
 
 				fmt.Fprint(w, tt.response)
@@ -496,7 +497,7 @@ func TestElasticSearch_Write_UnexpectedSuccessResponses(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			es := newTestES(t, "test-index", func(w http.ResponseWriter, r *http.Request) {
+			es := newTestES(t, func(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprint(w, tt.response)
 			})
 

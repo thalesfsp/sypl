@@ -46,7 +46,7 @@ func TestAudit_DebugCacheBounded(t *testing.T) {
 	}
 
 	// Simulates dynamically named child loggers, well past the bound.
-	for i := 0; i < bound+64; i++ {
+	for i := range bound + 64 {
 		d := New(fmt.Sprintf("audit-bounded-%d", i), "out")
 
 		// Results stay correct whether cached or compiled fresh.

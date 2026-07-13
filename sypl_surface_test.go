@@ -819,7 +819,7 @@ func TestSypl_Breakpoint(t *testing.T) {
 	l := sypl.New("bp", o)
 
 	// With data.
-	if _, err := w.Write([]byte("\n")); err != nil {
+	if _, err := w.WriteString("\n"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -846,7 +846,7 @@ func TestSypl_Breakpoint(t *testing.T) {
 	// Without data: no "Data:" section.
 	buf.Reset()
 
-	if _, err := w.Write([]byte("\n")); err != nil {
+	if _, err := w.WriteString("\n"); err != nil {
 		t.Fatal(err)
 	}
 

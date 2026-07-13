@@ -10,58 +10,44 @@ import (
 	"github.com/thalesfsp/sypl/flag"
 )
 
+const testValue = "value"
+
 func TestNew(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "Should work - defaults",
-		},
+	o := New()
+
+	if o == nil {
+		t.Fatal("New() = nil, want non-nil")
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			o := New()
 
-			if o == nil {
-				t.Fatal("New() = nil, want non-nil")
-			}
+	if o.Flag != flag.None {
+		t.Errorf("New().Flag = %v, want %v", o.Flag, flag.None)
+	}
 
-			if o.Fields == nil {
-				t.Error("New().Fields = nil, want initialized map")
-			}
+	if o.Fields == nil {
+		t.Error("New().Fields = nil, want initialized map")
+	}
 
-			if len(o.Fields) != 0 {
-				t.Errorf("New().Fields len = %d, want 0", len(o.Fields))
-			}
+	if len(o.Fields) != 0 {
+		t.Errorf("New().Fields len = %d, want 0", len(o.Fields))
+	}
 
-			if o.Flag != flag.None {
-				t.Errorf("New().Flag = %v, want %v", o.Flag, flag.None)
-			}
+	slices := []struct {
+		name  string
+		value []string
+	}{
+		{"OutputsNames", o.OutputsNames},
+		{"ProcessorsNames", o.ProcessorsNames},
+		{"Tags", o.Tags},
+	}
 
-			if o.OutputsNames == nil {
-				t.Error("New().OutputsNames = nil, want initialized slice")
-			}
+	for _, s := range slices {
+		if s.value == nil {
+			t.Errorf("New().%s = nil, want initialized slice", s.name)
+		}
 
-			if len(o.OutputsNames) != 0 {
-				t.Errorf("New().OutputsNames len = %d, want 0", len(o.OutputsNames))
-			}
-
-			if o.ProcessorsNames == nil {
-				t.Error("New().ProcessorsNames = nil, want initialized slice")
-			}
-
-			if len(o.ProcessorsNames) != 0 {
-				t.Errorf("New().ProcessorsNames len = %d, want 0", len(o.ProcessorsNames))
-			}
-
-			if o.Tags == nil {
-				t.Error("New().Tags = nil, want initialized slice")
-			}
-
-			if len(o.Tags) != 0 {
-				t.Errorf("New().Tags len = %d, want 0", len(o.Tags))
-			}
-		})
+		if len(s.value) != 0 {
+			t.Errorf("New().%s len = %d, want 0", s.name, len(s.value))
+		}
 	}
 }
 
@@ -69,10 +55,10 @@ func TestNew(t *testing.T) {
 func TestNew_FieldsWritable(t *testing.T) {
 	o := New()
 
-	o.Fields["key"] = "value"
+	o.Fields["key"] = testValue
 
-	if o.Fields["key"] != "value" {
-		t.Errorf(`New().Fields["key"] = %v, want "value"`, o.Fields["key"])
+	if o.Fields["key"] != testValue {
+		t.Errorf(`New().Fields["key"] = %v, want %q`, o.Fields["key"], testValue)
 	}
 }
 
@@ -85,7 +71,7 @@ func TestNew_IndependentInstances(t *testing.T) {
 		t.Fatal("New() returned the same pointer twice, want distinct instances")
 	}
 
-	o1.Fields["key"] = "value"
+	o1.Fields["key"] = testValue
 
 	o1.OutputsNames = append(o1.OutputsNames, "output")
 

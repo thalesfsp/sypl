@@ -18,7 +18,7 @@ type testData struct {
 	Value int
 
 	// Unexported fields must be dropped by the JSON encoder.
-	hidden string //nolint:structcheck,unused
+	hidden string
 }
 
 func TestPrettify(t *testing.T) {
@@ -166,7 +166,7 @@ func TestGenerateUUID(t *testing.T) {
 func TestGenerateUUID_Uniqueness(t *testing.T) {
 	seen := map[string]bool{}
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		id := GenerateUUID()
 
 		if seen[id] {

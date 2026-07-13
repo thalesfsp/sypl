@@ -62,7 +62,7 @@ func TestAudit_FamilyReconfigureRaceFree(t *testing.T) {
 	go func() {
 		defer fwg.Done()
 
-		for j := 0; j < 100; j++ {
+		for j := range 100 {
 			parent.GetFields()[fmt.Sprintf("p-%d", j)] = j
 		}
 	}()
@@ -70,7 +70,7 @@ func TestAudit_FamilyReconfigureRaceFree(t *testing.T) {
 	go func() {
 		defer fwg.Done()
 
-		for j := 0; j < 100; j++ {
+		for j := range 100 {
 			child.GetFields()[fmt.Sprintf("c-%d", j)] = j
 		}
 	}()
@@ -156,7 +156,7 @@ func TestAudit_FactoryOutputsSliceNotAliased(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 16; i++ {
+	for range 16 {
 		wg.Add(2)
 
 		go func() {
@@ -274,7 +274,7 @@ var _ fmt.Stringer = sypl.Sypl{}
 func TestAudit_SyplValueStringer(t *testing.T) {
 	l := sypl.New("value-stringer")
 
-	if got := fmt.Sprintf("%s", *l); got != "value-stringer" {
+	if got := fmt.Sprint(*l); got != "value-stringer" {
 		t.Fatalf(`Sprintf of a Sypl value = %q, expected "value-stringer"`, got)
 	}
 
@@ -296,7 +296,7 @@ func TestAudit_SyplValueStringer(t *testing.T) {
 	zero.SetName("zeroed")
 	zero.SetTags("zt")
 
-	if got := fmt.Sprintf("%s", zero); got != "zeroed" {
+	if got := fmt.Sprint(zero); got != "zeroed" {
 		t.Fatalf(`zero-value Sprintf after SetName = %q, expected "zeroed"`, got)
 	}
 

@@ -214,11 +214,11 @@ func TestE2E_Concurrent(t *testing.T) {
 
 	wg.Add(goroutines)
 
-	for g := 0; g < goroutines; g++ {
+	for g := range goroutines {
 		go func(g int) {
 			defer wg.Done()
 
-			for j := 0; j < messagesPerRoutine; j++ {
+			for j := range messagesPerRoutine {
 				l.Printlnf(level.Info, "g%02d-m%02d", g, j)
 			}
 		}(g)
@@ -248,8 +248,8 @@ func TestE2E_Concurrent(t *testing.T) {
 		counts[line]++
 	}
 
-	for g := 0; g < goroutines; g++ {
-		for j := 0; j < messagesPerRoutine; j++ {
+	for g := range goroutines {
+		for j := range messagesPerRoutine {
 			expected := fmt.Sprintf("g%02d-m%02d", g, j)
 
 			if counts[expected] != 1 {

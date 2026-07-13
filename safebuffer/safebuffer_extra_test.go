@@ -49,13 +49,13 @@ func TestBuffer_ConcurrentWrites_ByteAccounting(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for g := 0; g < goroutines; g++ {
+	for range goroutines {
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
 
-			for i := 0; i < writesPerRoutine; i++ {
+			for range writesPerRoutine {
 				n, err := buf.Write([]byte(payload))
 				if err != nil {
 					t.Errorf("Write() error = %v, want nil", err)
@@ -104,13 +104,13 @@ func TestBuffer_ConcurrentWriteStringReset(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for g := 0; g < goroutines; g++ {
+	for g := range goroutines {
 		wg.Add(1)
 
 		go func(id int) {
 			defer wg.Done()
 
-			for i := 0; i < iterations; i++ {
+			for i := range iterations {
 				switch (id + i) % 3 {
 				case 0:
 					//nolint:errcheck // Accounting asserted in the writes-only test.

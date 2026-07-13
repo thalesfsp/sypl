@@ -25,6 +25,11 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [1.20.1] - 2026-07-12
+### Changed
+- Test suite and directives conform to the repository's golangci-lint gate
+  (no library behavior changes).
+
 ## [1.20.0] - 2026-07-12
 ### Fixed
 - Data race: `Sypl` and `output` are now safe for concurrent reconfiguration

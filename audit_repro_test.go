@@ -227,7 +227,7 @@ func TestAudit_ReconfigureWhileLoggingRaceFree(t *testing.T) {
 	go func() {
 		defer wg.Done()
 
-		for i := 0; i < 500; i++ {
+		for range 500 {
 			l.Infoln("x")
 		}
 	}()
@@ -235,7 +235,7 @@ func TestAudit_ReconfigureWhileLoggingRaceFree(t *testing.T) {
 	go func() {
 		defer wg.Done()
 
-		for i := 0; i < 500; i++ {
+		for i := range 500 {
 			l.SetMaxLevel(level.Debug)
 			l.SetTags("t")
 			l.SetFields(fields.Fields{"k": i})
