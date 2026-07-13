@@ -187,11 +187,7 @@ func TestConstValues(t *testing.T) {
 	}{
 		{name: "ErrorPrefix", got: ErrorPrefix, want: "[sypl] [Error]"},
 		{name: "WarnPrefix", got: WarnPrefix, want: "[sypl] [Warn]"},
-		{name: "DefaultComponentNameOutput", got: DefaultComponentNameOutput, want: "componentNameTest"},
-		{name: "DefaultContentOutput", got: DefaultContentOutput, want: "contentTest"},
 		{name: "DefaultFileMode", got: DefaultFileMode, want: 0o644},
-		{name: "DefaultPrefixValue", got: DefaultPrefixValue, want: "My Prefix - "},
-		{name: "DefaultTimestampFormat", got: DefaultTimestampFormat, want: "2006"},
 		{name: "FilterEnvVar", got: FilterEnvVar, want: "SYPL_FILTER"},
 		{name: "LevelEnvVar", got: LevelEnvVar, want: "SYPL_LEVEL"},
 	}

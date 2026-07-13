@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/thalesfsp/sypl/v2/flag"
+	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
-	"github.com/thalesfsp/sypl/v2/shared"
 	"github.com/thalesfsp/sypl/v2/status"
 )
 
@@ -32,14 +32,14 @@ func Test_generateDefaultPrefix(t *testing.T) {
 		{
 			name: "Should work",
 			args: args{
-				timestamp: time.Now().Format(shared.DefaultTimestampFormat),
-				component: shared.DefaultComponentNameOutput,
+				timestamp: time.Now().Format(sypltest.DefaultTimestampFormat),
+				component: sypltest.DefaultComponentNameOutput,
 				level:     level.Trace,
 			},
 			want: fmt.Sprintf("%d [%d] [%s] [trace] ",
 				time.Now().Year(),
 				os.Getpid(),
-				shared.DefaultComponentNameOutput,
+				sypltest.DefaultComponentNameOutput,
 			),
 		},
 	}
@@ -65,10 +65,10 @@ func TestPrefixer(t *testing.T) {
 		{
 			name: "Should work",
 			args: args{
-				prefix: shared.DefaultPrefixValue,
+				prefix: sypltest.DefaultPrefixValue,
 			},
-			message: message.New(level.Info, shared.DefaultContentOutput),
-			want:    shared.DefaultPrefixValue + shared.DefaultContentOutput,
+			message: message.New(level.Info, sypltest.DefaultContentOutput),
+			want:    sypltest.DefaultPrefixValue + sypltest.DefaultContentOutput,
 		},
 	}
 	for _, tt := range tests {
@@ -100,8 +100,8 @@ func TestSuffixer(t *testing.T) {
 			args: args{
 				suffix: " - My Suffix",
 			},
-			message: message.New(level.Info, shared.DefaultContentOutput),
-			want:    shared.DefaultContentOutput + " - My Suffix",
+			message: message.New(level.Info, sypltest.DefaultContentOutput),
+			want:    sypltest.DefaultContentOutput + " - My Suffix",
 		},
 	}
 	for _, tt := range tests {
@@ -133,7 +133,7 @@ func TestPrintOnlyAtLevel(t *testing.T) {
 			args: args{
 				levels: []level.Level{level.Info, level.Warn},
 			},
-			message: message.New(level.Info, shared.DefaultContentOutput),
+			message: message.New(level.Info, sypltest.DefaultContentOutput),
 			want:    flag.None,
 		},
 		{
@@ -141,7 +141,7 @@ func TestPrintOnlyAtLevel(t *testing.T) {
 			args: args{
 				levels: []level.Level{level.Info, level.Warn},
 			},
-			message: message.New(level.Warn, shared.DefaultContentOutput),
+			message: message.New(level.Warn, sypltest.DefaultContentOutput),
 			want:    flag.None,
 		},
 		{
@@ -149,7 +149,7 @@ func TestPrintOnlyAtLevel(t *testing.T) {
 			args: args{
 				levels: []level.Level{level.Info, level.Warn},
 			},
-			message: message.New(level.Debug, shared.DefaultContentOutput),
+			message: message.New(level.Debug, sypltest.DefaultContentOutput),
 			want:    flag.Mute,
 		},
 		{
@@ -157,7 +157,7 @@ func TestPrintOnlyAtLevel(t *testing.T) {
 			args: args{
 				levels: []level.Level{level.Trace},
 			},
-			message: message.New(level.Debug, shared.DefaultContentOutput),
+			message: message.New(level.Debug, sypltest.DefaultContentOutput),
 			want:    flag.Mute,
 		},
 		{
@@ -165,7 +165,7 @@ func TestPrintOnlyAtLevel(t *testing.T) {
 			args: args{
 				levels: []level.Level{level.Trace},
 			},
-			message: message.New(level.Trace, shared.DefaultContentOutput),
+			message: message.New(level.Trace, sypltest.DefaultContentOutput),
 			want:    flag.None,
 		},
 	}
@@ -199,19 +199,19 @@ func TestNewProcessor(t *testing.T) {
 			args: args{
 				name: "Prefixer",
 				RunFunc: func(m message.IMessage) error {
-					m.GetContent().SetProcessed(shared.DefaultPrefixValue + m.GetContent().GetProcessed())
+					m.GetContent().SetProcessed(sypltest.DefaultPrefixValue + m.GetContent().GetProcessed())
 
 					return nil
 				},
 			},
-			want: shared.DefaultPrefixValue + shared.DefaultContentOutput,
+			want: sypltest.DefaultPrefixValue + sypltest.DefaultContentOutput,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := New(tt.args.name, tt.args.RunFunc)
 
-			m := message.New(level.Info, shared.DefaultContentOutput)
+			m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 			if err := p.Run(m); err != nil {
 				t.Errorf("Run failed: %s", err)
@@ -240,20 +240,20 @@ func TestProcessor_SetStatus(t *testing.T) {
 			args: args{
 				name: "Prefixer",
 				RunFunc: func(message message.IMessage) error {
-					message.GetContent().SetProcessed(shared.DefaultPrefixValue + message.GetContent().GetProcessed())
+					message.GetContent().SetProcessed(sypltest.DefaultPrefixValue + message.GetContent().GetProcessed())
 
 					return nil
 				},
 			},
 			status: status.Disabled,
-			want:   shared.DefaultContentOutput,
+			want:   sypltest.DefaultContentOutput,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := New(tt.args.name, tt.args.RunFunc)
 
-			m := message.New(level.Info, shared.DefaultContentOutput)
+			m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 			p.SetStatus(tt.status)
 
@@ -284,7 +284,7 @@ func TestProcessor_GetStatus(t *testing.T) {
 			args: args{
 				name: "Prefixer",
 				RunFunc: func(message message.IMessage) error {
-					message.GetContent().SetProcessed(shared.DefaultPrefixValue + message.GetContent().GetProcessed())
+					message.GetContent().SetProcessed(sypltest.DefaultPrefixValue + message.GetContent().GetProcessed())
 
 					return nil
 				},

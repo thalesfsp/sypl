@@ -10,10 +10,10 @@ import (
 	"testing"
 
 	"github.com/thalesfsp/sypl/v2/internal/builtin"
+	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
 	"github.com/thalesfsp/sypl/v2/processor"
-	"github.com/thalesfsp/sypl/v2/shared"
 	"github.com/thalesfsp/sypl/v2/status"
 )
 
@@ -33,7 +33,7 @@ func TestNewOutput(t *testing.T) {
 				name:     "Buffer",
 				maxLevel: level.Trace,
 			},
-			want: shared.DefaultPrefixValue + shared.DefaultContentOutput,
+			want: sypltest.DefaultPrefixValue + sypltest.DefaultContentOutput,
 		},
 	}
 	for _, tt := range tests {
@@ -41,9 +41,9 @@ func TestNewOutput(t *testing.T) {
 			var buf bytes.Buffer
 			bufWriter := bufio.NewWriter(&buf)
 
-			output := New(tt.args.name, tt.args.maxLevel, bufWriter, processor.Prefixer(shared.DefaultPrefixValue))
+			output := New(tt.args.name, tt.args.maxLevel, bufWriter, processor.Prefixer(sypltest.DefaultPrefixValue))
 
-			message := message.New(level.Info, shared.DefaultContentOutput)
+			message := message.New(level.Info, sypltest.DefaultContentOutput)
 
 			if message.GetComponentName() != "" &&
 				message.GetOutputName() != "" &&

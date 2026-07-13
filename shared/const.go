@@ -10,13 +10,9 @@ const (
 	WarnPrefix  = "[sypl] [Warn]"
 )
 
-// Default values used in tests.
+// Default values.
 const (
-	DefaultComponentNameOutput = "componentNameTest"
-	DefaultContentOutput       = "contentTest"
-	DefaultFileMode            = 0o644
-	DefaultPrefixValue         = "My Prefix - "
-	DefaultTimestampFormat     = "2006"
+	DefaultFileMode = 0o644
 )
 
 // Env vars that affects Sypl.

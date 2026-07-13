@@ -15,6 +15,7 @@ import (
 	"github.com/thalesfsp/sypl/v2/fields"
 	"github.com/thalesfsp/sypl/v2/flag"
 	"github.com/thalesfsp/sypl/v2/formatter"
+	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
 	"github.com/thalesfsp/sypl/v2/options"
@@ -72,7 +73,7 @@ func ExampleNew_notChained() {
 	}
 
 	// Adds `Processor` to `Output`.
-	ConsoleToStdOut.AddProcessors(Prefixer(shared.DefaultPrefixValue))
+	ConsoleToStdOut.AddProcessors(Prefixer(sypltest.DefaultPrefixValue))
 
 	// Adds `Output` to logger.
 	testingLogger.AddOutputs(ConsoleToStdOut)
@@ -102,7 +103,7 @@ func ExampleNew_chained() {
 
 					return nil
 				})
-			}(shared.DefaultPrefixValue))).
+			}(sypltest.DefaultPrefixValue))).
 		// Prints:
 		// My Prefix - Test error message
 		Println(level.Error, "Test error message")
@@ -121,7 +122,7 @@ func ExampleNew_chainedUsingBuiltin() {
 		// `stdout` and max print level @ `Info`.
 		//
 		// Adds a `Processor`. It will prefix all messages.
-		AddOutputs(output.Console(level.Info).AddProcessors(processor.Prefixer(shared.DefaultPrefixValue))).
+		AddOutputs(output.Console(level.Info).AddProcessors(processor.Prefixer(sypltest.DefaultPrefixValue))).
 		// Prints: My Prefix - Test info message
 		Infoln("Test info message")
 
@@ -132,7 +133,7 @@ func ExampleNew_chainedUsingBuiltin() {
 // inlineUsingBuiltin same as `ChainedUsingBuiltin` but using inline form.
 func ExampleNew_inlineUsingBuiltin() {
 	sypl.New("Testing Logger", output.Console(level.Info).
-		AddProcessors(processor.Prefixer(shared.DefaultPrefixValue))).
+		AddProcessors(processor.Prefixer(sypltest.DefaultPrefixValue))).
 		Infoln("Test info message")
 
 	// output:
@@ -192,7 +193,7 @@ func ExampleNew_printWithOptions() {
 	testingLogger.AddOutputs(Console1ToStdOut, Console2ToStdOut, Console3ToStdOut)
 
 	// Prints with prefix, without suffix.
-	testingLogger.Print(level.Info, shared.DefaultContentOutput)
+	testingLogger.Print(level.Info, sypltest.DefaultContentOutput)
 
 	fmt.Println(strings.EqualFold(c1buf.String(), "Output: Buffer 1 Processor: Prefixer Content: contentTest"))
 	fmt.Println(strings.EqualFold(c2buf.String(), "Output: Buffer 2 Processor: Prefixer Content: contentTest"))
@@ -205,7 +206,7 @@ func ExampleNew_printWithOptions() {
 	// Prints with prefix, and suffix.
 	testingLogger.PrintWithOptions(
 		level.Info,
-		shared.DefaultContentOutput,
+		sypltest.DefaultContentOutput,
 		sypl.WithOutputsNames("Buffer 1"),
 		sypl.WithProcessorsNames("Prefixer", "SuffixBasedOnTag"),
 		sypl.WithTags("SuffixIt"),
@@ -242,26 +243,26 @@ func ExampleNew_printPretty() {
 // Flags example.
 func ExampleNew_flags() {
 	// Creates logger, and name it.
-	sypl.New("Testing Logger", output.Console(level.Info, processor.Prefixer(shared.DefaultPrefixValue))).
+	sypl.New("Testing Logger", output.Console(level.Info, processor.Prefixer(sypltest.DefaultPrefixValue))).
 		// Message will be processed, and printed independent of `Level`
 		// restrictions.
-		PrintlnWithOptions(level.Debug, shared.DefaultContentOutput, sypl.WithFlag(flag.Force)).
+		PrintlnWithOptions(level.Debug, sypltest.DefaultContentOutput, sypl.WithFlag(flag.Force)).
 
 		// Message will be processed, but not printed.
-		PrintlnWithOptions(level.Info, shared.DefaultContentOutput, sypl.WithFlag(flag.Mute)).
+		PrintlnWithOptions(level.Info, sypltest.DefaultContentOutput, sypl.WithFlag(flag.Mute)).
 
 		// Message will not be processed, but printed.
-		PrintlnWithOptions(level.Info, shared.DefaultContentOutput, sypl.WithFlag(flag.Skip)).
+		PrintlnWithOptions(level.Info, sypltest.DefaultContentOutput, sypl.WithFlag(flag.Skip)).
 
 		// Should not print - restricted by level.
-		Debugln(shared.DefaultContentOutput).
+		Debugln(sypltest.DefaultContentOutput).
 
 		// SkipAndForce message will not be processed, but will be printed
 		// independent of `Level` restrictions.
-		PrintlnWithOptions(level.Debug, shared.DefaultContentOutput, sypl.WithFlag(flag.SkipAndForce)).
+		PrintlnWithOptions(level.Debug, sypltest.DefaultContentOutput, sypl.WithFlag(flag.SkipAndForce)).
 
 		// Message will not be processed, neither printed.
-		PrintlnWithOptions(level.Debug, shared.DefaultContentOutput, sypl.WithFlag(flag.SkipAndMute))
+		PrintlnWithOptions(level.Debug, sypltest.DefaultContentOutput, sypl.WithFlag(flag.SkipAndMute))
 
 	// output:
 	// My Prefix - contentTest
@@ -276,18 +277,18 @@ func ExampleNew_serrorX() {
 	// Creates logger, and name it.
 	testingLogger := sypl.New("Testing Logger", output.Console(level.Info))
 
-	sErrorResult := testingLogger.Serror(shared.DefaultContentOutput)
+	sErrorResult := testingLogger.Serror(sypltest.DefaultContentOutput)
 
 	errExample := errors.New("Failed to reach something")
 	sErrorfResult := testingLogger.Serrorf("Failed to do something, %s", errExample)
 	sErrorlnfResult := testingLogger.Serrorlnf("Failed to do something, %s", errExample)
-	sErrorlnResult := testingLogger.Serrorln(shared.DefaultContentOutput)
+	sErrorlnResult := testingLogger.Serrorln(sypltest.DefaultContentOutput)
 
 	fmt.Print(
-		sErrorResult.Error() == shared.DefaultContentOutput,
+		sErrorResult.Error() == sypltest.DefaultContentOutput,
 		sErrorfResult.Error() == "Failed to do something, Failed to reach something",
 		sErrorlnfResult.Error() == "Failed to do something, Failed to reach something"+"\n",
-		sErrorlnResult.Error() == shared.DefaultContentOutput+"\n",
+		sErrorlnResult.Error() == sypltest.DefaultContentOutput+"\n",
 	)
 
 	// output:
@@ -302,11 +303,11 @@ func ExampleNew_textFormatter() {
 	o.SetFormatter(formatter.Text())
 
 	// Creates logger, and name it.
-	sypl.New(shared.DefaultComponentNameOutput).
+	sypl.New(sypltest.DefaultComponentNameOutput).
 		AddOutputs(o).
 		PrintlnWithOptions(
 			level.Info,
-			shared.DefaultContentOutput,
+			sypltest.DefaultContentOutput,
 			sypl.WithFields(fields.Fields{
 				"field1": "value1",
 				"field2": "value2",
@@ -317,7 +318,7 @@ func ExampleNew_textFormatter() {
 	s := buf.String()
 
 	fmt.Print(
-		strings.Contains(s, shared.DefaultContentOutput),
+		strings.Contains(s, sypltest.DefaultContentOutput),
 		strings.Contains(s, "field1=value1"),
 		strings.Contains(s, "field2=value2"),
 		strings.Contains(s, "field3=value3"),
@@ -340,11 +341,11 @@ func ExampleNew_jsonFormatter() {
 	o.SetFormatter(formatter.JSONPretty())
 
 	// Creates logger, and name it.
-	sypl.New(shared.DefaultComponentNameOutput).
+	sypl.New(sypltest.DefaultComponentNameOutput).
 		AddOutputs(o).
 		PrintWithOptions(
 			level.Info,
-			shared.DefaultContentOutput,
+			sypltest.DefaultContentOutput,
 			sypl.WithFields(fields.Fields{
 				"field1": "value1",
 				"field2": 1,
@@ -389,9 +390,9 @@ func ExampleNew_jsonFormatter() {
 // Simulates a problematic processor.
 func ExampleNew_errorSimulator() {
 	// Creates logger, and name it.
-	sypl.New(shared.DefaultComponentNameOutput).
+	sypl.New(sypltest.DefaultComponentNameOutput).
 		AddOutputs(output.Console(level.Info, processor.ErrorSimulator("Test"))).
-		Infoln(shared.DefaultContentOutput)
+		Infoln(sypltest.DefaultContentOutput)
 
 	// Prints:
 	//
@@ -444,9 +445,9 @@ func ExampleNew_printMessagesToOutputs() {
 // StdErr output example.
 func ExampleNew_stdErrOutputExample() {
 	// Creates logger, and name it.
-	sypl.New(shared.DefaultComponentNameOutput, output.StdErr()).
-		Infoln(shared.DefaultContentOutput).
-		Errorln(shared.DefaultContentOutput)
+	sypl.New(sypltest.DefaultComponentNameOutput, output.StdErr()).
+		Infoln(sypltest.DefaultContentOutput).
+		Errorln(sypltest.DefaultContentOutput)
 
 	// Prints:
 	//
@@ -456,8 +457,8 @@ func ExampleNew_stdErrOutputExample() {
 // NewDefault output example.
 func ExampleNew_newDefault() {
 	// Creates logger, and name it.
-	sypl.NewDefault(shared.DefaultComponentNameOutput, level.Trace).
-		Infoln(shared.DefaultContentOutput).
+	sypl.NewDefault(sypltest.DefaultComponentNameOutput, level.Trace).
+		Infoln(sypltest.DefaultContentOutput).
 		Errorln("error message")
 
 	// Prints:
@@ -469,11 +470,11 @@ func ExampleNew_newDefault() {
 // PrintOnlyIfTagged output example.
 func ExampleNew_printOnlyIfTagged() {
 	// Creates logger, and name it.
-	sypl.NewDefault(shared.DefaultComponentNameOutput, level.Trace, processor.PrintOnlyIfTagged("testTag")).
-		Infoln(shared.DefaultContentOutput).
+	sypl.NewDefault(sypltest.DefaultComponentNameOutput, level.Trace, processor.PrintOnlyIfTagged("testTag")).
+		Infoln(sypltest.DefaultContentOutput).
 		PrintlnWithOptions(
 			level.Info,
-			shared.DefaultContentOutput,
+			sypltest.DefaultContentOutput,
 			sypl.WithTags("testTag"),
 		)
 
@@ -485,7 +486,7 @@ func ExampleNew_printOnlyIfTagged() {
 // Updating outputs' max levels example.
 func ExampleNew_updateOutputsMaxLevel() {
 	// Creates logger, and name it.
-	l := sypl.New(shared.DefaultComponentNameOutput).AddOutputs(
+	l := sypl.New(sypltest.DefaultComponentNameOutput).AddOutputs(
 		output.New("Console 1", level.Info, os.Stdout),
 		output.New("Console 2", level.Debug, os.Stdout),
 		output.New("Console 3", level.Trace, os.Stdout),
@@ -513,7 +514,7 @@ func ExampleNew_updateOutputsMaxLevel() {
 // PrintMessagesToOutputsWithOptions example.
 func ExampleNew_printMessagesToOutputsWithOptions() {
 	// Creates logger, and name it.
-	l := sypl.New(shared.DefaultComponentNameOutput).AddOutputs(
+	l := sypl.New(sypltest.DefaultComponentNameOutput).AddOutputs(
 		output.New("Console 1", level.Trace, os.Stdout).SetFormatter(formatter.Text()),
 		output.New("Console 2", level.Trace, os.Stdout).SetFormatter(formatter.Text()),
 	)
@@ -521,8 +522,8 @@ func ExampleNew_printMessagesToOutputsWithOptions() {
 	l.PrintMessagesToOutputsWithOptions(&options.Options{
 		Fields: fields.Fields{"1": 2},
 	},
-		sypl.MessageToOutput{Content: fmt.Sprintln(shared.DefaultContentOutput), Level: level.Info, OutputName: "Console 1"},
-		sypl.MessageToOutput{Content: fmt.Sprintln(shared.DefaultContentOutput), Level: level.Warn, OutputName: "Console 2"},
+		sypl.MessageToOutput{Content: fmt.Sprintln(sypltest.DefaultContentOutput), Level: level.Info, OutputName: "Console 1"},
+		sypl.MessageToOutput{Content: fmt.Sprintln(sypltest.DefaultContentOutput), Level: level.Warn, OutputName: "Console 2"},
 	)
 
 	// Prints:
@@ -534,11 +535,11 @@ func ExampleNew_printMessagesToOutputsWithOptions() {
 // PrintNewLine example.
 func ExampleNew_printNewLine() {
 	// Creates logger, and name it.
-	l := sypl.New(shared.DefaultComponentNameOutput, output.Console(level.Info))
+	l := sypl.New(sypltest.DefaultComponentNameOutput, output.Console(level.Info))
 
-	l.Infoln(shared.DefaultContentOutput)
+	l.Infoln(sypltest.DefaultContentOutput)
 	l.PrintNewLine()
-	l.Infoln(shared.DefaultContentOutput)
+	l.Infoln(sypltest.DefaultContentOutput)
 
 	// output:
 	// contentTest
@@ -551,15 +552,15 @@ func ExampleNew_globalFields() {
 	buf, o := output.SafeBuffer(level.Info)
 
 	// Creates logger, and name it.
-	l := sypl.New(shared.DefaultComponentNameOutput, o.SetFormatter(formatter.Text()))
+	l := sypl.New(sypltest.DefaultComponentNameOutput, o.SetFormatter(formatter.Text()))
 	l.SetFields(fields.Fields{"a": 1})
 
-	l.Infoln(shared.DefaultContentOutput) // a=1
+	l.Infoln(sypltest.DefaultContentOutput) // a=1
 
-	l.PrintWithOptions(level.Info, shared.DefaultContentOutput,
+	l.PrintWithOptions(level.Info, sypltest.DefaultContentOutput,
 		sypl.WithFields(fields.Fields{"a": 2, "b": 3}))
 
-	l.Infoln(shared.DefaultContentOutput) // a=1
+	l.Infoln(sypltest.DefaultContentOutput) // a=1
 
 	fmt.Println(stringContains(buf.String(), "contentTest", "a=1", "a=2", "b=3"))
 
@@ -572,15 +573,15 @@ func ExampleNew_globalTags() {
 	buf, o := output.SafeBuffer(level.Info)
 
 	// Creates logger, and name it.
-	l := sypl.New(shared.DefaultComponentNameOutput, o.SetFormatter(formatter.JSONPretty()))
+	l := sypl.New(sypltest.DefaultComponentNameOutput, o.SetFormatter(formatter.JSONPretty()))
 	l.SetTags("a", "b")
 
-	l.Infoln(shared.DefaultContentOutput) // a=1
+	l.Infoln(sypltest.DefaultContentOutput) // a=1
 
-	l.PrintWithOptions(level.Info, shared.DefaultContentOutput,
+	l.PrintWithOptions(level.Info, sypltest.DefaultContentOutput,
 		sypl.WithTags("a", "c"))
 
-	l.Infoln(shared.DefaultContentOutput) // a=1
+	l.Infoln(sypltest.DefaultContentOutput) // a=1
 
 	fmt.Println(stringContains(buf.String(), "contentTest", "tags", "a", "b", "c"))
 
@@ -593,10 +594,10 @@ func ExampleNew_globalTagsNonDup() {
 	buf, o := output.SafeBuffer(level.Info)
 
 	// Creates logger, and name it.
-	l := sypl.New(shared.DefaultComponentNameOutput, o.SetFormatter(formatter.JSONPretty()))
+	l := sypl.New(sypltest.DefaultComponentNameOutput, o.SetFormatter(formatter.JSONPretty()))
 	l.SetTags("a", "b")
 
-	l.PrintWithOptions(level.Info, shared.DefaultContentOutput,
+	l.PrintWithOptions(level.Info, sypltest.DefaultContentOutput,
 		sypl.WithTags("a", "a", "c"))
 
 	bufStr := buf.String()
@@ -661,17 +662,17 @@ func ExampleNew_ioWriter() {
 	buf, o := output.SafeBuffer(level.Trace)
 
 	// Creates logger, and name it.
-	l := sypl.New(shared.DefaultComponentNameOutput, o.SetFormatter(formatter.Text()))
+	l := sypl.New(sypltest.DefaultComponentNameOutput, o.SetFormatter(formatter.Text()))
 
 	l.SetDefaultIoWriterLevel(level.Info)
 
-	if _, err := l.Write([]byte(shared.DefaultContentOutput + "1 \n")); err != nil {
+	if _, err := l.Write([]byte(sypltest.DefaultContentOutput + "1 \n")); err != nil {
 		fmt.Println(false)
 	}
 
 	l.SetDefaultIoWriterLevel(level.Warn)
 
-	if _, err := l.Write([]byte(shared.DefaultContentOutput + "2 \n")); err != nil {
+	if _, err := l.Write([]byte(sypltest.DefaultContentOutput + "2 \n")); err != nil {
 		fmt.Println(false)
 	}
 
@@ -681,13 +682,13 @@ func ExampleNew_ioWriter() {
 
 	m.SetDefaultIoWriterLevel(level.Debug)
 
-	if _, err := m.Write([]byte(shared.DefaultContentOutput + "3 \n")); err != nil {
+	if _, err := m.Write([]byte(sypltest.DefaultContentOutput + "3 \n")); err != nil {
 		fmt.Println(false)
 	}
 
 	m.SetDefaultIoWriterLevel(level.Trace)
 
-	if _, err := m.Write([]byte(shared.DefaultContentOutput + "4 \n")); err != nil {
+	if _, err := m.Write([]byte(sypltest.DefaultContentOutput + "4 \n")); err != nil {
 		fmt.Println(false)
 	}
 
@@ -721,7 +722,7 @@ func ExampleNew_tagger() {
 	o.SetFormatter(formatter.Text())
 
 	// Creates logger, and name it.
-	sypl.New(shared.DefaultComponentNameOutput, o).Infoln(shared.DefaultContentOutput)
+	sypl.New(sypltest.DefaultComponentNameOutput, o).Infoln(sypltest.DefaultContentOutput)
 
 	fmt.Print(strings.Contains(buf.String(), "tags=[a, b]"))
 
@@ -736,7 +737,7 @@ func ExampleNew_forcePrintProcessor() {
 	o.SetFormatter(formatter.Text())
 
 	// Creates logger, and name it.
-	sypl.New(shared.DefaultComponentNameOutput, o).Traceln(shared.DefaultContentOutput)
+	sypl.New(sypltest.DefaultComponentNameOutput, o).Traceln(sypltest.DefaultContentOutput)
 
 	fmt.Print(strings.Contains(buf.String(), "message=contentTest"))
 
@@ -751,7 +752,7 @@ func ExampleNew_withID_option() {
 	o.SetFormatter(formatter.JSON())
 
 	// Creates logger, and name it.
-	sypl.New(shared.DefaultComponentNameOutput, o).PrintWithOptions(level.Info, shared.DefaultContentOutput, sypl.WithID("idTest"))
+	sypl.New(sypltest.DefaultComponentNameOutput, o).PrintWithOptions(level.Info, sypltest.DefaultContentOutput, sypl.WithID("idTest"))
 
 	fmt.Print(strings.Contains(buf.String(), `"id":"idTest"`))
 

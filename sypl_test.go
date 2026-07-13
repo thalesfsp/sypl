@@ -18,6 +18,7 @@ import (
 	"github.com/thalesfsp/sypl/v2/fields"
 	"github.com/thalesfsp/sypl/v2/flag"
 	"github.com/thalesfsp/sypl/v2/formatter"
+	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
 	"github.com/thalesfsp/sypl/v2/output"
@@ -39,12 +40,12 @@ func TestNew(t *testing.T) {
 	}
 
 	noneArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.None,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
-			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(shared.DefaultTimestampFormat))
+			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(sypltest.DefaultTimestampFormat))
 
 			New(a.component).AddOutputs(o).Print(a.level, a.content)
 
@@ -53,12 +54,12 @@ func TestNew(t *testing.T) {
 	}
 
 	infoArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Debug,
 		run: func(a args) string {
-			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(shared.DefaultTimestampFormat))
+			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(sypltest.DefaultTimestampFormat))
 
 			New(a.component).AddOutputs(o).Print(a.level, a.content)
 
@@ -70,7 +71,7 @@ func TestNew(t *testing.T) {
 		level:    level.Trace,
 		maxLevel: level.Debug,
 		run: func(a args) string {
-			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(shared.DefaultTimestampFormat))
+			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(sypltest.DefaultTimestampFormat))
 
 			New(a.component).AddOutputs(o).Print(a.level, a.content)
 
@@ -95,8 +96,8 @@ func TestNew(t *testing.T) {
 	}
 
 	fileArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		dir:       t.TempDir(),
 		filename:  "test.log",
 		level:     level.Info,
@@ -128,12 +129,12 @@ func TestNew(t *testing.T) {
 	}
 
 	disableArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
-			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(shared.DefaultTimestampFormat))
+			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(sypltest.DefaultTimestampFormat))
 
 			New(a.component).
 				AddOutputs(o).
@@ -144,12 +145,12 @@ func TestNew(t *testing.T) {
 	}
 
 	errorArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.None, // Will not be used.
 		maxLevel:  level.Trace,
 		run: func(a args) string {
-			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(shared.DefaultTimestampFormat))
+			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(sypltest.DefaultTimestampFormat))
 
 			New(a.component).AddOutputs(o).Errorf("%s", a.content)
 
@@ -158,12 +159,12 @@ func TestNew(t *testing.T) {
 	}
 
 	info2Args := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.None, // Will not be used.
 		maxLevel:  level.Trace,
 		run: func(a args) string {
-			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(shared.DefaultTimestampFormat))
+			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(sypltest.DefaultTimestampFormat))
 
 			New(a.component).AddOutputs(o).Infof("%s", a.content)
 
@@ -172,12 +173,12 @@ func TestNew(t *testing.T) {
 	}
 
 	warnArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.None, // Will not be used.
 		maxLevel:  level.Trace,
 		run: func(a args) string {
-			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(shared.DefaultTimestampFormat))
+			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(sypltest.DefaultTimestampFormat))
 
 			New(a.component).AddOutputs(o).Warnf("%s", a.content)
 
@@ -186,12 +187,12 @@ func TestNew(t *testing.T) {
 	}
 
 	debugArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.None, // Will not be used.
 		maxLevel:  level.Trace,
 		run: func(a args) string {
-			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(shared.DefaultTimestampFormat))
+			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(sypltest.DefaultTimestampFormat))
 
 			New(a.component).AddOutputs(o).Debugf("%s", a.content)
 
@@ -200,12 +201,12 @@ func TestNew(t *testing.T) {
 	}
 
 	trace2Args := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.None, // Will not be used.
 		maxLevel:  level.Trace,
 		run: func(a args) string {
-			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(shared.DefaultTimestampFormat))
+			buf, o := output.SafeBuffer(a.maxLevel, processor.PrefixBasedOnMask(sypltest.DefaultTimestampFormat))
 
 			New(a.component).AddOutputs(o).Tracef("%s", a.content)
 
@@ -214,8 +215,8 @@ func TestNew(t *testing.T) {
 	}
 
 	forceArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Error, // Will not be used.
 		maxLevel:  level.Fatal,
 		run: func(a args) string {
@@ -228,8 +229,8 @@ func TestNew(t *testing.T) {
 	}
 
 	printfArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
@@ -242,8 +243,8 @@ func TestNew(t *testing.T) {
 	}
 
 	printfNewLineArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
@@ -256,8 +257,8 @@ func TestNew(t *testing.T) {
 	}
 
 	printlnArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
@@ -270,15 +271,15 @@ func TestNew(t *testing.T) {
 	}
 
 	prefixBasedOnMaskExceptForLevelsArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info, // Will not be used.
 		maxLevel:  level.Trace,
 		run: func(a args) string {
 			buf, o := output.SafeBuffer(
 				a.maxLevel,
 				processor.PrefixBasedOnMaskExceptForLevels(
-					shared.DefaultTimestampFormat,
+					sypltest.DefaultTimestampFormat,
 					level.Info,
 					level.Warn,
 				),
@@ -294,15 +295,15 @@ func TestNew(t *testing.T) {
 	}
 
 	prefixBasedOnMaskExceptForLevelsDontArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
 			buf, o := output.SafeBuffer(
 				a.maxLevel,
 				processor.PrefixBasedOnMaskExceptForLevels(
-					shared.DefaultTimestampFormat,
+					sypltest.DefaultTimestampFormat,
 					level.Warn),
 			)
 
@@ -313,8 +314,8 @@ func TestNew(t *testing.T) {
 	}
 
 	printWithOptionsArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
@@ -333,8 +334,8 @@ func TestNew(t *testing.T) {
 	}
 
 	printWithOptionsDontArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
@@ -349,8 +350,8 @@ func TestNew(t *testing.T) {
 	}
 
 	enableDisableOutputsArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
@@ -369,8 +370,8 @@ func TestNew(t *testing.T) {
 	}
 
 	changeFirstCharCaseUpperArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
@@ -379,7 +380,7 @@ func TestNew(t *testing.T) {
 
 			New(a.component).
 				AddOutputs(output.New("buffer 1", a.maxLevel, bufWriter, processor.ChangeFirstCharCase(processor.Uppercase))).
-				Info(shared.DefaultContentOutput)
+				Info(sypltest.DefaultContentOutput)
 
 			bufWriter.Flush()
 
@@ -388,7 +389,7 @@ func TestNew(t *testing.T) {
 	}
 
 	changeFirstCharCaseLowerArgs := args{
-		component: shared.DefaultComponentNameOutput,
+		component: sypltest.DefaultComponentNameOutput,
 		content:   "ContentTest",
 		level:     level.Info,
 		maxLevel:  level.Trace,
@@ -398,7 +399,7 @@ func TestNew(t *testing.T) {
 
 			New(a.component).
 				AddOutputs(output.New("buffer 1", a.maxLevel, bufWriter, processor.ChangeFirstCharCase(processor.Lowercase))).
-				Info(shared.DefaultContentOutput)
+				Info(sypltest.DefaultContentOutput)
 
 			bufWriter.Flush()
 
@@ -407,8 +408,8 @@ func TestNew(t *testing.T) {
 	}
 
 	nonChainedNewLoggerArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
@@ -432,7 +433,7 @@ func TestNew(t *testing.T) {
 			}
 
 			// Adds `Processor` to `Output`.
-			ConsoleToStdOut.AddProcessors(Prefixer(shared.DefaultPrefixValue))
+			ConsoleToStdOut.AddProcessors(Prefixer(sypltest.DefaultPrefixValue))
 
 			// Adds `Output` to logger.
 			testingLogger.AddOutputs(ConsoleToStdOut)
@@ -447,8 +448,8 @@ func TestNew(t *testing.T) {
 	}
 
 	printflnArgs := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
@@ -475,8 +476,8 @@ func TestNew(t *testing.T) {
 	}
 
 	PrintWithOptionsFunc := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
@@ -573,14 +574,14 @@ func TestNew(t *testing.T) {
 			name: "Should print - File based",
 			args: fileArgs,
 			want: func(a args) string {
-				return "Test Prefix - " + shared.DefaultContentOutput
+				return "Test Prefix - " + sypltest.DefaultContentOutput
 			},
 		},
 		{
 			name: "Should print - Only prefix (Disabler)",
 			args: disableArgs,
 			want: func(a args) string {
-				return shared.DefaultContentOutput
+				return sypltest.DefaultContentOutput
 			},
 		},
 		{
@@ -647,35 +648,35 @@ func TestNew(t *testing.T) {
 			name: "Should print - Force",
 			args: forceArgs,
 			want: func(a args) string {
-				return shared.DefaultContentOutput + shared.DefaultContentOutput
+				return sypltest.DefaultContentOutput + sypltest.DefaultContentOutput
 			},
 		},
 		{
 			name: "Should print - Printf - No newline",
 			args: printfArgs,
 			want: func(a args) string {
-				return shared.DefaultContentOutput
+				return sypltest.DefaultContentOutput
 			},
 		},
 		{
 			name: "Should print - Printf - Newline",
 			args: printfNewLineArgs,
 			want: func(a args) string {
-				return shared.DefaultContentOutput + "\n"
+				return sypltest.DefaultContentOutput + "\n"
 			},
 		},
 		{
 			name: "Should print - Println",
 			args: printlnArgs,
 			want: func(a args) string {
-				return shared.DefaultContentOutput + "\n"
+				return sypltest.DefaultContentOutput + "\n"
 			},
 		},
 		{
 			name: "Should print not prefixed - PrefixBasedOnMaskExceptForLevels",
 			args: prefixBasedOnMaskExceptForLevelsArgs,
 			want: func(a args) string {
-				return shared.DefaultContentOutput + shared.DefaultContentOutput
+				return sypltest.DefaultContentOutput + sypltest.DefaultContentOutput
 			},
 		},
 		{
@@ -694,7 +695,7 @@ func TestNew(t *testing.T) {
 			name: "Should print - printWithOptions",
 			args: printWithOptionsArgs,
 			want: func(a args) string {
-				return shared.DefaultContentOutput
+				return sypltest.DefaultContentOutput
 			},
 		},
 		{
@@ -708,7 +709,7 @@ func TestNew(t *testing.T) {
 			name: "Should print - enableDisableOutputsArgs",
 			args: enableDisableOutputsArgs,
 			want: func(a args) string {
-				return shared.DefaultContentOutput
+				return sypltest.DefaultContentOutput
 			},
 		},
 		{
@@ -722,7 +723,7 @@ func TestNew(t *testing.T) {
 			name: "Should print - changeFirstCharCaseLowerArgs",
 			args: changeFirstCharCaseLowerArgs,
 			want: func(a args) string {
-				return shared.DefaultContentOutput
+				return sypltest.DefaultContentOutput
 			},
 		},
 		{

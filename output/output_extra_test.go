@@ -17,6 +17,7 @@ import (
 	"github.com/thalesfsp/sypl/v2/debug"
 	"github.com/thalesfsp/sypl/v2/flag"
 	"github.com/thalesfsp/sypl/v2/formatter"
+	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
 	"github.com/thalesfsp/sypl/v2/processor"
@@ -110,7 +111,7 @@ func TestOutput_Write_Dispatch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			buf, o := newBufferedOutput(tt.maxLevel)
 
-			m := message.New(tt.msgLevel, shared.DefaultContentOutput)
+			m := message.New(tt.msgLevel, sypltest.DefaultContentOutput)
 
 			m.SetFlag(tt.flag)
 
@@ -118,8 +119,8 @@ func TestOutput_Write_Dispatch(t *testing.T) {
 				t.Fatalf("Write() error = %v, want nil", err)
 			}
 
-			if tt.wantWrite && !strings.Contains(buf.String(), shared.DefaultContentOutput) {
-				t.Errorf("Expected %q to be written, buffer: %q", shared.DefaultContentOutput, buf.String())
+			if tt.wantWrite && !strings.Contains(buf.String(), sypltest.DefaultContentOutput) {
+				t.Errorf("Expected %q to be written, buffer: %q", sypltest.DefaultContentOutput, buf.String())
 			}
 
 			if !tt.wantWrite && buf.Len() != 0 {
@@ -139,11 +140,11 @@ func TestOutput_Write_SkipFlagsBypassProcessing(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			buf, o := newBufferedOutput(level.Trace, processor.Prefixer(shared.DefaultPrefixValue))
+			buf, o := newBufferedOutput(level.Trace, processor.Prefixer(sypltest.DefaultPrefixValue))
 
 			o.SetFormatter(formatter.JSON())
 
-			m := message.New(level.Info, shared.DefaultContentOutput)
+			m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 			m.SetFlag(tt.flag)
 
@@ -153,8 +154,8 @@ func TestOutput_Write_SkipFlagsBypassProcessing(t *testing.T) {
 
 			// Raw content only: no prefix (processing skipped), and no JSON
 			// (formatting skipped).
-			if buf.String() != shared.DefaultContentOutput {
-				t.Errorf("Expected raw content %q, got %q", shared.DefaultContentOutput, buf.String())
+			if buf.String() != sypltest.DefaultContentOutput {
+				t.Errorf("Expected raw content %q, got %q", sypltest.DefaultContentOutput, buf.String())
 			}
 		})
 	}
@@ -162,17 +163,17 @@ func TestOutput_Write_SkipFlagsBypassProcessing(t *testing.T) {
 
 func TestOutput_Write_ProcessorsAreApplied(t *testing.T) {
 	buf, o := newBufferedOutput(level.Trace,
-		processor.Prefixer(shared.DefaultPrefixValue),
+		processor.Prefixer(sypltest.DefaultPrefixValue),
 		processor.Suffixer(" - suffixed"),
 	)
 
-	m := message.New(level.Info, shared.DefaultContentOutput)
+	m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 	if err := o.Write(m); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
-	want := shared.DefaultPrefixValue + shared.DefaultContentOutput + " - suffixed"
+	want := sypltest.DefaultPrefixValue + sypltest.DefaultContentOutput + " - suffixed"
 
 	if buf.String() != want {
 		t.Errorf("Write() output = %q, want %q", buf.String(), want)
@@ -181,11 +182,11 @@ func TestOutput_Write_ProcessorsAreApplied(t *testing.T) {
 
 func TestOutput_Write_MessageSelectedProcessors(t *testing.T) {
 	buf, o := newBufferedOutput(level.Trace,
-		processor.Prefixer(shared.DefaultPrefixValue),
+		processor.Prefixer(sypltest.DefaultPrefixValue),
 		processor.Suffixer(" - suffixed"),
 	)
 
-	m := message.New(level.Info, shared.DefaultContentOutput)
+	m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 	// The message narrows processing down to a single processor.
 	m.SetProcessorsNames([]string{"Suffixer"})
@@ -194,7 +195,7 @@ func TestOutput_Write_MessageSelectedProcessors(t *testing.T) {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
-	want := shared.DefaultContentOutput + " - suffixed"
+	want := sypltest.DefaultContentOutput + " - suffixed"
 
 	if buf.String() != want {
 		t.Errorf("Write() output = %q, want %q", buf.String(), want)
@@ -209,13 +210,13 @@ func TestOutput_Write_ProcessorErrorContinues(t *testing.T) {
 		processor.Suffixer(" - suffixed"),
 	)
 
-	m := message.New(level.Info, shared.DefaultContentOutput)
+	m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 	if err := o.Write(m); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
-	want := shared.DefaultContentOutput + " - suffixed"
+	want := sypltest.DefaultContentOutput + " - suffixed"
 
 	if buf.String() != want {
 		t.Errorf("Write() output = %q, want %q", buf.String(), want)
@@ -231,7 +232,7 @@ func TestOutput_Write_WithFormatter(t *testing.T) {
 
 	o.SetFormatter(formatter.JSON())
 
-	m := message.New(level.Info, shared.DefaultContentOutput)
+	m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 	if err := o.Write(m); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
@@ -243,8 +244,8 @@ func TestOutput_Write_WithFormatter(t *testing.T) {
 		t.Fatalf("Formatted output isn't valid JSON: %v.\nOutput: %s", err, buf.String())
 	}
 
-	if parsed["message"] != shared.DefaultContentOutput {
-		t.Errorf(`message = %v, want %q`, parsed["message"], shared.DefaultContentOutput)
+	if parsed["message"] != sypltest.DefaultContentOutput {
+		t.Errorf(`message = %v, want %q`, parsed["message"], sypltest.DefaultContentOutput)
 	}
 }
 
@@ -257,14 +258,14 @@ func TestOutput_Write_FormatterErrorContinues(t *testing.T) {
 		return errors.New("formatter boom")
 	}))
 
-	m := message.New(level.Info, shared.DefaultContentOutput)
+	m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 	if err := o.Write(m); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
-	if buf.String() != shared.DefaultContentOutput {
-		t.Errorf("Write() output = %q, want %q", buf.String(), shared.DefaultContentOutput)
+	if buf.String() != sypltest.DefaultContentOutput {
+		t.Errorf("Write() output = %q, want %q", buf.String(), sypltest.DefaultContentOutput)
 	}
 }
 
@@ -301,7 +302,7 @@ func TestOutput_Write_EnvVarLevelOverride(t *testing.T) {
 
 			buf, o := newBufferedOutput(level.Info)
 
-			m := message.New(level.Debug, shared.DefaultContentOutput)
+			m := message.New(level.Debug, sypltest.DefaultContentOutput)
 
 			// In the real pipeline (sypl.go), the debug matchers are set
 			// on the message before it reaches the output.
@@ -311,7 +312,7 @@ func TestOutput_Write_EnvVarLevelOverride(t *testing.T) {
 				t.Fatalf("Write() error = %v, want nil", err)
 			}
 
-			if tt.wantWrite && !strings.Contains(buf.String(), shared.DefaultContentOutput) {
+			if tt.wantWrite && !strings.Contains(buf.String(), sypltest.DefaultContentOutput) {
 				t.Errorf("Expected message to be written, buffer: %q", buf.String())
 			}
 
@@ -362,7 +363,7 @@ func TestOutput_Write_WriterErrors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			o := New("TestOutput", level.Trace, &failingWriter{err: tt.writerErr})
 
-			m := message.New(level.Info, shared.DefaultContentOutput)
+			m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 			err := o.Write(m)
 
@@ -395,7 +396,7 @@ func TestOutput_Write_WriterErrorWithForceFlag(t *testing.T) {
 	// behave the same.
 	o := New("TestOutput", level.Info, &failingWriter{err: errors.New("disk full")})
 
-	m := message.New(level.Trace, shared.DefaultContentOutput)
+	m := message.New(level.Trace, sypltest.DefaultContentOutput)
 
 	m.SetFlag(flag.Force)
 
@@ -416,7 +417,7 @@ func TestOutput_Write_WriterErrorWithForceFlag(t *testing.T) {
 func TestOutput_GettersAndSetters(t *testing.T) {
 	var buf bytes.Buffer
 
-	o := New("TestOutput", level.Info, &buf, processor.Prefixer(shared.DefaultPrefixValue))
+	o := New("TestOutput", level.Info, &buf, processor.Prefixer(sypltest.DefaultPrefixValue))
 
 	// Name, and String.
 	if o.GetName() != "TestOutput" {
@@ -477,7 +478,7 @@ func TestOutput_GettersAndSetters(t *testing.T) {
 func TestOutput_ProcessorManagement(t *testing.T) {
 	var buf bytes.Buffer
 
-	o := New("TestOutput", level.Info, &buf, processor.Prefixer(shared.DefaultPrefixValue))
+	o := New("TestOutput", level.Info, &buf, processor.Prefixer(sypltest.DefaultPrefixValue))
 
 	// Name-based lookup - case-insensitive hit, and miss (v2: via
 	// GetProcessors - IOutput.GetProcessor was removed).
@@ -512,7 +513,7 @@ func TestOutput_ProcessorManagement(t *testing.T) {
 
 	o.SetProcessors(replacement)
 
-	m := message.New(level.Info, shared.DefaultContentOutput)
+	m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 	if err := getProcessorByName(o, "Prefixer").Run(m); err != nil {
 		t.Fatalf("Run failed: %s", err)
@@ -548,15 +549,15 @@ func TestOutput_BuiltinLoggerRedirect(t *testing.T) {
 	// logger's destination instead.
 	o.GetBuiltinLogger().SetOutput(&redirected)
 
-	m := message.New(level.Info, shared.DefaultContentOutput)
+	m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 	if err := o.Write(m); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
 	// The write must land on the redirected destination - not the original.
-	if redirected.String() != shared.DefaultContentOutput {
-		t.Errorf("Redirected buffer = %q, want %q", redirected.String(), shared.DefaultContentOutput)
+	if redirected.String() != sypltest.DefaultContentOutput {
+		t.Errorf("Redirected buffer = %q, want %q", redirected.String(), sypltest.DefaultContentOutput)
 	}
 
 	if buf.Len() != 0 {

@@ -10,9 +10,9 @@ import (
 
 	"github.com/thalesfsp/sypl/v2/color"
 	"github.com/thalesfsp/sypl/v2/flag"
+	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
-	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 //////
@@ -113,7 +113,7 @@ func TestChangeFirstCharCase(t *testing.T) {
 func TestChangeFirstCharCase_EmptyProcessedContent(t *testing.T) {
 	// Non-empty original, but the processed content was emptied by an
 	// earlier processor - nothing to change, and no panic.
-	m := message.New(level.Info, shared.DefaultContentOutput)
+	m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 	m.GetContent().SetProcessed("")
 
@@ -139,19 +139,19 @@ func TestColorizeBasedOnLevel(t *testing.T) {
 		{
 			name:  "Should colorize - level matches",
 			level: level.Info,
-			want:  "<C>" + shared.DefaultContentOutput + "</C>",
+			want:  "<C>" + sypltest.DefaultContentOutput + "</C>",
 		},
 		{
 			name:  "Should not colorize - level doesn't match",
 			level: level.Warn,
-			want:  shared.DefaultContentOutput,
+			want:  sypltest.DefaultContentOutput,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := ColorizeBasedOnLevel(map[level.Level]color.Color{level.Info: fakeColor})
 
-			m := runProcessor(t, p, tt.level, shared.DefaultContentOutput)
+			m := runProcessor(t, p, tt.level, sypltest.DefaultContentOutput)
 
 			if got := m.GetContent().GetProcessed(); got != tt.want {
 				t.Errorf("ColorizeBasedOnLevel() = %q, want %q", got, tt.want)
@@ -203,8 +203,8 @@ func TestDecolourizer(t *testing.T) {
 		},
 		{
 			name:    "Should pass through - no ANSI codes",
-			content: shared.DefaultContentOutput,
-			want:    shared.DefaultContentOutput,
+			content: sypltest.DefaultContentOutput,
+			want:    sypltest.DefaultContentOutput,
 		},
 		{
 			name:    "Should pass through - empty content",
@@ -234,7 +234,7 @@ func TestErrorSimulator(t *testing.T) {
 		t.Errorf("GetName() = %q, want %q", p.GetName(), "ErrorSimulator")
 	}
 
-	m := message.New(level.Info, shared.DefaultContentOutput)
+	m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 	err := p.Run(m)
 	if err == nil {
@@ -257,7 +257,7 @@ func TestFlagger(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := runProcessor(t, Flagger(tt.flag), level.Info, shared.DefaultContentOutput)
+			m := runProcessor(t, Flagger(tt.flag), level.Info, sypltest.DefaultContentOutput)
 
 			if got := m.GetFlag(); got != tt.flag {
 				t.Errorf("Flagger() flag = %v, want %v", got, tt.flag)
@@ -298,7 +298,7 @@ func TestForceBasedOnLevel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := runProcessor(t, ForceBasedOnLevel(tt.levels...), tt.level, shared.DefaultContentOutput)
+			m := runProcessor(t, ForceBasedOnLevel(tt.levels...), tt.level, sypltest.DefaultContentOutput)
 
 			if got := m.GetFlag(); got != tt.want {
 				t.Errorf("ForceBasedOnLevel() flag = %v, want %v", got, tt.want)
@@ -335,7 +335,7 @@ func TestMuteBasedOnLevel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := runProcessor(t, MuteBasedOnLevel(tt.levels...), tt.level, shared.DefaultContentOutput)
+			m := runProcessor(t, MuteBasedOnLevel(tt.levels...), tt.level, sypltest.DefaultContentOutput)
 
 			if got := m.GetFlag(); got != tt.want {
 				t.Errorf("MuteBasedOnLevel() flag = %v, want %v", got, tt.want)
@@ -346,7 +346,7 @@ func TestMuteBasedOnLevel(t *testing.T) {
 
 func TestPrintOnlyAtLevel_EmptySet(t *testing.T) {
 	// An empty set means no level is allowed - everything is muted.
-	m := runProcessor(t, PrintOnlyAtLevel(), level.Info, shared.DefaultContentOutput)
+	m := runProcessor(t, PrintOnlyAtLevel(), level.Info, sypltest.DefaultContentOutput)
 
 	if got := m.GetFlag(); got != flag.Mute {
 		t.Errorf("PrintOnlyAtLevel() flag = %v, want %v", got, flag.Mute)
@@ -358,19 +358,19 @@ func TestPrintOnlyAtLevel_EmptySet(t *testing.T) {
 //////
 
 func TestPrefixBasedOnMask(t *testing.T) {
-	m := message.New(level.Info, shared.DefaultContentOutput)
+	m := message.New(level.Info, sypltest.DefaultContentOutput)
 
-	m.SetComponentName(shared.DefaultComponentNameOutput)
+	m.SetComponentName(sypltest.DefaultComponentNameOutput)
 
-	if err := PrefixBasedOnMask(shared.DefaultTimestampFormat).Run(m); err != nil {
+	if err := PrefixBasedOnMask(sypltest.DefaultTimestampFormat).Run(m); err != nil {
 		t.Fatalf("Run failed: %s", err)
 	}
 
 	want := generateDefaultPrefix(
-		m.GetTimestamp().Format(shared.DefaultTimestampFormat),
-		shared.DefaultComponentNameOutput,
+		m.GetTimestamp().Format(sypltest.DefaultTimestampFormat),
+		sypltest.DefaultComponentNameOutput,
 		level.Info,
-	) + shared.DefaultContentOutput
+	) + sypltest.DefaultContentOutput
 
 	if got := m.GetContent().GetProcessed(); got != want {
 		t.Errorf("PrefixBasedOnMask() = %q, want %q", got, want)
@@ -405,24 +405,24 @@ func TestPrefixBasedOnMaskExceptForLevels(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := message.New(tt.level, shared.DefaultContentOutput)
+			m := message.New(tt.level, sypltest.DefaultContentOutput)
 
-			m.SetComponentName(shared.DefaultComponentNameOutput)
+			m.SetComponentName(sypltest.DefaultComponentNameOutput)
 
-			p := PrefixBasedOnMaskExceptForLevels(shared.DefaultTimestampFormat, tt.exceptions...)
+			p := PrefixBasedOnMaskExceptForLevels(sypltest.DefaultTimestampFormat, tt.exceptions...)
 
 			if err := p.Run(m); err != nil {
 				t.Fatalf("Run failed: %s", err)
 			}
 
-			want := shared.DefaultContentOutput
+			want := sypltest.DefaultContentOutput
 
 			if tt.wantPrefix {
 				want = generateDefaultPrefix(
-					m.GetTimestamp().Format(shared.DefaultTimestampFormat),
-					shared.DefaultComponentNameOutput,
+					m.GetTimestamp().Format(sypltest.DefaultTimestampFormat),
+					sypltest.DefaultComponentNameOutput,
 					tt.level,
-				) + shared.DefaultContentOutput
+				) + sypltest.DefaultContentOutput
 			}
 
 			if got := m.GetContent().GetProcessed(); got != want {
@@ -465,7 +465,7 @@ func TestPrintOnlyIfTagged(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := message.New(level.Info, shared.DefaultContentOutput)
+			m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 			m.AddTags(tt.tags...)
 
@@ -514,7 +514,7 @@ func TestPrintOnlyIfNotTaggedWith(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := message.New(level.Info, shared.DefaultContentOutput)
+			m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 			m.AddTags(tt.messageTags...)
 
@@ -540,7 +540,7 @@ func TestTagger(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := runProcessor(t, Tagger(tt.tags...), level.Info, shared.DefaultContentOutput)
+			m := runProcessor(t, Tagger(tt.tags...), level.Info, sypltest.DefaultContentOutput)
 
 			for _, tag := range tt.tags {
 				if !m.ContainTag(tag) {

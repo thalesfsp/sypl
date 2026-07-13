@@ -11,18 +11,18 @@ import (
 
 	"github.com/thalesfsp/sypl/v2/fields"
 	"github.com/thalesfsp/sypl/v2/flag"
+	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
-	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 // fullyLoadedMessage builds a message exercising every optional branch of
 // `mapBuilder`: tags, flag, outputs names, processors names, and fields -
 // including a nil-valued field, which must be dropped.
 func fullyLoadedMessage() message.IMessage {
-	m := message.New(level.Info, shared.DefaultContentOutput)
+	m := message.New(level.Info, sypltest.DefaultContentOutput)
 
-	m.SetComponentName(shared.DefaultComponentNameOutput)
+	m.SetComponentName(sypltest.DefaultComponentNameOutput)
 	m.SetOutputName("Console")
 	m.AddTags("alpha", "beta")
 	m.SetFlag(flag.Force)
@@ -56,8 +56,8 @@ func assertFullyLoadedJSON(t *testing.T, m message.IMessage, parsed map[string]i
 	t.Helper()
 
 	// Always-present keys.
-	if parsed["component"] != shared.DefaultComponentNameOutput {
-		t.Errorf(`component = %v, want %q`, parsed["component"], shared.DefaultComponentNameOutput)
+	if parsed["component"] != sypltest.DefaultComponentNameOutput {
+		t.Errorf(`component = %v, want %q`, parsed["component"], sypltest.DefaultComponentNameOutput)
 	}
 
 	if parsed["output"] != "Console" {
@@ -68,8 +68,8 @@ func assertFullyLoadedJSON(t *testing.T, m message.IMessage, parsed map[string]i
 		t.Errorf(`level = %v, want "info"`, parsed["level"])
 	}
 
-	if parsed["message"] != shared.DefaultContentOutput {
-		t.Errorf(`message = %v, want %q`, parsed["message"], shared.DefaultContentOutput)
+	if parsed["message"] != sypltest.DefaultContentOutput {
+		t.Errorf(`message = %v, want %q`, parsed["message"], sypltest.DefaultContentOutput)
 	}
 
 	if parsed["id"] != m.GetID() {
@@ -143,7 +143,7 @@ func TestJSONPretty_FullyLoadedMessage(t *testing.T) {
 func TestJSON_MinimalMessage(t *testing.T) {
 	// No tags, no flag, no outputs/processors names, no fields - every
 	// conditional key must be absent.
-	m := message.New(level.Error, shared.DefaultContentOutput)
+	m := message.New(level.Error, sypltest.DefaultContentOutput)
 
 	if err := JSON().Run(m); err != nil {
 		t.Fatalf("JSON() error: %v", err)
@@ -163,9 +163,9 @@ func TestJSON_MinimalMessage(t *testing.T) {
 }
 
 func TestText_TagsAndNilFields(t *testing.T) {
-	m := message.New(level.Info, shared.DefaultContentOutput)
+	m := message.New(level.Info, sypltest.DefaultContentOutput)
 
-	m.SetComponentName(shared.DefaultComponentNameOutput)
+	m.SetComponentName(sypltest.DefaultComponentNameOutput)
 	m.SetOutputName("Console")
 	m.AddTags("alpha")
 	m.SetFields(fields.Fields{
@@ -197,7 +197,7 @@ func TestText_TagsAndNilFields(t *testing.T) {
 }
 
 func TestText_NoTagsNoFields(t *testing.T) {
-	m := message.New(level.Info, shared.DefaultContentOutput)
+	m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 	if err := Text().Run(m); err != nil {
 		t.Fatalf("Text() error: %v", err)
@@ -209,7 +209,7 @@ func TestText_NoTagsNoFields(t *testing.T) {
 		t.Errorf("Text() = %q, tags should be absent", got)
 	}
 
-	if !strings.Contains(got, "message="+shared.DefaultContentOutput) {
+	if !strings.Contains(got, "message="+sypltest.DefaultContentOutput) {
 		t.Errorf("Text() = %q, missing the message", got)
 	}
 }

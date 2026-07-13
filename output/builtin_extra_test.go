@@ -15,6 +15,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
 	"github.com/thalesfsp/sypl/v2/processor"
@@ -38,7 +39,7 @@ func getProcessorByName(o IOutput, name string) processor.IProcessor {
 //////
 
 func TestConsole(t *testing.T) {
-	o := Console(level.Debug, processor.Prefixer(shared.DefaultPrefixValue))
+	o := Console(level.Debug, processor.Prefixer(sypltest.DefaultPrefixValue))
 
 	if o.GetName() != "Console" {
 		t.Errorf("GetName() = %q, want %q", o.GetName(), "Console")
@@ -116,13 +117,13 @@ func TestFileBased(t *testing.T) {
 
 	defer f.Close()
 
-	o := FileBased("MyFile", level.Trace, f, processor.Prefixer(shared.DefaultPrefixValue))
+	o := FileBased("MyFile", level.Trace, f, processor.Prefixer(sypltest.DefaultPrefixValue))
 
 	if o.GetName() != "MyFile" {
 		t.Errorf("GetName() = %q, want %q", o.GetName(), "MyFile")
 	}
 
-	if err := o.Write(message.New(level.Info, shared.DefaultContentOutput)); err != nil {
+	if err := o.Write(message.New(level.Info, sypltest.DefaultContentOutput)); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
@@ -131,7 +132,7 @@ func TestFileBased(t *testing.T) {
 		t.Fatalf("Failed to read the log file: %v", err)
 	}
 
-	want := shared.DefaultPrefixValue + shared.DefaultContentOutput
+	want := sypltest.DefaultPrefixValue + sypltest.DefaultContentOutput
 
 	if string(content) != want {
 		t.Errorf("File content = %q, want %q", string(content), want)
@@ -147,7 +148,7 @@ func TestFile(t *testing.T) {
 		t.Errorf("GetName() = %q, want %q", o.GetName(), "File")
 	}
 
-	if err := o.Write(message.New(level.Info, shared.DefaultContentOutput)); err != nil {
+	if err := o.Write(message.New(level.Info, sypltest.DefaultContentOutput)); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
@@ -156,8 +157,8 @@ func TestFile(t *testing.T) {
 		t.Fatalf("Failed to read the log file: %v", err)
 	}
 
-	if string(content) != shared.DefaultContentOutput {
-		t.Errorf("File content = %q, want %q", string(content), shared.DefaultContentOutput)
+	if string(content) != sypltest.DefaultContentOutput {
+		t.Errorf("File content = %q, want %q", string(content), sypltest.DefaultContentOutput)
 	}
 }
 
@@ -168,7 +169,7 @@ func TestFile_CreatesMissingDirectories(t *testing.T) {
 
 	o := File("File", path, level.Trace)
 
-	if err := o.Write(message.New(level.Info, shared.DefaultContentOutput)); err != nil {
+	if err := o.Write(message.New(level.Info, sypltest.DefaultContentOutput)); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
@@ -177,8 +178,8 @@ func TestFile_CreatesMissingDirectories(t *testing.T) {
 		t.Fatalf("Failed to read the log file: %v", err)
 	}
 
-	if string(content) != shared.DefaultContentOutput {
-		t.Errorf("File content = %q, want %q", string(content), shared.DefaultContentOutput)
+	if string(content) != sypltest.DefaultContentOutput {
+		t.Errorf("File content = %q, want %q", string(content), sypltest.DefaultContentOutput)
 	}
 }
 
@@ -222,7 +223,7 @@ func TestFile_EmptyPathCreatesTempFile(t *testing.T) {
 
 	t.Cleanup(func() { os.Remove(path) })
 
-	if err := o.Write(message.New(level.Info, shared.DefaultContentOutput)); err != nil {
+	if err := o.Write(message.New(level.Info, sypltest.DefaultContentOutput)); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
@@ -231,8 +232,8 @@ func TestFile_EmptyPathCreatesTempFile(t *testing.T) {
 		t.Fatalf("Failed to read the log file: %v", err)
 	}
 
-	if string(content) != shared.DefaultContentOutput {
-		t.Errorf("File content = %q, want %q", string(content), shared.DefaultContentOutput)
+	if string(content) != sypltest.DefaultContentOutput {
+		t.Errorf("File content = %q, want %q", string(content), sypltest.DefaultContentOutput)
 	}
 }
 
@@ -328,7 +329,7 @@ func TestFile_FatalPaths(t *testing.T) {
 //////
 
 func TestSafeBuffer(t *testing.T) {
-	buf, o := SafeBuffer(level.Trace, processor.Prefixer(shared.DefaultPrefixValue))
+	buf, o := SafeBuffer(level.Trace, processor.Prefixer(sypltest.DefaultPrefixValue))
 
 	if o.GetName() != "Buffer" {
 		t.Errorf("GetName() = %q, want %q", o.GetName(), "Buffer")
@@ -338,11 +339,11 @@ func TestSafeBuffer(t *testing.T) {
 		t.Error("SafeBuffer should expose the same buffer it writes to")
 	}
 
-	if err := o.Write(message.New(level.Info, shared.DefaultContentOutput)); err != nil {
+	if err := o.Write(message.New(level.Info, sypltest.DefaultContentOutput)); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
-	want := shared.DefaultPrefixValue + shared.DefaultContentOutput
+	want := sypltest.DefaultPrefixValue + sypltest.DefaultContentOutput
 
 	if buf.String() != want {
 		t.Errorf("Buffer = %q, want %q", buf.String(), want)

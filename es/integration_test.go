@@ -14,8 +14,8 @@ import (
 
 	"github.com/thalesfsp/sypl/v2"
 	"github.com/thalesfsp/sypl/v2/es"
+	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 	"github.com/thalesfsp/sypl/v2/level"
-	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 var (
@@ -43,32 +43,32 @@ func TestNewIntegration(t *testing.T) {
 	}
 
 	elasticSearchOutput := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
 			// Creates logger, and name it.
-			l := sypl.New(shared.DefaultComponentNameOutput, es.Output(
+			l := sypl.New(sypltest.DefaultComponentNameOutput, es.Output(
 				esIndexName,
 				esConfig,
 				level.Trace,
 			))
 
-			l.Infoln(shared.DefaultContentOutput)
+			l.Infoln(sypltest.DefaultContentOutput)
 
-			return shared.DefaultContentOutput
+			return sypltest.DefaultContentOutput
 		},
 	}
 
 	elasticSearchTagMapOutput := args{
-		component: shared.DefaultComponentNameOutput,
-		content:   shared.DefaultContentOutput,
+		component: sypltest.DefaultComponentNameOutput,
+		content:   sypltest.DefaultContentOutput,
 		level:     level.Info,
 		maxLevel:  level.Trace,
 		run: func(a args) string {
 			// Creates logger, and name it.
-			l := sypl.New(shared.DefaultComponentNameOutput, es.OutputWithTagMap(
+			l := sypl.New(sypltest.DefaultComponentNameOutput, es.OutputWithTagMap(
 				es.TagMap{
 					esTagName1TagMap: es.NewTagMapItem(a.maxLevel, func() string { return esIndexName1TagMap }),
 					esTagName2TagMap: es.NewTagMapItem(a.maxLevel, func() string { return esIndexName2TagMap }),
@@ -79,19 +79,19 @@ func TestNewIntegration(t *testing.T) {
 
 			l.PrintWithOptions(
 				level.Info,
-				shared.DefaultContentOutput,
+				sypltest.DefaultContentOutput,
 				sypl.WithTags(esTagName1TagMap),
 			)
 
 			l.PrintWithOptions(
 				level.Info,
-				shared.DefaultContentOutput,
+				sypltest.DefaultContentOutput,
 				sypl.WithTags(esTagName2TagMap),
 			)
 
-			l.Infoln(shared.DefaultContentOutput)
+			l.Infoln(sypltest.DefaultContentOutput)
 
-			return shared.DefaultContentOutput
+			return sypltest.DefaultContentOutput
 		},
 	}
 
@@ -105,7 +105,7 @@ func TestNewIntegration(t *testing.T) {
 			name: "Should print - elasticSearchOutput",
 			args: elasticSearchOutput,
 			want: func(a args) string {
-				return shared.DefaultContentOutput
+				return sypltest.DefaultContentOutput
 			},
 			CleanUp: func() {
 			},
@@ -114,7 +114,7 @@ func TestNewIntegration(t *testing.T) {
 			name: "Should print - elasticSearchTagMapOutput",
 			args: elasticSearchTagMapOutput,
 			want: func(a args) string {
-				return shared.DefaultContentOutput
+				return sypltest.DefaultContentOutput
 			},
 			CleanUp: func() {
 			},

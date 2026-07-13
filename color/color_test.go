@@ -11,7 +11,7 @@ import (
 
 	"github.com/acarl005/stripansi"
 	fatihcolor "github.com/fatih/color"
-	"github.com/thalesfsp/sypl/v2/shared"
+	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 )
 
 // All built-in colors must satisfy the exported Color specification.
@@ -61,24 +61,24 @@ func TestColors_WrapWithANSICodes(t *testing.T) {
 
 	for _, tt := range colorTable() {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.color(shared.DefaultContentOutput)
+			got := tt.color(sypltest.DefaultContentOutput)
 
 			// Must open with the exact color code...
 			wantPrefix := fmt.Sprintf("\x1b[%sm", tt.ansiCode)
 
 			if !strings.HasPrefix(got, wantPrefix) {
-				t.Errorf("%s(%q) = %q, want prefix %q", tt.name, shared.DefaultContentOutput, got, wantPrefix)
+				t.Errorf("%s(%q) = %q, want prefix %q", tt.name, sypltest.DefaultContentOutput, got, wantPrefix)
 			}
 
 			// ...and close with a reset sequence ("\x1b[0m", or an
 			// attribute-specific reset such as "\x1b[0;22m" for bold).
-			if !strings.Contains(got, shared.DefaultContentOutput+"\x1b[0") || !strings.HasSuffix(got, "m") {
-				t.Errorf("%s(%q) = %q, want content followed by a reset sequence", tt.name, shared.DefaultContentOutput, got)
+			if !strings.Contains(got, sypltest.DefaultContentOutput+"\x1b[0") || !strings.HasSuffix(got, "m") {
+				t.Errorf("%s(%q) = %q, want content followed by a reset sequence", tt.name, sypltest.DefaultContentOutput, got)
 			}
 
 			// Content must pass through untouched once codes are stripped.
-			if stripped := stripansi.Strip(got); stripped != shared.DefaultContentOutput {
-				t.Errorf("stripansi.Strip(%s(...)) = %q, want %q", tt.name, stripped, shared.DefaultContentOutput)
+			if stripped := stripansi.Strip(got); stripped != sypltest.DefaultContentOutput {
+				t.Errorf("stripansi.Strip(%s(...)) = %q, want %q", tt.name, stripped, sypltest.DefaultContentOutput)
 			}
 		})
 	}
@@ -123,10 +123,10 @@ func TestColors_NoColorPassthrough(t *testing.T) {
 
 	for _, tt := range colorTable() {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.color(shared.DefaultContentOutput)
+			got := tt.color(sypltest.DefaultContentOutput)
 
-			if got != shared.DefaultContentOutput {
-				t.Errorf("%s(...) with NoColor = %q, want %q (no ANSI codes)", tt.name, got, shared.DefaultContentOutput)
+			if got != sypltest.DefaultContentOutput {
+				t.Errorf("%s(...) with NoColor = %q, want %q (no ANSI codes)", tt.name, got, sypltest.DefaultContentOutput)
 			}
 
 			if strings.Contains(got, "\x1b[") {

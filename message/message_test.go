@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/thalesfsp/sypl/v2/flag"
+	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/shared"
 )
@@ -72,7 +73,7 @@ func TestCopy(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := New(level.Info, shared.DefaultContentOutput)
+			m := New(level.Info, sypltest.DefaultContentOutput)
 
 			if !reflect.DeepEqual(Copy(m), m) {
 				t.Log("Expected:", shared.Prettify(m))

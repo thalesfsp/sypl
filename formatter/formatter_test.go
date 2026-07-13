@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/thalesfsp/sypl/v2/fields"
+	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 	"github.com/thalesfsp/sypl/v2/level"
 	"github.com/thalesfsp/sypl/v2/message"
-	"github.com/thalesfsp/sypl/v2/shared"
 )
 
 func TestText(t *testing.T) {
@@ -20,8 +20,8 @@ func TestText(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := message.New(level.Info, shared.DefaultContentOutput)
-			m.SetComponentName(shared.DefaultComponentNameOutput)
+			m := message.New(level.Info, sypltest.DefaultContentOutput)
+			m.SetComponentName(sypltest.DefaultComponentNameOutput)
 			m.SetFields(fields.Fields{
 				"key1": "value1",
 			})
@@ -33,8 +33,8 @@ func TestText(t *testing.T) {
 			if !strings.Contains(m.String(), "component=") {
 				t.Errorf("Text() = missing %s", "component=")
 			}
-			if !strings.Contains(m.String(), shared.DefaultContentOutput) {
-				t.Errorf("Text() = missing %s", shared.DefaultContentOutput)
+			if !strings.Contains(m.String(), sypltest.DefaultContentOutput) {
+				t.Errorf("Text() = missing %s", sypltest.DefaultContentOutput)
 			}
 			if !strings.Contains(m.String(), `key1=value1`) {
 				t.Errorf("Text() = missing %s", `key1=value1`)
@@ -59,8 +59,8 @@ func TestJSONPrettify(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := message.New(level.Info, shared.DefaultContentOutput)
-			m.SetComponentName(shared.DefaultComponentNameOutput)
+			m := message.New(level.Info, sypltest.DefaultContentOutput)
+			m.SetComponentName(sypltest.DefaultComponentNameOutput)
 			m.SetFields(fields.Fields{
 				"key1": "value1",
 			})
@@ -72,8 +72,8 @@ func TestJSONPrettify(t *testing.T) {
 			if !strings.Contains(m.String(), `"component"`) {
 				t.Errorf("Text() = missing %s", `"component"`)
 			}
-			if !strings.Contains(m.String(), shared.DefaultContentOutput) {
-				t.Errorf("Text() = missing %s", shared.DefaultContentOutput)
+			if !strings.Contains(m.String(), sypltest.DefaultContentOutput) {
+				t.Errorf("Text() = missing %s", sypltest.DefaultContentOutput)
 			}
 			if !strings.Contains(m.String(), `"key1": "value1"`) {
 				t.Errorf("Text() = missing %s", `"key1": "value1"`)
@@ -98,8 +98,8 @@ func TestJSON(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := message.New(level.Info, shared.DefaultContentOutput)
-			m.SetComponentName(shared.DefaultComponentNameOutput)
+			m := message.New(level.Info, sypltest.DefaultContentOutput)
+			m.SetComponentName(sypltest.DefaultComponentNameOutput)
 			m.SetFields(fields.Fields{
 				"key1": "value1",
 			})
@@ -111,8 +111,8 @@ func TestJSON(t *testing.T) {
 			if !strings.Contains(m.String(), `"component"`) {
 				t.Errorf("Text() = missing %s", `"component"`)
 			}
-			if !strings.Contains(m.String(), shared.DefaultContentOutput) {
-				t.Errorf("Text() = missing %s", shared.DefaultContentOutput)
+			if !strings.Contains(m.String(), sypltest.DefaultContentOutput) {
+				t.Errorf("Text() = missing %s", sypltest.DefaultContentOutput)
 			}
 			if !strings.Contains(m.String(), "key1") {
 				t.Errorf("Text() = missing %s", "key1")

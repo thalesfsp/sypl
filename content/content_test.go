@@ -7,7 +7,7 @@ package content
 import (
 	"testing"
 
-	"github.com/thalesfsp/sypl/v2/shared"
+	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 )
 
 func TestNew(t *testing.T) {
@@ -22,9 +22,9 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should work",
 			args: args{
-				c: shared.DefaultContentOutput,
+				c: sypltest.DefaultContentOutput,
 			},
-			want: shared.DefaultContentOutput,
+			want: sypltest.DefaultContentOutput,
 		},
 		{
 			name: "Should work - empty string",
@@ -74,28 +74,28 @@ func TestSetProcessed(t *testing.T) {
 		{
 			name: "Should work - single set",
 			args: args{
-				initial:   shared.DefaultContentOutput,
+				initial:   sypltest.DefaultContentOutput,
 				processed: []string{"processed"},
 			},
-			wantOriginal:  shared.DefaultContentOutput,
+			wantOriginal:  sypltest.DefaultContentOutput,
 			wantProcessed: "processed",
 		},
 		{
 			name: "Should work - multiple sets - last wins",
 			args: args{
-				initial:   shared.DefaultContentOutput,
+				initial:   sypltest.DefaultContentOutput,
 				processed: []string{"first", "second", "third"},
 			},
-			wantOriginal:  shared.DefaultContentOutput,
+			wantOriginal:  sypltest.DefaultContentOutput,
 			wantProcessed: "third",
 		},
 		{
 			name: "Should work - set to empty string",
 			args: args{
-				initial:   shared.DefaultContentOutput,
+				initial:   sypltest.DefaultContentOutput,
 				processed: []string{""},
 			},
-			wantOriginal:  shared.DefaultContentOutput,
+			wantOriginal:  sypltest.DefaultContentOutput,
 			wantProcessed: "",
 		},
 		{
