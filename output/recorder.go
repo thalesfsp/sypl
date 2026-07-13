@@ -60,7 +60,7 @@ func copyRecord(r Record) Record {
 // RecorderOutput is an `IOutput` capturing a structured snapshot of every
 // message it writes - a test-assertion helper for Sypl consumers.
 type RecorderOutput struct {
-	*proxyOutput
+	*Proxy
 
 	// writeMu serializes Write, guarding `pending` - the message currently
 	// traversing the inner pipeline.
@@ -188,7 +188,7 @@ func (w recorderWriter) Write(p []byte) (int, error) {
 func Recorder(maxLevel level.Level, processors ...processor.IProcessor) (*RecorderOutput, IOutput) {
 	r := &RecorderOutput{}
 
-	r.proxyOutput = newProxyOutput(
+	r.Proxy = NewProxy(
 		New("Recorder", maxLevel, recorderWriter{r: r}, processors...),
 		r,
 	)

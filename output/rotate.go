@@ -346,7 +346,7 @@ func (w *rotatingWriter) prune() error {
 // rotatingFileOutput is a rotating-file-backed `IOutput` carrying the Flush,
 // and Close capabilities.
 type rotatingFileOutput struct {
-	*proxyOutput
+	*Proxy
 
 	writer *rotatingWriter
 }
@@ -439,7 +439,7 @@ func RotatingFile(
 
 	o := &rotatingFileOutput{writer: w}
 
-	o.proxyOutput = newProxyOutput(New(name, maxLevel, w, processors...), o)
+	o.Proxy = NewProxy(New(name, maxLevel, w, processors...), o)
 
 	return o, nil
 }

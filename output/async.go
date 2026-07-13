@@ -107,7 +107,7 @@ func AsyncWithFlushInterval(interval time.Duration) AsyncOption {
 // the message into a bounded buffer; a single worker goroutine drains it to
 // the wrapped output - preserving FIFO order.
 type asyncOutput struct {
-	*proxyOutput
+	*Proxy
 
 	// Immutable after construction.
 	capacity      int
@@ -485,7 +485,7 @@ func Async(o IOutput, opts ...AsyncOption) IOutput {
 		workerDone: make(chan struct{}),
 	}
 
-	a.proxyOutput = newProxyOutput(o, a)
+	a.Proxy = NewProxy(o, a)
 
 	a.cond = sync.NewCond(&a.mu)
 

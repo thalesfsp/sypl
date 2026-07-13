@@ -34,6 +34,27 @@ const (
 	renamedName  = "Renamed"
 )
 
+// waitForBlockedWriter polls the runtime until some goroutine is parked in
+// `sync.(*Cond).Wait` - the async output's buffer-full wait. Bounded, and
+// observation-based: no fixed-sleep scheduling assumption.
+func waitForBlockedWriter(t *testing.T) {
+	t.Helper()
+
+	buf := make([]byte, 1<<20)
+
+	for deadline := time.Now().Add(2 * time.Second); time.Now().Before(deadline); {
+		n := runtime.Stack(buf, true)
+
+		if strings.Contains(string(buf[:n]), "sync.(*Cond).Wait") {
+			return
+		}
+
+		time.Sleep(time.Millisecond)
+	}
+
+	t.Fatal("The blocked writer never parked in the buffer-full wait")
+}
+
 // gatedWriter blocks each Write until released, signaling when a Write
 // starts - it makes the async worker's progress deterministic in tests.
 type gatedWriter struct {
@@ -857,6 +878,12 @@ func TestAsync_BlockedWriterUnblocksOnCloseWithTypedError(t *testing.T) {
 	go func() {
 		blockedErr <- a.Write(message.New(level.Info, "m2\n"))
 	}()
+
+	// Wait until the writer is PARKED in the buffer-full wait - otherwise
+	// Close could win the race for the mutex, and the writer would take
+	// the early already-closed return instead of the woken-while-waiting
+	// path this test exists to exercise.
+	waitForBlockedWriter(t)
 
 	// Close wakes the blocked writer with the typed error. Run it in the
 	// background: Close itself blocks draining the gated worker.
