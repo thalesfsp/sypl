@@ -29,12 +29,15 @@ const (
 	badKeyPrefix = "!BADKEY"
 
 	missingValue = "(MISSING)"
+
+	// kvPairWidth is the width of one key-value pair.
+	kvPairWidth = 2
 )
 
 // kvToFields converts alternating key-value pairs into fields - tolerating
 // non-string keys, and an odd trailing key. Never panics.
 func kvToFields(keysAndValues []any) fields.Fields {
-	f := make(fields.Fields, len(keysAndValues)/2)
+	f := make(fields.Fields, len(keysAndValues)/kvPairWidth)
 
 	i := 0
 
@@ -63,7 +66,7 @@ func kvToFields(keysAndValues []any) fields.Fields {
 
 		f[k] = keysAndValues[i+1]
 
-		i += 2
+		i += kvPairWidth
 	}
 
 	return f

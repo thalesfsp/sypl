@@ -18,17 +18,17 @@ import (
 	"github.com/thalesfsp/sypl/output"
 )
 
-// discardOutput builds an output that mimics a console output - text
-// formatter, same pipeline - but writes to io.Discard, so the benchmark
+// discardOutput builds an Info-capped output that mimics a console output -
+// text formatter, same pipeline - but writes to io.Discard, so the benchmark
 // measures the logging path, not terminal I/O.
-func discardOutput(name string, maxLevel level.Level) output.IOutput {
-	return output.New(name, maxLevel, io.Discard).SetFormatter(formatter.Text())
+func discardOutput(name string) output.IOutput {
+	return output.New(name, level.Info, io.Discard).SetFormatter(formatter.Text())
 }
 
 // BenchmarkPrint_SingleConsoleOutput measures the simplest hot path: one
 // enabled output, message level allowed.
 func BenchmarkPrint_SingleConsoleOutput(b *testing.B) {
-	l := sypl.New("bench", discardOutput("Discard", level.Info))
+	l := sypl.New("bench", discardOutput("Discard"))
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -43,8 +43,8 @@ func BenchmarkPrint_SingleConsoleOutput(b *testing.B) {
 func BenchmarkPrint_TwoOutputs(b *testing.B) {
 	l := sypl.New(
 		"bench",
-		discardOutput("DiscardA", level.Info),
-		discardOutput("DiscardB", level.Info),
+		discardOutput("DiscardA"),
+		discardOutput("DiscardB"),
 	)
 
 	b.ReportAllocs()
@@ -58,7 +58,7 @@ func BenchmarkPrint_TwoOutputs(b *testing.B) {
 // BenchmarkPrint_MutedLevel measures the cost of a message that will NOT be
 // printed: Debug against an Info-capped output.
 func BenchmarkPrint_MutedLevel(b *testing.B) {
-	l := sypl.New("bench", discardOutput("Discard", level.Info))
+	l := sypl.New("bench", discardOutput("Discard"))
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -72,7 +72,7 @@ func BenchmarkPrint_MutedLevel(b *testing.B) {
 // opt-in fast level gate enabled: it must return before any message
 // construction.
 func BenchmarkPrint_MutedLevel_FastGate(b *testing.B) {
-	l := sypl.New("bench", discardOutput("Discard", level.Info)).SetFastGate(true)
+	l := sypl.New("bench", discardOutput("Discard")).SetFastGate(true)
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -85,7 +85,7 @@ func BenchmarkPrint_MutedLevel_FastGate(b *testing.B) {
 // BenchmarkWith measures derived-logger construction (fields merge + state
 // copy).
 func BenchmarkWith(b *testing.B) {
-	l := sypl.New("bench", discardOutput("Discard", level.Info))
+	l := sypl.New("bench", discardOutput("Discard"))
 	l.SetFields(fields.Fields{"parent": "value"})
 
 	f := fields.Fields{"child": "value"}
@@ -100,7 +100,7 @@ func BenchmarkWith(b *testing.B) {
 
 // BenchmarkPrintWithOptions_Fields measures the structured-fields path.
 func BenchmarkPrintWithOptions_Fields(b *testing.B) {
-	l := sypl.New("bench", discardOutput("Discard", level.Info))
+	l := sypl.New("bench", discardOutput("Discard"))
 
 	f := fields.Fields{"key1": "value1", "key2": 2}
 

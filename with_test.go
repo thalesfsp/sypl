@@ -19,6 +19,12 @@ import (
 	"github.com/thalesfsp/sypl/status"
 )
 
+// Shared expected values - hoisted so repeated literals stay lint-clean.
+const (
+	envProd  = "prod"
+	whoChild = "child"
+)
+
 // jsonLine decodes the last JSON line written to buf.
 func jsonLine(t *testing.T, buf *safebuffer.Buffer) map[string]interface{} {
 	t.Helper()
@@ -40,7 +46,7 @@ func TestWith_MergedFieldsChildWins(t *testing.T) {
 	o.SetFormatter(formatter.JSON())
 
 	parent := sypl.New("with-merge", o)
-	parent.SetFields(fields.Fields{"env": "prod", "shared": "parent-value"})
+	parent.SetFields(fields.Fields{"env": envProd, "shared": "parent-value"})
 
 	child := parent.With(fields.Fields{"request_id": "r-1", "shared": "child-value"})
 
@@ -48,7 +54,7 @@ func TestWith_MergedFieldsChildWins(t *testing.T) {
 
 	decoded := jsonLine(t, buf)
 
-	if decoded["env"] != "prod" {
+	if decoded["env"] != envProd {
 		t.Fatalf("child lost the parent field: env = %v", decoded["env"])
 	}
 
@@ -164,7 +170,7 @@ func TestWith_NilAndEmptyFields(t *testing.T) {
 	o.SetFormatter(formatter.JSON())
 
 	parent := sypl.New("with-nil", o)
-	parent.SetFields(fields.Fields{"env": "prod"})
+	parent.SetFields(fields.Fields{"env": envProd})
 
 	for name, f := range map[string]fields.Fields{"nil": nil, "empty": {}} {
 		buf.Reset()
@@ -173,7 +179,7 @@ func TestWith_NilAndEmptyFields(t *testing.T) {
 
 		child.Println(level.Info, "child message")
 
-		if decoded := jsonLine(t, buf); decoded["env"] != "prod" {
+		if decoded := jsonLine(t, buf); decoded["env"] != envProd {
 			t.Fatalf("%s fields: child lost the parent field: env = %v", name, decoded["env"])
 		}
 	}
@@ -195,7 +201,7 @@ func TestWith_ParentChildIsolationRace(t *testing.T) {
 	parent.SetTags("t2")
 	parent.SetTags("t3")
 
-	child := parent.With(fields.Fields{"who": "child"})
+	child := parent.With(fields.Fields{"who": whoChild})
 
 	var wg sync.WaitGroup
 
@@ -215,7 +221,7 @@ func TestWith_ParentChildIsolationRace(t *testing.T) {
 
 		for i := range 100 {
 			child.SetTags("child-tag")
-			child.SetFields(fields.Fields{"who": "child", "i": i})
+			child.SetFields(fields.Fields{"who": whoChild, "i": i})
 		}
 	}()
 
@@ -242,7 +248,7 @@ func TestWith_ParentChildIsolationRace(t *testing.T) {
 		t.Fatalf("child leaked into parent fields: %v", parent.GetFields())
 	}
 
-	if child.GetFields()["who"] != "child" {
+	if child.GetFields()["who"] != whoChild {
 		t.Fatalf("parent leaked into child fields: %v", child.GetFields())
 	}
 
@@ -258,7 +264,7 @@ func TestWith_DoesNotAliasArgument(t *testing.T) {
 	_, o := output.SafeBuffer(level.Trace)
 
 	parent := sypl.New("with-alias", o)
-	parent.SetFields(fields.Fields{"env": "prod"})
+	parent.SetFields(fields.Fields{"env": envProd})
 
 	arg := fields.Fields{"request_id": "r-9"}
 

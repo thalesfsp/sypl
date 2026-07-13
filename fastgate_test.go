@@ -163,6 +163,9 @@ func TestFastGate_GatedCallAllocs(t *testing.T) {
 
 // The Force flag must bypass the gate: options can alter the flag, so any
 // call carrying options takes the slow path.
+// forcedMsg is the payload used by the force-bypass probe.
+const forcedMsg = "forced\n"
+
 func TestFastGate_ForceBypassesGate(t *testing.T) {
 	clearSyplEnvVars(t)
 
@@ -171,10 +174,10 @@ func TestFastGate_ForceBypassesGate(t *testing.T) {
 	l := sypl.New("fastgate-force", o)
 	l.SetFastGate(true)
 
-	l.PrintWithOptions(level.Debug, "forced\n", sypl.WithFlag(flag.Force))
+	l.PrintWithOptions(level.Debug, forcedMsg, sypl.WithFlag(flag.Force))
 
-	if buf.String() != "forced\n" {
-		t.Fatalf("forced message produced %q, want %q", buf.String(), "forced\n")
+	if buf.String() != forcedMsg {
+		t.Fatalf("forced message produced %q, want %q", buf.String(), forcedMsg)
 	}
 }
 

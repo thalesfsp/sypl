@@ -122,7 +122,7 @@ func TestContext_PrintWithContextExtractsAndMerges(t *testing.T) {
 	o.SetFormatter(formatter.JSON())
 
 	l := sypl.New("ctx-extract", o)
-	l.SetFields(fields.Fields{"env": "prod", "trace_id": "global-loses"})
+	l.SetFields(fields.Fields{"env": envProd, "trace_id": "global-loses"})
 	l.SetContextExtractor(traceIDExtractor)
 
 	ctx := context.WithValue(context.Background(), traceIDKey{}, "abc-123")
@@ -135,7 +135,7 @@ func TestContext_PrintWithContextExtractsAndMerges(t *testing.T) {
 		t.Fatalf("trace_id = %v, want abc-123 (extracted, message-level, wins)", decoded["trace_id"])
 	}
 
-	if decoded["env"] != "prod" {
+	if decoded["env"] != envProd {
 		t.Fatalf("global field env = %v, want prod", decoded["env"])
 	}
 
@@ -266,7 +266,7 @@ func TestContext_WithInheritsExtractor(t *testing.T) {
 	parent := sypl.New("ctx-with", o)
 	parent.SetContextExtractor(traceIDExtractor)
 
-	child := parent.With(fields.Fields{"component": "child"})
+	child := parent.With(fields.Fields{"component": whoChild})
 
 	ctx := context.WithValue(context.Background(), traceIDKey{}, "inherited")
 
@@ -278,7 +278,7 @@ func TestContext_WithInheritsExtractor(t *testing.T) {
 		t.Fatalf("trace_id = %v, want inherited (child lost the extractor)", decoded["trace_id"])
 	}
 
-	if decoded["component"] != "child" {
+	if decoded["component"] != whoChild {
 		t.Fatalf("component = %v, want child", decoded["component"])
 	}
 }
