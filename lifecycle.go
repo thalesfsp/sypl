@@ -4,6 +4,62 @@
 
 package sypl
 
+import (
+	"errors"
+	"io"
+)
+
+//////
+// Flush/Close contract.
+//
+// Outputs are not required to buffer - so the capability is detected by
+// type-asserting each registered output against the SMALL interfaces
+// `interface{ Flush() error }`, and `io.Closer`. Outputs lacking the
+// capability are skipped. Calls happen in registration order, and ALL errors
+// are aggregated via `errors.Join` - one failing output never shadows its
+// siblings.
+//////
+
+// Flush flushes every registered output implementing
+// `interface{ Flush() error }`, in registration order, aggregating all
+// errors via `errors.Join`. Outputs lacking the capability are skipped.
+//
+// NOTE: The outputs are snapshotted under the read lock, which is released
+// BEFORE any Flush call.
+func (sypl *Sypl) Flush() error {
+	outputs := sypl.GetOutputs()
+
+	errs := make([]error, 0, len(outputs))
+
+	for _, o := range outputs {
+		if f, ok := o.(interface{ Flush() error }); ok {
+			errs = append(errs, f.Flush())
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+// Close closes every registered output implementing `io.Closer`, in
+// registration order, aggregating all errors via `errors.Join`. Outputs
+// lacking the capability are skipped.
+//
+// NOTE: The outputs are snapshotted under the read lock, which is released
+// BEFORE any Close call.
+func (sypl *Sypl) Close() error {
+	outputs := sypl.GetOutputs()
+
+	errs := make([]error, 0, len(outputs))
+
+	for _, o := range outputs {
+		if c, ok := o.(io.Closer); ok {
+			errs = append(errs, c.Close())
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
 //////
 // Error handler.
 //

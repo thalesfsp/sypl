@@ -780,6 +780,15 @@ func (sypl *Sypl) process(messages ...message.IMessage) {
 
 	// Should exit if `level` is `Fatal`.
 	if shouldExit.Load() {
+		// Best-effort flush BEFORE exiting, so flush-capable (e.g.
+		// buffered/async) outputs get a chance to drain. Errors are
+		// delivered to the error handler, when set.
+		if err := sypl.Flush(); err != nil {
+			if h := sypl.GetErrorHandler(); h != nil {
+				h(err)
+			}
+		}
+
 		os.Exit(1)
 	}
 }
