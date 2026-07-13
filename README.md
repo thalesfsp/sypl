@@ -6,11 +6,15 @@
 
 ## Install
 
-`$ go get github.com/thalesfsp/sypl`
+`$ go get github.com/thalesfsp/sypl/v2`
+
+Logging to ElasticSearch? It's a separate module: `$ go get github.com/thalesfsp/sypl/v2/es`
+
+> Upgrading from v1? See [MIGRATION-V2.md](MIGRATION-V2.md) — three breaking changes, mostly mechanical.
 
 ### Specific version
 
-Example: `$ go get github.com/thalesfsp/sypl@v1.2.0`
+Example: `$ go get github.com/thalesfsp/sypl/v2@v2.0.0`
 
 ## Usage
 
@@ -36,7 +40,7 @@ See [`example_test.go`](example_test.go), and [`sypl_test.go`](sypl_test.go) fil
 
 ### Documentation
 
-Run `$ make doc` or check out [online](https://pkg.go.dev/github.com/thalesfsp/sypl).
+Run `$ make doc` or check out [online](https://pkg.go.dev/github.com/thalesfsp/sypl/v2).
 
 ## How it works
 

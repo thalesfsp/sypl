@@ -25,6 +25,46 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [2.0.0] - 2026-07-13
+
+SEMVER-MAJOR release: exactly three breaking changes. See
+[MIGRATION-V2.md](MIGRATION-V2.md) for the old→new tables, worked examples,
+and the mechanical sed one-liners.
+
+### Breaking
+- **Module path is now `github.com/thalesfsp/sypl/v2`** (Go semantic import
+  versioning). Every import gains the `/v2` segment.
+- **ElasticSearch support moved into the nested `es/` submodule**
+  (`github.com/thalesfsp/sypl/v2/es`): the former `elasticsearch` package
+  (client, bulk, utils) plus the ES output factories formerly in `output`
+  (`ElasticSearch` → `es.Output`, `ElasticSearchWithDynamicIndex` →
+  `es.OutputWithDynamicIndex`, `ElasticSearchWithTagMap` →
+  `es.OutputWithTagMap`, `ElasticSearchBulk` → `es.BulkOutput`,
+  `ElasticSearchBulkWithDynamicIndex` → `es.BulkOutputWithDynamicIndex`, and
+  the `Config`/`TagMap`/`TagMapItem`/`NewTagMapItem`/`BulkOption` types).
+  The core module now depends only on `fatih/color`, `google/uuid`, and
+  `acarl005/stripansi` — a non-ES consumer compiles 145 packages instead of
+  952. Runtime output names (`GetName`) are unchanged.
+- **Conventional level ordering**: `Warn(3)` now sits below `Info(4)` —
+  `SetMaxLevel(Info)` shows warnings, and `FromInt(3)`/`FromInt(4)` mean
+  `Warn`/`Info`. Name-based lookups (`FromString`/`String`) are unaffected.
+- **Dead API removal** (zero known callers): `IMessage.SetContent`,
+  `IMessage.SetLevel`, `IOutput.GetProcessor`, `IOutput.SetBuiltinLogger`,
+  `IMeta.SetName` (and all impls), `Sypl.AnyMaxLevel`,
+  `debug.MatchL/MatchOL/MatchCOL` (unexported), the `shared.Default*` test
+  fixtures, and the unused stdlib-logger machinery inside
+  `internal/builtin`.
+
+### Added
+- `output.Proxy`/`output.NewProxy`: the forwarding proxy (self-returning
+  chainable setters) is exported, so external packages — like `es` — can
+  build capability-carrying output wrappers.
+- `es/` ships as its own Go module: `go get github.com/thalesfsp/sypl/v2/es`
+  only when you log to ElasticSearch. CI lints, and tests it separately;
+  releases tag both `v2.x.y`, and `es/v2.x.y`.
+- MIGRATION-V2.md: complete old→new mapping, level table, `AnyMaxLevel`
+  replacement snippet, and sed one-liners covering the mechanical 90%.
+
 ## [1.21.0] - 2026-07-13
 ### Added
 - Opt-in hot-path fast gate: `SetFastGate(true)` makes filtered-out levels

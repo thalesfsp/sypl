@@ -9,6 +9,21 @@
 // The order of execution is according to the registering order. The above
 // features allow sypl to fit into many different logging flows and needs.
 //
+// # v2
+//
+// Three breaking changes - see MIGRATION-V2.md for the full old→new tables:
+//
+//   - The module path is github.com/thalesfsp/sypl/v2, and ElasticSearch
+//     support lives in the nested es module
+//     (github.com/thalesfsp/sypl/v2/es) - the core module carries no
+//     ElasticSearch dependency.
+//   - Levels follow the conventional order: None(0) Fatal(1) Error(2)
+//     Warn(3) Info(4) Debug(5) Trace(6) - `SetMaxLevel(level.Info)` now
+//     SHOWS warnings. Name-based lookups are unaffected.
+//   - Dead v1 APIs were removed (IMessage.SetContent/SetLevel,
+//     IOutput.GetProcessor/SetBuiltinLogger, IMeta.SetName,
+//     Sypl.AnyMaxLevel, debug.Match*).
+//
 // In a application with many loggers, and child loggers, sometimes more fine
 // control is needed, specially when debugging applications. Sypl offers two
 // powerful ways to achieve that: `SYPL_FILTER`, and `SYPL_DEBUG` env vars.
