@@ -61,6 +61,19 @@ func (g *gatedWriter) Write(p []byte) (int, error) {
 	return g.buf.Write(p)
 }
 
+// slowWriter delays each write - keeping the async queue non-empty under
+// sustained concurrent writers.
+type slowWriter struct {
+	delay time.Duration
+	buf   safebuffer.Buffer
+}
+
+func (s *slowWriter) Write(p []byte) (int, error) {
+	time.Sleep(s.delay)
+
+	return s.buf.Write(p)
+}
+
 // errorCollector concurrency-safely accumulates handler errors.
 type errorCollector struct {
 	mu     sync.Mutex
@@ -565,6 +578,85 @@ func TestAsync_FlushProxiesInnerFlush(t *testing.T) {
 	inner.mu.Lock()
 	inner.flushErr = nil
 	inner.mu.Unlock()
+
+	if err := asyncClose(t, a); err != nil {
+		t.Fatalf("Close() error = %v, want nil", err)
+	}
+}
+
+// Flush has SNAPSHOT semantics: everything enqueued BEFORE the call is
+// guaranteed written, and Flush returns even while concurrent writers keep
+// hammering - a quiescence wait (`len(queue) == 0 && !inFlight`) livelocks
+// here, as the queue never empties.
+func TestAsync_FlushSnapshotUnderSustainedWrites(t *testing.T) {
+	sink := &slowWriter{delay: time.Millisecond}
+
+	inner := New("Inner", level.Trace, sink)
+
+	a := Async(inner, AsyncWithBufferSize(16))
+
+	const preFlush = 64
+
+	for i := range preFlush {
+		if err := a.Write(message.New(level.Info, fmt.Sprintf("pre-%03d\n", i))); err != nil {
+			t.Fatalf("Write() error = %v, want nil", err)
+		}
+	}
+
+	// 4 concurrent writers keep hammering for the whole flush.
+	stop := make(chan struct{})
+
+	var wg sync.WaitGroup
+
+	for w := range 4 {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			for i := 0; ; i++ {
+				select {
+				case <-stop:
+					return
+				default:
+				}
+
+				_ = a.Write(message.New(level.Info, fmt.Sprintf("post-w%d-%d\n", w, i)))
+			}
+		}()
+	}
+
+	f, ok := a.(interface{ Flush() error })
+
+	if !ok {
+		t.Fatal("Async output should implement Flush() error")
+	}
+
+	flushErr := make(chan error, 1)
+
+	go func() { flushErr <- f.Flush() }()
+
+	select {
+	case err := <-flushErr:
+		if err != nil {
+			t.Fatalf("Flush() error = %v, want nil", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Flush should return under sustained concurrent writes - quiescence livelock")
+	}
+
+	// Everything enqueued BEFORE the Flush call must be in the sink.
+	content := sink.buf.String()
+
+	for i := range preFlush {
+		if want := fmt.Sprintf("pre-%03d", i); !strings.Contains(content, want) {
+			t.Fatalf("Sink is missing %q - Flush returned before draining the snapshot", want)
+		}
+	}
+
+	close(stop)
+
+	wg.Wait()
 
 	if err := asyncClose(t, a); err != nil {
 		t.Fatalf("Close() error = %v, want nil", err)

@@ -16,6 +16,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/thalesfsp/sypl/debug"
 	"github.com/thalesfsp/sypl/fields"
@@ -29,6 +30,14 @@ import (
 	"github.com/thalesfsp/sypl/shared"
 	"github.com/thalesfsp/sypl/status"
 )
+
+// fatalFlushTimeout bounds the best-effort flush the Fatal path performs
+// BEFORE `os.Exit(1)`: flush-capable outputs get up to this long to drain,
+// so a hung sink (e.g. an async-wrapped output whose writer never returns)
+// can't keep the process alive - Fatal's contract is that the process
+// terminates. On timeout, a one-line warning is written to stderr, and the
+// process exits regardless.
+const fatalFlushTimeout = 10 * time.Second
 
 // MessageToOutput defines a `Message` to printed at the specified `Level`, and
 // to the specified `Output`.
@@ -782,16 +791,39 @@ func (sypl *Sypl) process(messages ...message.IMessage) {
 
 	// Should exit if `level` is `Fatal`.
 	if shouldExit.Load() {
-		// Best-effort flush BEFORE exiting, so flush-capable (e.g.
-		// buffered/async) outputs get a chance to drain. Errors are
-		// delivered to the error handler, when set.
-		if err := sypl.Flush(); err != nil {
+		sypl.flushBeforeExit()
+
+		os.Exit(1)
+	}
+}
+
+// flushBeforeExit best-effort flushes BEFORE the Fatal exit, so
+// flush-capable (e.g. buffered/async) outputs get a chance to drain.
+// Errors are delivered to the error handler, when set.
+//
+// BOUNDED by `fatalFlushTimeout`: Fatal's contract - the process
+// terminates - must hold even with a hung sink, so the flush runs in a
+// goroutine, and the caller proceeds to exit regardless once the timeout
+// elapses - after a best-effort warning to stderr.
+func (sypl *Sypl) flushBeforeExit() {
+	flushed := make(chan error, 1)
+
+	go func() { flushed <- sypl.Flush() }()
+
+	select {
+	case err := <-flushed:
+		if err != nil {
 			if h := sypl.GetErrorHandler(); h != nil {
 				h(err)
 			}
 		}
-
-		os.Exit(1)
+	case <-time.After(fatalFlushTimeout):
+		fmt.Fprintf(
+			os.Stderr,
+			"%s fatal: flush did not complete within %s - exiting without a full drain\n",
+			shared.WarnPrefix,
+			fatalFlushTimeout,
+		)
 	}
 }
 

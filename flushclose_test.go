@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/thalesfsp/sypl"
 	"github.com/thalesfsp/sypl/level"
@@ -233,6 +234,67 @@ func TestFlushClose_FatalFlushesBeforeExit(t *testing.T) {
 	// all before the exit.
 	if !strings.Contains(stderr.String(), "FLUSHED-MARKER calls=[flush:FatalFlush] err=flush boom") {
 		t.Errorf("Fatal did not flush before exit, stderr: %s", stderr.String())
+	}
+}
+
+// hungWriter blocks every Write forever - simulating a hung sink.
+type hungWriter struct{}
+
+func (hungWriter) Write([]byte) (int, error) {
+	select {} // Blocks forever.
+}
+
+// Fatal's contract - the process terminates - must hold even when a sink
+// hangs forever: the pre-exit flush is bounded by `fatalFlushTimeout`, a
+// one-line warning lands on stderr, and the process still exits 1.
+// Asserted via subprocess re-exec, with a hard 15s parent-side budget.
+func TestFlushClose_FatalExitsDespiteHungSink(t *testing.T) {
+	if os.Getenv("SYPL_TEST_FATAL_HUNG") == "1" {
+		hung := output.Async(output.New("hung", level.Trace, hungWriter{}))
+
+		l := sypl.New("fatal-hung", hung)
+
+		l.Fatalln("fatal with a hung sink")
+
+		os.Exit(42) // Sentinel: Fatalln did not exit.
+	}
+
+	//nolint:gosec // Re-running the test binary itself.
+	cmd := exec.Command(os.Args[0], "-test.run=TestFlushClose_FatalExitsDespiteHungSink$")
+
+	cmd.Env = append(os.Environ(), "SYPL_TEST_FATAL_HUNG=1")
+
+	var stderr bytes.Buffer
+
+	cmd.Stderr = &stderr
+
+	if err := cmd.Start(); err != nil {
+		t.Fatalf("failed starting the subprocess: %v", err)
+	}
+
+	done := make(chan error, 1)
+
+	go func() { done <- cmd.Wait() }()
+
+	select {
+	case err := <-done:
+		var exitErr *exec.ExitError
+
+		if !errors.As(err, &exitErr) {
+			t.Fatalf("expected subprocess to exit with an error, got %v (stderr: %s)", err, stderr.String())
+		}
+
+		if code := exitErr.ExitCode(); code != 1 {
+			t.Errorf("expected exit code 1 (Fatal), got %d (stderr: %s)", code, stderr.String())
+		}
+	case <-time.After(15 * time.Second):
+		_ = cmd.Process.Kill()
+
+		t.Fatal("Fatal did not exit within 15s - the hung sink kept the process alive")
+	}
+
+	if !strings.Contains(stderr.String(), "flush did not complete within") {
+		t.Errorf("stderr should carry the flush-timeout warning, got: %q", stderr.String())
 	}
 }
 

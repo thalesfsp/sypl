@@ -118,10 +118,18 @@ type asyncOutput struct {
 	mu   sync.Mutex
 	cond *sync.Cond
 
-	closed   bool
-	dropped  uint64
-	inFlight bool
-	queue    []message.IMessage
+	closed  bool
+	dropped uint64
+	queue   []message.IMessage
+
+	// Sequence-based flush accounting. Sequences are assigned contiguously
+	// at enqueue (starting at 1), so the queue always holds the sequences
+	// `[headSeq, headSeq+len(queue)-1]`. A sequence is RESOLVED once its
+	// message was written to the wrapped output, or dropped by policy -
+	// `Flush` waits until every sequence enqueued before the call resolved.
+	enqueuedSeq uint64 // Sequence of the most recently enqueued message.
+	headSeq     uint64 // Sequence of `queue[0]` - meaningful when non-empty.
+	inFlightSeq uint64 // Sequence being written by the worker - 0 when idle.
 
 	// closeOnce guards Close - making it idempotent; closeErr records its
 	// outcome for subsequent calls.
@@ -168,13 +176,15 @@ func (a *asyncOutput) Write(m message.IMessage) error {
 		}
 	case AsyncPolicyDropOldest:
 		if len(a.queue) >= a.capacity {
+			// Dropping the oldest RESOLVES its sequence - waiting
+			// flushers are woken by the broadcast below.
 			a.dequeueLocked()
 
 			a.dropped++
 
 			total := a.dropped
 
-			a.queue = append(a.queue, m)
+			a.enqueueLocked(m)
 
 			a.cond.Broadcast()
 			a.mu.Unlock()
@@ -197,7 +207,7 @@ func (a *asyncOutput) Write(m message.IMessage) error {
 		}
 	}
 
-	a.queue = append(a.queue, m)
+	a.enqueueLocked(m)
 
 	a.cond.Broadcast()
 	a.mu.Unlock()
@@ -205,13 +215,23 @@ func (a *asyncOutput) Write(m message.IMessage) error {
 	return nil
 }
 
-// Flush blocks until the buffer is fully drained - then flushes the wrapped
-// output, if it implements `Flush() error`. After Close it's a no-op: Close
-// already drained, and flushed everything.
+// Flush guarantees - SNAPSHOT semantics - that every message enqueued
+// BEFORE the call was resolved (written to the wrapped output, or dropped
+// by policy), then flushes the wrapped output, if it implements
+// `Flush() error`. Messages enqueued AFTER the call may remain buffered -
+// so Flush returns even under sustained concurrent writes. After Close
+// it's a no-op: Close already drained, and flushed everything.
+//
+// NOTE: Flush waits - unbounded - for the wrapped output's in-flight
+// write: a sink that never returns blocks Flush forever.
 func (a *asyncOutput) Flush() error {
 	a.mu.Lock()
 
-	for len(a.queue) > 0 || a.inFlight {
+	target := a.enqueuedSeq
+
+	// Terminates even mid-Close: the worker drains the whole buffer before
+	// exiting, resolving every enqueued sequence.
+	for a.minUnresolvedSeqLocked() <= target {
 		a.cond.Wait()
 	}
 
@@ -267,18 +287,50 @@ func (a *asyncOutput) Close() error {
 // Helpers.
 //////
 
-// dequeueLocked removes, and returns the oldest buffered message. The
-// caller must hold `mu`, and guarantee the buffer isn't empty. The backing
-// array slot is cleared so the message can be collected.
-func (a *asyncOutput) dequeueLocked() message.IMessage {
+// enqueueLocked appends the message to the buffer, assigning it the next
+// sequence. The caller must hold `mu`.
+func (a *asyncOutput) enqueueLocked(m message.IMessage) {
+	a.enqueuedSeq++
+
+	if len(a.queue) == 0 {
+		a.headSeq = a.enqueuedSeq
+	}
+
+	a.queue = append(a.queue, m)
+}
+
+// dequeueLocked removes, and returns the oldest buffered message with its
+// sequence. The caller must hold `mu`, and guarantee the buffer isn't
+// empty. The backing array slot is cleared so the message can be collected.
+func (a *asyncOutput) dequeueLocked() (message.IMessage, uint64) {
 	m := a.queue[0]
+
+	seq := a.headSeq
+
+	a.headSeq++
 
 	copy(a.queue, a.queue[1:])
 
 	a.queue[len(a.queue)-1] = nil
 	a.queue = a.queue[:len(a.queue)-1]
 
-	return m
+	return m, seq
+}
+
+// minUnresolvedSeqLocked returns the lowest sequence not yet resolved -
+// neither written to the wrapped output, nor dropped by policy. When
+// everything resolved, it returns `enqueuedSeq + 1`. The caller must hold
+// `mu`.
+func (a *asyncOutput) minUnresolvedSeqLocked() uint64 {
+	if a.inFlightSeq != 0 {
+		return a.inFlightSeq
+	}
+
+	if len(a.queue) > 0 {
+		return a.headSeq
+	}
+
+	return a.enqueuedSeq + 1
 }
 
 // flushInner flushes the wrapped output, if it implements `Flush() error`.
@@ -333,9 +385,9 @@ func (a *asyncOutput) worker() {
 			return
 		}
 
-		m := a.dequeueLocked()
+		m, seq := a.dequeueLocked()
 
-		a.inFlight = true
+		a.inFlightSeq = seq
 
 		// The freed slot may unblock writers.
 		a.cond.Broadcast()
@@ -344,7 +396,7 @@ func (a *asyncOutput) worker() {
 		err := a.inner.Write(m)
 
 		a.mu.Lock()
-		a.inFlight = false
+		a.inFlightSeq = 0
 		a.cond.Broadcast()
 		a.mu.Unlock()
 
@@ -381,8 +433,11 @@ func (a *asyncOutput) flusher() {
 // checks, status checks) behaves identically.
 //
 // Capabilities:
-// - `Flush() error`: blocks until the buffer is drained, then flushes `o` -
-// if `o` implements `Flush() error`.
+// - `Flush() error`: guarantees everything enqueued BEFORE the call was
+// written to `o` (or dropped by policy), then flushes `o` - if `o`
+// implements `Flush() error`. SNAPSHOT semantics: messages enqueued after
+// the call may remain buffered, so Flush returns even under sustained
+// concurrent writes.
 // - `Close() error`: flushes, stops the worker, and closes `o` - if `o`
 // implements `io.Closer`. Idempotent. Writes after Close return
 // `ErrAsyncClosed`.

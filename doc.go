@@ -79,6 +79,7 @@
 //     failing output's name - instead of the default silent swallow.
 //   - `Flush`/`Close` walk the outputs in registration order, calling the
 //     ones implementing `interface{ Flush() error }`/`io.Closer`, and
-//     aggregate all errors via `errors.Join`. Fatal flushes (best-effort)
-//     before exiting.
+//     aggregate all errors via `errors.Join`. Fatal flushes (best-effort,
+//     time-bounded - a hung sink can't keep the process alive) before
+//     exiting.
 package sypl
