@@ -13,6 +13,15 @@ import (
 )
 
 // Level specification.
+//
+// V2 BREAKING CHANGE: levels follow the CONVENTIONAL order -
+// None(0) Fatal(1) Error(2) Warn(3) Info(4) Debug(5) Trace(6).
+// In v1, Info(3) came before Warn(4), so an output capped at Info HID
+// warnings. In v2, Warn nests below Info: `SetMaxLevel(Info)` SHOWS
+// warnings, and each cap admits every level at, or below it. Code relying
+// on v1's numeric values (e.g. `FromInt(3)` meaning Info, or persisted
+// integers) must be migrated - see MIGRATION-V2.md. Name-based lookups
+// (`FromString`, `MustFromString`, `String`) are unaffected.
 type Level int
 
 // Available levels.
@@ -20,13 +29,13 @@ const (
 	None Level = iota
 	Fatal
 	Error
-	Info
 	Warn
+	Info
 	Debug
 	Trace
 )
 
-var names = []string{"none", "fatal", "error", "info", "warn", "debug", "trace"}
+var names = []string{"none", "fatal", "error", "warn", "info", "debug", "trace"}
 
 // String interface implementation.
 func (l Level) String() string {
@@ -38,6 +47,9 @@ func (l Level) String() string {
 }
 
 // FromInt returns a `Level` from a given integer.
+//
+// V2 BREAKING CHANGE: integers follow the v2 conventional order -
+// FromInt(3) is now Warn, and FromInt(4) is now Info (swapped from v1).
 //
 // NOTE: Failure will return "Unknown".
 func FromInt(level int) Level {

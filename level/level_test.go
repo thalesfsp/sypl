@@ -23,7 +23,7 @@ func TestFromInt(t *testing.T) {
 			args: args{
 				level: 3,
 			},
-			want: Info,
+			want: Warn, // V2: FromInt(3) is Warn - conventional order.
 		},
 	}
 	for _, tt := range tests {
@@ -62,14 +62,14 @@ func TestFromString(t *testing.T) {
 			},
 			want:       None,
 			wantErr:    true,
-			wantErrMsg: "invalid error level: Invalid. Available: none, fatal, error, info, warn, debug, trace",
+			wantErrMsg: "invalid error level: Invalid. Available: none, fatal, error, warn, info, debug, trace",
 		},
 		{
 			name:       "Should fail - empty",
 			args:       args{},
 			want:       None,
 			wantErr:    true,
-			wantErrMsg: "invalid error level: No level specified. Available: none, fatal, error, info, warn, debug, trace",
+			wantErrMsg: "invalid error level: No level specified. Available: none, fatal, error, warn, info, debug, trace",
 		},
 	}
 	for _, tt := range tests {

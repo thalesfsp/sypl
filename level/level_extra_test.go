@@ -236,8 +236,8 @@ func TestLevelsToString_Extra(t *testing.T) {
 		},
 		{
 			name: "Should work - all levels, in order",
-			args: args{levels: []Level{None, Fatal, Error, Info, Warn, Debug, Trace}},
-			want: "none,fatal,error,info,warn,debug,trace",
+			args: args{levels: []Level{None, Fatal, Error, Warn, Info, Debug, Trace}},
+			want: "none,fatal,error,warn,info,debug,trace",
 		},
 		{
 			name: "Should work - mixed valid, and out-of-range",
@@ -255,7 +255,7 @@ func TestLevelsToString_Extra(t *testing.T) {
 }
 
 func TestLevelsNames_Completeness(t *testing.T) {
-	want := []string{"none", "fatal", "error", "info", "warn", "debug", "trace"}
+	want := []string{"none", "fatal", "error", "warn", "info", "debug", "trace"}
 
 	got := LevelsNames()
 
