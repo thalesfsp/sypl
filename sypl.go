@@ -845,42 +845,69 @@ func contains(list []string, name string) bool {
 	return false
 }
 
+// outputWrite pairs an eligible output with its isolated message copy.
+type outputWrite struct {
+	o   output.IOutput
+	msg message.IMessage
+}
+
 // Outputs logic of the Process method.
 func (sypl *Sypl) processOutputs(m message.IMessage, outputsNames []string) {
-	wg := sync.WaitGroup{}
+	// Gather the eligible outputs - enabled, and named (listed) ones - each
+	// receiving its own isolated copy of the message.
+	writes := []outputWrite{}
 
 	for _, o := range sypl.GetOutputs() {
-		// https://golang.org/doc/faq#closures_and_goroutines
-		o := o
-		m := m
-
-		// Should only use enabled Outputs, and named (listed) ones.
-		if o.GetStatus() == status.Enabled && contains(outputsNames, o.GetName()) {
-			// Message is isolated per `Output`.
-			msg := message.Copy(m)
-
-			msg.SetComponentName(sypl.GetName())
-			msg.SetOutputName(o.GetName())
-
-			// Debug capability.
-			// Should only run if Debug env var is set.
-			if os.Getenv(shared.LevelEnvVar) != "" {
-				msg.SetDebugEnvVarRegexes(
-					debug.New(msg.GetComponentName(), msg.GetOutputName()),
-				)
-			}
-
-			wg.Add(1)
-
-			go func() {
-				defer wg.Done()
-
-				_ = o.Write(msg)
-			}()
+		if o.GetStatus() != status.Enabled || !contains(outputsNames, o.GetName()) {
+			continue
 		}
+
+		// Message is isolated per `Output`.
+		msg := message.Copy(m)
+
+		msg.SetComponentName(sypl.GetName())
+		msg.SetOutputName(o.GetName())
+
+		// Debug capability.
+		// Should only run if Debug env var is set.
+		if os.Getenv(shared.LevelEnvVar) != "" {
+			msg.SetDebugEnvVarRegexes(
+				debug.New(msg.GetComponentName(), msg.GetOutputName()),
+			)
+		}
+
+		writes = append(writes, outputWrite{o: o, msg: msg})
+	}
+
+	// Fast path: a single receiving output is written INLINE, on the calling
+	// goroutine - no goroutine spawn, no WaitGroup.
+	if len(writes) == 1 {
+		sypl.writeToOutput(writes[0].o, writes[0].msg)
+
+		return
+	}
+
+	// Fan-out: multiple receiving outputs are written concurrently.
+	wg := sync.WaitGroup{}
+
+	for _, w := range writes {
+		wg.Add(1)
+
+		go func(w outputWrite) {
+			defer wg.Done()
+
+			sypl.writeToOutput(w.o, w.msg)
+		}(w)
 	}
 
 	wg.Wait()
+}
+
+// writeToOutput writes `msg` to `o` - the single funnel for both the inline,
+// and the fan-out dispatch paths. Write errors are swallowed - the historical
+// behavior.
+func (sypl *Sypl) writeToOutput(o output.IOutput, msg message.IMessage) {
+	_ = o.Write(msg)
 }
 
 //////
