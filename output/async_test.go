@@ -979,6 +979,136 @@ func TestAsync_InnerWriteErrorsWithoutHandlerDoNotPanic(t *testing.T) {
 }
 
 //////
+// Panic containment.
+//////
+
+// panickyOutput panics on a configurable number of writes/flushes, then
+// delegates.
+type panickyOutput struct {
+	IOutput
+
+	writePanics atomic.Int32
+	flushPanics atomic.Int32
+}
+
+func (p *panickyOutput) Write(m message.IMessage) error {
+	if p.writePanics.Add(-1) >= 0 {
+		panic("sink exploded")
+	}
+
+	return p.IOutput.Write(m)
+}
+
+func (p *panickyOutput) Flush() error {
+	if p.flushPanics.Add(-1) >= 0 {
+		panic("flush exploded")
+	}
+
+	return nil
+}
+
+// A panicking inner output must not kill the worker - nor the host
+// process: the panic is converted to an error, delivered to the handler,
+// and subsequent messages are still delivered.
+func TestAsync_WorkerPanicContained(t *testing.T) {
+	collector := newErrorCollector()
+
+	buf, inner := SafeBuffer(level.Trace)
+
+	p := &panickyOutput{IOutput: inner}
+	p.writePanics.Store(1)
+
+	a := Async(p, AsyncWithErrorHandler(collector.handler()))
+
+	if err := a.Write(message.New(level.Info, "boom\n")); err != nil {
+		t.Fatalf("Write() error = %v, want nil", err)
+	}
+
+	select {
+	case <-collector.notified:
+	case <-time.After(2 * time.Second):
+		t.Fatal("The panic should reach the error handler as an error")
+	}
+
+	handlerErrors := collector.all()
+
+	if !strings.Contains(handlerErrors[0].Error(), "panic in output") ||
+		!strings.Contains(handlerErrors[0].Error(), "sink exploded") {
+		t.Errorf("Handler error = %v, want the converted panic", handlerErrors[0])
+	}
+
+	// The worker survived: subsequent messages are still delivered.
+	if err := a.Write(message.New(level.Info, "after\n")); err != nil {
+		t.Fatalf("Write() error = %v, want nil", err)
+	}
+
+	if err := asyncFlush(t, a); err != nil {
+		t.Fatalf("Flush() error = %v, want nil", err)
+	}
+
+	if !strings.Contains(buf.String(), "after") {
+		t.Errorf("Buffer = %q, want the post-panic message delivered", buf.String())
+	}
+
+	if err := asyncClose(t, a); err != nil {
+		t.Fatalf("Close() error = %v, want nil", err)
+	}
+}
+
+// A panicking inner Flush comes back from the direct Flush path as an
+// error - never a panic.
+func TestAsync_FlushPanicContained(t *testing.T) {
+	_, inner := SafeBuffer(level.Trace)
+
+	p := &panickyOutput{IOutput: inner}
+	p.flushPanics.Store(1)
+
+	a := Async(p)
+
+	err := asyncFlush(t, a)
+
+	if err == nil || !strings.Contains(err.Error(), "panic in output") ||
+		!strings.Contains(err.Error(), "flush exploded") {
+		t.Errorf("Flush() error = %v, want the converted panic", err)
+	}
+
+	if err := asyncClose(t, a); err != nil {
+		t.Fatalf("Close() error = %v, want nil", err)
+	}
+}
+
+// A panicking inner Flush must not kill the interval flusher either: the
+// panic reaches the handler, and the flusher keeps running.
+func TestAsync_FlushIntervalPanicContained(t *testing.T) {
+	collector := newErrorCollector()
+
+	_, inner := SafeBuffer(level.Trace)
+
+	p := &panickyOutput{IOutput: inner}
+	p.flushPanics.Store(1)
+
+	a := Async(p,
+		AsyncWithFlushInterval(5*time.Millisecond),
+		AsyncWithErrorHandler(collector.handler()),
+	)
+
+	select {
+	case <-collector.notified:
+	case <-time.After(2 * time.Second):
+		t.Fatal("The interval-flush panic should reach the error handler")
+	}
+
+	if handlerErrors := collector.all(); !strings.Contains(handlerErrors[0].Error(), "flush exploded") {
+		t.Errorf("Handler error = %v, want the converted panic", handlerErrors[0])
+	}
+
+	// The flusher survived - Close (flushing once more) succeeds.
+	if err := asyncClose(t, a); err != nil {
+		t.Fatalf("Close() error = %v, want nil", err)
+	}
+}
+
+//////
 // Options.
 //////
 

@@ -83,8 +83,10 @@ func AsyncWithPolicy(policy AsyncPolicy) AsyncOption {
 }
 
 // AsyncWithErrorHandler sets the handler receiving the wrapped output's
-// write errors, drop notifications (wrapping `ErrAsyncDropped`), and
-// interval-flush errors. The handler may be called concurrently.
+// write errors, drop notifications (wrapping `ErrAsyncDropped`),
+// interval-flush errors, and panics from the wrapped output - converted to
+// errors, so a misbehaving sink never kills the worker, nor the host
+// process. The handler may be called concurrently.
 func AsyncWithErrorHandler(handler func(error)) AsyncOption {
 	return func(a *asyncOutput) {
 		a.errorHandler = handler
@@ -269,9 +271,7 @@ func (a *asyncOutput) Close() error {
 
 		errs := []error{}
 
-		if f, ok := a.inner.(interface{ Flush() error }); ok {
-			errs = append(errs, f.Flush())
-		}
+		errs = append(errs, a.flushInner())
 
 		if c, ok := a.inner.(io.Closer); ok {
 			errs = append(errs, c.Close())
@@ -333,8 +333,28 @@ func (a *asyncOutput) minUnresolvedSeqLocked() uint64 {
 	return a.enqueuedSeq + 1
 }
 
-// flushInner flushes the wrapped output, if it implements `Flush() error`.
-func (a *asyncOutput) flushInner() error {
+// writeInner writes the message to the wrapped output, converting a panic
+// into an error - a misbehaving sink must never kill the worker goroutine,
+// nor the host process.
+func (a *asyncOutput) writeInner(m message.IMessage) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("async: panic in output %q: %v", a.GetName(), r)
+		}
+	}()
+
+	return a.inner.Write(m)
+}
+
+// flushInner flushes the wrapped output, if it implements `Flush() error` -
+// converting a panic into an error, exactly like `writeInner`.
+func (a *asyncOutput) flushInner() (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("async: panic in output %q: %v", a.GetName(), r)
+		}
+	}()
+
 	if f, ok := a.inner.(interface{ Flush() error }); ok {
 		return f.Flush()
 	}
@@ -393,7 +413,7 @@ func (a *asyncOutput) worker() {
 		a.cond.Broadcast()
 		a.mu.Unlock()
 
-		err := a.inner.Write(m)
+		err := a.writeInner(m)
 
 		a.mu.Lock()
 		a.inFlightSeq = 0
