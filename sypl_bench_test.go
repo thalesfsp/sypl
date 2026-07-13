@@ -68,6 +68,20 @@ func BenchmarkPrint_MutedLevel(b *testing.B) {
 	}
 }
 
+// BenchmarkPrint_MutedLevel_FastGate measures the same muted call with the
+// opt-in fast level gate enabled: it must return before any message
+// construction.
+func BenchmarkPrint_MutedLevel_FastGate(b *testing.B) {
+	l := sypl.New("bench", discardOutput("Discard", level.Info)).SetFastGate(true)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for range b.N {
+		l.Print(level.Debug, "benchmark message")
+	}
+}
+
 // BenchmarkPrintWithOptions_Fields measures the structured-fields path.
 func BenchmarkPrintWithOptions_Fields(b *testing.B) {
 	l := sypl.New("bench", discardOutput("Discard", level.Info))
