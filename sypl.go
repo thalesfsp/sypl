@@ -6,6 +6,7 @@ package sypl
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -59,6 +60,7 @@ type Sypl struct {
 	mu *sync.RWMutex
 
 	// NOTE: Changes here may reflect in the `New(name string)` method (Child).
+	contextExtractor     func(ctx context.Context) fields.Fields
 	defaultIoWriterLevel level.Level
 	errorHandler         func(err error)
 	fastGate             bool

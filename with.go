@@ -18,8 +18,8 @@ import (
 // commit 25dfacc).
 //
 // The derived logger inherits Name, the default io.Writer level, status, the
-// error handler, and the fast-gate setting. `f` may be nil, or empty - the
-// child then simply inherits the parent's fields.
+// error handler, the context extractor, and the fast-gate setting. `f` may
+// be nil, or empty - the child then simply inherits the parent's fields.
 func (sypl *Sypl) With(f fields.Fields) *Sypl {
 	sypl.rLock()
 	defer sypl.rUnlock()
@@ -40,6 +40,7 @@ func (sypl *Sypl) With(f fields.Fields) *Sypl {
 	// ELEMENTS stay shared by design.
 	s := New(sypl.Name, sypl.outputs...)
 
+	s.contextExtractor = sypl.contextExtractor
 	s.defaultIoWriterLevel = sypl.defaultIoWriterLevel
 	s.errorHandler = sypl.errorHandler
 	s.fastGate = sypl.fastGate
