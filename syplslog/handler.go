@@ -62,7 +62,7 @@ func HandlerWithLevel(leveler slog.Leveler) HandlerOption {
 // `HandlerWithLevel` - and at least one ENABLED sypl output must accept the
 // mapped sypl level.
 //
-// NOTE: The `SYPL_DEBUG` env var - which overrides output max levels at
+// NOTE: The `SYPL_LEVEL` env var - which overrides output max levels at
 // write time - isn't consulted here.
 func (h *Handler) Enabled(_ context.Context, l slog.Level) bool {
 	if h.leveler != nil && l < h.leveler.Level() {

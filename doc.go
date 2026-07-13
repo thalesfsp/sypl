@@ -50,7 +50,7 @@
 //     whose level no enabled output can write return BEFORE any message
 //     construction. Processors cannot resurrect a gated-out message - the
 //     same contract as slog/zap. Fatal is never gated, and the gate defers
-//     to the slow path while `SYPL_DEBUG`/`SYPL_FILTER` are set.
+//     to the slow path while `SYPL_LEVEL`/`SYPL_FILTER` are set.
 //   - Lazy message identity: the message UUID, and the content-based hash
 //     are computed - and memoized - only when first read (e.g. by the JSON
 //     formatter). Per-output copies share the computation, observing one
