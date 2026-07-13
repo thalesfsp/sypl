@@ -68,7 +68,9 @@ type output struct {
 // String interface implementation.
 //
 // NOTE: Value receiver on purpose - an output VALUE satisfies fmt.Stringer,
-// as on master.
+// as on master. The receiver copy itself is unsynchronized (also as on
+// master): don't format an output VALUE concurrently with reconfiguration -
+// use the pointer, whose accessors lock.
 func (o output) String() string {
 	return o.GetName()
 }

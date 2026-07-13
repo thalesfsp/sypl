@@ -2,6 +2,7 @@ package debug
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/thalesfsp/sypl/level"
@@ -14,6 +15,21 @@ import (
 // evicted - and results stay correct.
 func TestAudit_DebugCacheBounded(t *testing.T) {
 	const bound = 1024
+
+	// The cache, and its size counter are package globals - restore them so
+	// test order (e.g. `go test -shuffle=on`) can't leave the cache capped
+	// for tests relying on caching (e.g. TestNewCachesRegexes' pointer
+	// equality).
+	t.Cleanup(func() {
+		matchersCache.Range(func(k, _ any) bool {
+			if key, ok := k.(string); ok && strings.HasPrefix(key, "audit-bounded-") {
+				matchersCache.Delete(key)
+				matchersCacheSize.Add(-1)
+			}
+
+			return true
+		})
+	})
 
 	t.Setenv(shared.LevelEnvVar, "trace")
 
@@ -60,10 +76,18 @@ func TestAudit_DebugCacheBounded(t *testing.T) {
 		t.Fatalf("over-cap Level() = (%s, %s, %v), expected (debug, %s, true)", l, m, ok, COL)
 	}
 
-	// Cached entries keep being served (hit path).
-	d2 := New("audit-bounded-0", "out")
+	// Cached entries keep being served (hit path): two Debugs for the same
+	// under-cap key share the SAME compiled regexes.
+	dA := New("audit-bounded-0", "out")
+	dB := New("audit-bounded-0", "out")
 
-	if l, _, ok := d2.Level(); ok || l != level.None {
+	if dA.Levels != dB.Levels ||
+		dA.OutputLevels != dB.OutputLevels ||
+		dA.ComponentOutputLevels != dB.ComponentOutputLevels {
+		t.Fatal("under-cap entries were not served from the cache")
+	}
+
+	if l, _, ok := dA.Level(); ok || l != level.None {
 		t.Fatalf("cached-entry Level() = (%s, %v), expected (none, false) for a non-matching env var", l, ok)
 	}
 }

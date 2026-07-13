@@ -69,7 +69,9 @@ type Sypl struct {
 // String interface implementation.
 //
 // NOTE: Value receiver on purpose - a Sypl VALUE satisfies fmt.Stringer, as
-// on master.
+// on master. The receiver copy itself is unsynchronized (also as on
+// master): don't format a Sypl VALUE concurrently with reconfiguration -
+// use the *Sypl, whose accessors lock.
 func (sypl Sypl) String() string {
 	return sypl.GetName()
 }
