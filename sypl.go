@@ -60,6 +60,7 @@ type Sypl struct {
 
 	// NOTE: Changes here may reflect in the `New(name string)` method (Child).
 	defaultIoWriterLevel level.Level
+	errorHandler         func(err error)
 	fastGate             bool
 	fields               fields.Fields
 	outputs              []output.IOutput
@@ -904,10 +905,20 @@ func (sypl *Sypl) processOutputs(m message.IMessage, outputsNames []string) {
 }
 
 // writeToOutput writes `msg` to `o` - the single funnel for both the inline,
-// and the fan-out dispatch paths. Write errors are swallowed - the historical
-// behavior.
+// and the fan-out dispatch paths. Write errors are delivered to the error
+// handler when one is set (see `SetErrorHandler`) - silently swallowed (the
+// historical behavior) otherwise.
 func (sypl *Sypl) writeToOutput(o output.IOutput, msg message.IMessage) {
-	_ = o.Write(msg)
+	err := o.Write(msg)
+	if err == nil {
+		return
+	}
+
+	// NOTE: `GetErrorHandler` releases sypl's mutex BEFORE the handler runs -
+	// the handler may safely reconfigure the logger.
+	if h := sypl.GetErrorHandler(); h != nil {
+		h(fmt.Errorf("output %s: %w", o.GetName(), err))
+	}
 }
 
 //////
