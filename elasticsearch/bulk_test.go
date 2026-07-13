@@ -464,6 +464,124 @@ func TestElasticSearchBulk_Write_TrimsTrailingLinebreaks(t *testing.T) {
 	}
 }
 
+func TestElasticSearchBulk_Write_CompactsMultiLineJSON(t *testing.T) {
+	es, recorder := newTestBulk(t, nil)
+
+	// A pretty-printed document: interior linebreaks would corrupt the
+	// NDJSON _bulk stream - each item's source must be a single line.
+	doc := "{\n  \"message\": \"pretty\",\n  \"nested\": {\n    \"k\": 1\n  }\n}\n"
+
+	n, err := es.Write([]byte(doc))
+	if err != nil {
+		t.Fatalf("Write() error = %v, want nil", err)
+	}
+
+	if n != len(doc) {
+		t.Errorf("Write() = %d, want %d", n, len(doc))
+	}
+
+	if err := es.Close(); err != nil {
+		t.Fatalf("Close() error = %v, want nil", err)
+	}
+
+	requests := recorder.all()
+
+	if len(requests) != 1 {
+		t.Fatalf("Expected 1 _bulk request, got %d", len(requests))
+	}
+
+	lines := strings.Split(strings.TrimSuffix(requests[0].Body, "\n"), "\n")
+
+	if len(lines) != 2 {
+		t.Fatalf("Expected exactly 2 NDJSON lines (action + single-line source), got %d: %q",
+			len(lines), requests[0].Body)
+	}
+
+	if lines[1] != `{"message":"pretty","nested":{"k":1}}` {
+		t.Errorf("Source line = %q, want the compacted document", lines[1])
+	}
+}
+
+func TestElasticSearchBulk_Write_RejectsNonCompactableMultiLine(t *testing.T) {
+	collector := &bulkErrorCollector{}
+
+	es, recorder := newTestBulk(t, nil, BulkWithOnError(collector.callback()))
+
+	// Parses as JSON (the decoder stops at the first value), but the FULL
+	// payload isn't compactable - enqueuing it would inject stray lines
+	// into the NDJSON stream, corrupting EVERY item in the batch.
+	bad := "{\"message\":\"first\"}\ngarbage trailing line"
+
+	n, err := es.Write([]byte(bad))
+
+	if err == nil || !strings.Contains(err.Error(), "corrupt the NDJSON") {
+		t.Fatalf("Write() error = %v, want the NDJSON-safety rejection", err)
+	}
+
+	if n != 0 {
+		t.Errorf("Write() = %d, want 0", n)
+	}
+
+	callbackErrors := collector.all()
+
+	if len(callbackErrors) != 1 || !strings.Contains(callbackErrors[0].Error(), "corrupt the NDJSON") {
+		t.Fatalf("Expected the rejection through the error callback, got %v", callbackErrors)
+	}
+
+	// The stream stays valid: a subsequent document still indexes.
+	if _, err := es.Write([]byte(`{"message":"good"}`)); err != nil {
+		t.Fatalf("Write() error = %v, want nil", err)
+	}
+
+	if err := es.Close(); err != nil {
+		t.Fatalf("Close() error = %v, want nil", err)
+	}
+
+	requests := recorder.all()
+
+	if len(requests) != 1 {
+		t.Fatalf("Expected 1 _bulk request, got %d", len(requests))
+	}
+
+	lines := strings.Split(strings.TrimSuffix(requests[0].Body, "\n"), "\n")
+
+	if len(lines) != 2 {
+		t.Fatalf("Expected 2 NDJSON lines - the rejected doc must not pollute the stream, got %d: %q",
+			len(lines), requests[0].Body)
+	}
+
+	if lines[1] != `{"message":"good"}` {
+		t.Errorf("Source line = %q, want the good document", lines[1])
+	}
+}
+
+func TestElasticSearchBulk_Write_SingleLineFastPathNotCompacted(t *testing.T) {
+	es, recorder := newTestBulk(t, nil)
+
+	// Deliberately non-compact spacing on a SINGLE line: the fast path must
+	// forward it VERBATIM - compaction runs only on interior linebreaks.
+	doc := `{"message":  "spaced",  "id": "doc-s"}`
+
+	if _, err := es.Write([]byte(doc)); err != nil {
+		t.Fatalf("Write() error = %v, want nil", err)
+	}
+
+	if err := es.Close(); err != nil {
+		t.Fatalf("Close() error = %v, want nil", err)
+	}
+
+	requests := recorder.all()
+
+	if len(requests) != 1 {
+		t.Fatalf("Expected 1 _bulk request, got %d", len(requests))
+	}
+
+	if !strings.Contains(requests[0].Body, doc) {
+		t.Errorf("Body %q should carry the single-line document VERBATIM - no compaction",
+			requests[0].Body)
+	}
+}
+
 //////
 // Write - bad paths.
 //////

@@ -7,6 +7,7 @@ package elasticsearch
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -109,6 +110,11 @@ type ElasticSearchBulk struct {
 // into the bulk indexer. Indexing is asynchronous - per-item failures are
 // delivered to the `BulkWithOnError` callback, never panics. After Close,
 // it returns `ErrBulkClosed`.
+//
+// NDJSON safety: _bulk items must be single-line JSON. Multi-line
+// documents are compacted; non-compactable ones are rejected - reported
+// through the error callback, and returned as the write error - so one bad
+// payload can't corrupt the whole batch.
 func (es *ElasticSearchBulk) Write(data []byte) (int, error) {
 	parsedData, err := parseResponseBody(bytes.NewReader(data))
 	if err != nil {
@@ -124,6 +130,31 @@ func (es *ElasticSearchBulk) Write(data []byte) (int, error) {
 	// builtin logger reuses its write buffer, so aliasing it is a data
 	// race, and corrupts in-flight documents.
 	doc := bytes.Clone(bytes.TrimRight(data, "\r\n"))
+
+	// _bulk is NDJSON: each item's source must be a SINGLE line - interior
+	// linebreaks (e.g. a pretty-printed document) corrupt the WHOLE stream.
+	// Multi-line payloads are compacted; non-compactable ones are rejected
+	// through the error callback - enqueuing them would poison every item
+	// in the batch. Single-line payloads skip this entirely: no extra
+	// allocation on the fast path.
+	if bytes.ContainsAny(doc, "\r\n") {
+		var compacted bytes.Buffer
+
+		if err := json.Compact(&compacted, doc); err != nil {
+			err = fmt.Errorf(
+				"refusing to enqueue a multi-line, non-compactable document - it would corrupt the NDJSON _bulk stream: %w",
+				err,
+			)
+
+			if es.onError != nil {
+				es.onError(err)
+			}
+
+			return 0, err
+		}
+
+		doc = compacted.Bytes()
+	}
 
 	item := esutil.BulkIndexerItem{
 		Action:    "index",
@@ -278,6 +309,10 @@ func (es *ElasticSearchBulk) newIndexer() esutil.BulkIndexer {
 //
 // NOTE: Indexing is asynchronous, and batched - deliver failures through
 // `BulkWithOnError`, and drain with `Flush`, or `Close`.
+//
+// NOTE: _bulk items must be single-line JSON (NDJSON) - `Write` enforces
+// it: multi-line documents are compacted, non-compactable ones rejected
+// through the error callback.
 func NewBulk(
 	indexName string,
 	esConfig Config,
