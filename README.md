@@ -16,6 +16,24 @@ Example: `$ go get github.com/thalesfsp/sypl@v1.2.0`
 
 See [`example_test.go`](example_test.go), and [`sypl_test.go`](sypl_test.go) file.
 
+### Highlights
+
+- Multi-output, multi-processor pipeline: route one message to console,
+  files, Elasticsearch, buffers — each with its own level, processors, and
+  formatter.
+- Hot path: opt-in fast gate (`SetFastGate(true)`) makes filtered-out levels
+  cost ~zero allocations; lazy message identity; benchmarks in-repo.
+- Structured logging: `With(fields)` derived loggers, `Infow`-style
+  key-value printers, context helpers with a pluggable tracing extractor,
+  and a bidirectional [`log/slog` bridge](syplslog/) (`slogtest`-verified).
+- Reliability: `output.Async` buffered wrapper (drop policies, panic
+  containment), Elasticsearch `_bulk` indexing, self-healing size-based file
+  rotation, `Flush`/`Close` lifecycle with a time-bounded flush on `Fatal`,
+  and an error handler for output write failures.
+- Operability: sampling, rate-limiting, and dedup processors; `SYPL_LEVEL` /
+  `SYPL_FILTER` runtime env-var overrides; a `Recorder` output for test
+  assertions.
+
 ### Documentation
 
 Run `$ make doc` or check out [online](https://pkg.go.dev/github.com/thalesfsp/sypl).

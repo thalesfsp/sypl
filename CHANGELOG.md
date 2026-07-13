@@ -25,6 +25,59 @@ Refs. for badges:
 - http://github.com/wayneashleyberry/terminal-dimensions
 - https://github.com/golangci/golangci-lint
 
+## [1.21.0] - 2026-07-13
+### Added
+- Opt-in hot-path fast gate: `SetFastGate(true)` makes filtered-out levels
+  cost ~38ns / 0 allocs (default off; Fatal, forced flags, and `SYPL_LEVEL`/
+  `SYPL_FILTER` always take the full path).
+- `With(fields)`: cheap derived logger with merged fields and unshared
+  containers; inherits outputs, error handler, gate, and context extractor.
+- Key-value sugar: `Infow`, `Debugw`, `Tracew`, `Warnw`, `Errorw`, `Fatalw`,
+  `Logw` (slog-style pairs; never panics on malformed pairs).
+- Context helpers: `NewContext`, `FromContext`, `FromContextOrDefault`,
+  `SetContextExtractor`, and `*WithContext` printers (bring-your-own tracing
+  extractor; no OpenTelemetry dependency).
+- Lifecycle: `Flush()` / `Close()` on the logger with capability detection
+  (`Flush() error` / `io.Closer`) and `errors.Join` aggregation. `Fatal`
+  flushes buffered outputs before exiting, bounded by a 10s timeout so the
+  process always terminates.
+- `SetErrorHandler(func(error))`: output write errors (previously silently
+  discarded) are delivered wrapped with the output name.
+- `output.Async(...)`: bounded buffered wrapper for any output — Block /
+  DropNewest / DropOldest policies, drop notifications, periodic flush,
+  snapshot-semantics `Flush` (everything enqueued before the call), panic
+  containment for the wrapped output, graceful `Close`, no goroutine leaks.
+- `output.ElasticSearchBulk(...)` (+ dynamic-index variant) built on
+  `esutil.BulkIndexer`: batched `_bulk` indexing with per-item error
+  callbacks; payloads are kept single-line NDJSON-safe (multi-line JSON is
+  compacted; invalid payloads are rejected instead of corrupting the
+  stream).
+- `output.RotatingFile(...)`: native size-based rotation with backup count
+  and age pruning; self-heals after mid-rotation failures (writes keep
+  landing in the original file and errors stay visible — never silent loss).
+- `output.Recorder(...)`: structured test-assertion output capturing level,
+  content, fields, tags, and names with defensive copies.
+- `processor.Sample(...)`: zap-style first-N-then-every-Mth sampling per key
+  and window, bounded internal state.
+- `processor.RateLimit(...)`: global per-window limiter with overflow
+  callback.
+- `processor.Dedup(...)`: log-once-per-window with suppression counters,
+  keyed by the (now lazy) content hash by default.
+- `syplslog`: bidirectional `log/slog` bridge — `NewHandler` (passes stdlib
+  `slogtest`; slog-speaking libraries log through sypl pipelines) and
+  `Output` (sypl logs into any `slog.Handler`); slog records can never
+  trigger sypl's `Fatal` exit.
+
+### Changed
+- Performance: single-output prints ~−44%, `message.New` ~−64%, muted-level
+  slow path ~−40% (UUID and content-hash generation now lazy and memoized
+  per message family; single-receiver writes run inline without goroutine
+  fan-out). Benchmarks live in-repo; numbers are benchstat-verified.
+- Edge-case note: the unexported message struct's `ID` and
+  `ContentBasedHashID` fields became lazy internals; code reaching through
+  `GetMessage().ID` must use `GetID()` / `GetContentBasedHashID()` instead
+  (no known consumers were affected).
+
 ## [1.20.1] - 2026-07-12
 ### Changed
 - Test suite and directives conform to the repository's golangci-lint gate
