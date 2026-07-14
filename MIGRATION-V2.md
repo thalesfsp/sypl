@@ -190,8 +190,12 @@ Run from a consumer repo root (GNU sed; on macOS use `sed -i ''`):
 # 1. Module path: every sypl import -> /v2 (idempotent-safe: run once).
 find . -name '*.go' -exec sed -i 's|github.com/thalesfsp/sypl|github.com/thalesfsp/sypl/v2|g' {} +
 
-# 2. ES imports: the old elasticsearch package -> the es module.
-find . -name '*.go' -exec sed -i 's|github.com/thalesfsp/sypl/v2/elasticsearch|github.com/thalesfsp/sypl/es/v2|g; s|elasticsearch\.|es.|g' {} +
+# 2. ES imports: the old elasticsearch package -> the es module. The
+#    qualifier rename is scoped to files importing SYPL's ES package - and
+#    still assumes those files don't ALSO use go-elasticsearch directly
+#    under its default `elasticsearch` name (see the caveats below).
+find . -name '*.go' -exec sed -i 's|github.com/thalesfsp/sypl/v2/elasticsearch|github.com/thalesfsp/sypl/es/v2|g' {} +
+grep -rl 'github.com/thalesfsp/sypl/es/v2' --include='*.go' . | xargs -r sed -i 's|\belasticsearch\.|es.|g'
 
 # 3. ES output factories, and types: output.ElasticSearch* -> es.*.
 find . -name '*.go' -exec sed -i 's|output\.NewElasticSearchTagMapItem|es.NewTagMapItem|g; s|output\.ElasticSearchTagMapItem|es.TagMapItem|g; s|output\.ElasticSearchTagMap|es.TagMap|g; s|output\.ElasticSearchConfig|es.Config|g; s|output\.ElasticSearchDynamicIndexFunc|es.DynamicIndexFunc|g; s|output\.ElasticSearchBulkOption|es.BulkOption|g' {} +
@@ -211,3 +215,10 @@ What the seds do **not** cover (audit by hand):
 - `FromInt`, or any persisted **numeric** level (section 2).
 - Behavior relying on `SetMaxLevel(Info)` hiding warnings (section 2).
 - `SetName`/`GetProcessor`/`SetContent`/`SetLevel`/`AnyMaxLevel` call sites (section 3).
+- Files that import **both** sypl's ES package *and*
+  `github.com/elastic/go-elasticsearch/v8` directly: go-elasticsearch's default
+  package name is also `elasticsearch`, so step 2's qualifier rename would hit
+  its usages too (`elasticsearch.NewClient` → a nonexistent `es.NewClient` —
+  loud compile error, not silent corruption). In such files, skip step 2, and
+  instead alias sypl's import (`syples "github.com/thalesfsp/sypl/es/v2"`), then
+  rename only the sypl-owned qualifiers by hand.
