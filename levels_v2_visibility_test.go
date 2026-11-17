@@ -62,27 +62,27 @@ func TestV2Visibility_NestingTable(t *testing.T) {
 	}{
 		{
 			cap:     level.Error,
-			visible: []string{"msg-error"},
-			hidden:  []string{"msg-warn", "msg-info", "msg-debug", "msg-trace"},
+			visible: []string{fixtureMsgError},
+			hidden:  []string{fixtureMsgWarn, fixtureMsgInfo, fixtureMsgDebug, fixtureMsgTrace},
 		},
 		{
 			cap:     level.Warn,
-			visible: []string{"msg-error", "msg-warn"},
-			hidden:  []string{"msg-info", "msg-debug", "msg-trace"},
+			visible: []string{fixtureMsgError, fixtureMsgWarn},
+			hidden:  []string{fixtureMsgInfo, fixtureMsgDebug, fixtureMsgTrace},
 		},
 		{
 			cap:     level.Info,
-			visible: []string{"msg-error", "msg-warn", "msg-info"},
-			hidden:  []string{"msg-debug", "msg-trace"},
+			visible: []string{fixtureMsgError, fixtureMsgWarn, fixtureMsgInfo},
+			hidden:  []string{fixtureMsgDebug, fixtureMsgTrace},
 		},
 		{
 			cap:     level.Debug,
-			visible: []string{"msg-error", "msg-warn", "msg-info", "msg-debug"},
-			hidden:  []string{"msg-trace"},
+			visible: []string{fixtureMsgError, fixtureMsgWarn, fixtureMsgInfo, fixtureMsgDebug},
+			hidden:  []string{fixtureMsgTrace},
 		},
 		{
 			cap:     level.Trace,
-			visible: []string{"msg-error", "msg-warn", "msg-info", "msg-debug", "msg-trace"},
+			visible: []string{fixtureMsgError, fixtureMsgWarn, fixtureMsgInfo, fixtureMsgDebug, fixtureMsgTrace},
 			hidden:  nil,
 		},
 	}

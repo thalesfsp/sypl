@@ -44,5 +44,6 @@ func (s *Buffer) Write(p []byte) (int, error) {
 func (s *Buffer) Reset() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+
 	s.buffer.Reset()
 }

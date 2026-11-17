@@ -6,6 +6,7 @@ package output
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"log"
 	"os"
@@ -297,7 +298,7 @@ func TestFile_FatalPaths(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			//nolint:gosec // Re-running the test binary itself.
-			cmd := exec.Command(os.Args[0], "-test.run=TestFile_FatalPaths$")
+			cmd := exec.CommandContext(context.Background(), os.Args[0], "-test.run=TestFile_FatalPaths$")
 
 			cmd.Env = append(os.Environ(), "SYPL_TEST_FILE_FATAL_MODE="+tt.mode)
 
@@ -331,7 +332,7 @@ func TestFile_FatalPaths(t *testing.T) {
 func TestSafeBuffer(t *testing.T) {
 	buf, o := SafeBuffer(level.Trace, processor.Prefixer(sypltest.DefaultPrefixValue))
 
-	if o.GetName() != "Buffer" {
+	if o.GetName() != fixtureBufferTitle {
 		t.Errorf("GetName() = %q, want %q", o.GetName(), "Buffer")
 	}
 

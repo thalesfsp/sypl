@@ -29,7 +29,7 @@ func TestNewOutput(t *testing.T) {
 		{
 			name: "Should work",
 			args: args{
-				name:     "Buffer",
+				name:     fixtureBufferTitle,
 				maxLevel: level.Trace,
 			},
 			want: sypltest.DefaultPrefixValue + sypltest.DefaultContentOutput,
@@ -82,7 +82,7 @@ func TestOutput_GetStatus(t *testing.T) {
 		{
 			name: "Should work",
 			args: args{
-				name:     "Buffer",
+				name:     fixtureBufferTitle,
 				maxLevel: level.Trace,
 			},
 			want: status.Disabled,

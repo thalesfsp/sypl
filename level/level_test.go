@@ -49,7 +49,7 @@ func TestFromString(t *testing.T) {
 		{
 			name: "Should work - Valid",
 			args: args{
-				level: "Info",
+				level: fixtureInfoTitle,
 			},
 			want:       Info,
 			wantErr:    false,
@@ -116,14 +116,14 @@ func TestMustFromString(t *testing.T) {
 		{
 			name: "Should work - Valid - Uppercased",
 			args: args{
-				level: "Info",
+				level: fixtureInfoTitle,
 			},
 			want: Info,
 		},
 		{
 			name: "Should work - Valid - Lowercased",
 			args: args{
-				level: "info",
+				level: fixtureInfo,
 			},
 			want: Info,
 		},
@@ -158,7 +158,7 @@ func TestLevelsToString(t *testing.T) {
 			args: args{
 				levels: []Level{Level(10)},
 			},
-			want: "Unknown",
+			want: fixtureUnknownTitle,
 		},
 	}
 	for _, tt := range tests {

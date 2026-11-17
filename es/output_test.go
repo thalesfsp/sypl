@@ -21,6 +21,14 @@ import (
 	"github.com/thalesfsp/sypl/v2/processor"
 )
 
+const (
+	fixtureAlpha       = "alpha"
+	fixtureBeta        = "beta"
+	fixtureIdx         = "idx-"
+	fixtureIdxAlpha    = "idx-alpha"
+	fixtureIdxCatchall = "idx-catchall"
+)
+
 //////
 // Test helpers.
 //////
@@ -197,7 +205,7 @@ func TestElasticSearchWithDynamicIndexOutput(t *testing.T) {
 	day := "2026-07-11"
 
 	o := OutputWithDynamicIndex(
-		func() string { return "idx-" + day },
+		func() string { return fixtureIdx + day },
 		Config{Addresses: []string{srv.URL}},
 		level.Trace,
 	)
@@ -231,12 +239,12 @@ func TestElasticSearchWithDynamicIndexOutput(t *testing.T) {
 
 func tagMapForTest(withCatchAll bool) TagMap {
 	tagMap := TagMap{
-		"alpha": NewTagMapItem(level.Trace, func() string { return "idx-alpha" }),
-		"beta":  NewTagMapItem(level.Trace, func() string { return "idx-beta" }),
+		fixtureAlpha: NewTagMapItem(level.Trace, func() string { return fixtureIdxAlpha }),
+		fixtureBeta:  NewTagMapItem(level.Trace, func() string { return "idx-beta" }),
 	}
 
 	if withCatchAll {
-		tagMap["*"] = NewTagMapItem(level.Trace, func() string { return "idx-catchall" })
+		tagMap["*"] = NewTagMapItem(level.Trace, func() string { return fixtureIdxCatchall })
 	}
 
 	return tagMap
@@ -336,23 +344,23 @@ func TestElasticSearchWithTagMapOutput_Routing(t *testing.T) {
 	}{
 		{
 			name:        "Should route - tagged message goes only to its index",
-			tags:        []string{"alpha"},
-			wantIndexes: map[string]bool{"idx-alpha": true},
+			tags:        []string{fixtureAlpha},
+			wantIndexes: map[string]bool{fixtureIdxAlpha: true},
 		},
 		{
 			name:        "Should route - multi-tagged message goes to every matching index",
-			tags:        []string{"alpha", "beta"},
-			wantIndexes: map[string]bool{"idx-alpha": true, "idx-beta": true},
+			tags:        []string{fixtureAlpha, fixtureBeta},
+			wantIndexes: map[string]bool{fixtureIdxAlpha: true, "idx-beta": true},
 		},
 		{
 			name:        "Should route - untagged message goes only to the catch-all",
 			tags:        nil,
-			wantIndexes: map[string]bool{"idx-catchall": true},
+			wantIndexes: map[string]bool{fixtureIdxCatchall: true},
 		},
 		{
 			name:        "Should route - unmapped tag goes only to the catch-all",
 			tags:        []string{"gamma"},
-			wantIndexes: map[string]bool{"idx-catchall": true},
+			wantIndexes: map[string]bool{fixtureIdxCatchall: true},
 		},
 	}
 	for _, tt := range tests {
@@ -410,7 +418,7 @@ func TestElasticSearchWithTagMapOutput_NoProcessorsAliasing(t *testing.T) {
 	// Each output must hold ITS OWN tag filter: its filter must pass a
 	// message carrying the output's own tag, and mute one carrying only
 	// the other output's tag.
-	for _, tag := range []string{"alpha", "beta"} {
+	for _, tag := range []string{fixtureAlpha, fixtureBeta} {
 		o := findOutput(outputs, "ElasticSearchWithTagMap-"+tag)
 
 		if o == nil {
@@ -443,10 +451,10 @@ func TestElasticSearchWithTagMapOutput_NoProcessorsAliasing(t *testing.T) {
 		}
 
 		// Other tag only: muted.
-		otherTag := "alpha"
+		otherTag := fixtureAlpha
 
-		if tag == "alpha" {
-			otherTag = "beta"
+		if tag == fixtureAlpha {
+			otherTag = fixtureBeta
 		}
 
 		other := message.New(level.Info, "other")

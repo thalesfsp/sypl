@@ -11,6 +11,16 @@ import (
 	"github.com/thalesfsp/sypl/v2/shared"
 )
 
+const (
+	fixtureComp                                   = "comp"
+	fixtureComponentX                             = "componentX"
+	fixtureConsole                                = "console"
+	fixtureFile                                   = "file"
+	fixtureInfoComponentXOutputYDebugOutputZTrace = "info,componentX:outputY:debug,outputZ:trace"
+	fixtureOut                                    = "out"
+	fixtureOutputY                                = "outputY"
+)
+
 // TestEntryBoundaries verifies that each matcher only matches COMPLETE
 // comma-delimited entries of the debug env var - never prefixes, or
 // substrings of unrelated entries.
@@ -33,7 +43,7 @@ func TestEntryBoundaries(t *testing.T) {
 		//////
 		{
 			name:        "Should work - bare level",
-			args:        args{componentName: "comp", outputName: "out"},
+			args:        args{componentName: fixtureComp, outputName: fixtureOut},
 			content:     "trace",
 			wantLevel:   level.Trace,
 			wantMatcher: L,
@@ -41,7 +51,7 @@ func TestEntryBoundaries(t *testing.T) {
 		},
 		{
 			name:        "Should work - output:level",
-			args:        args{componentName: "comp", outputName: "console"},
+			args:        args{componentName: fixtureComp, outputName: fixtureConsole},
 			content:     "console:debug",
 			wantLevel:   level.Debug,
 			wantMatcher: OL,
@@ -49,7 +59,7 @@ func TestEntryBoundaries(t *testing.T) {
 		},
 		{
 			name:        "Should work - component:output:level",
-			args:        args{componentName: "comp", outputName: "console"},
+			args:        args{componentName: fixtureComp, outputName: fixtureConsole},
 			content:     "comp:console:warn",
 			wantLevel:   level.Warn,
 			wantMatcher: COL,
@@ -57,7 +67,7 @@ func TestEntryBoundaries(t *testing.T) {
 		},
 		{
 			name:        "Should work - multi-entry, COL wins",
-			args:        args{componentName: "comp", outputName: "console"},
+			args:        args{componentName: fixtureComp, outputName: fixtureConsole},
 			content:     "info,comp:console:debug,file:trace",
 			wantLevel:   level.Debug,
 			wantMatcher: COL,
@@ -65,7 +75,7 @@ func TestEntryBoundaries(t *testing.T) {
 		},
 		{
 			name:        "Should work - multi-entry, OL wins",
-			args:        args{componentName: "comp", outputName: "file"},
+			args:        args{componentName: fixtureComp, outputName: fixtureFile},
 			content:     "info,other:console:debug,file:trace",
 			wantLevel:   level.Trace,
 			wantMatcher: OL,
@@ -73,7 +83,7 @@ func TestEntryBoundaries(t *testing.T) {
 		},
 		{
 			name:        "Should work - multi-entry, falls back to bare level",
-			args:        args{componentName: "comp", outputName: "out"},
+			args:        args{componentName: fixtureComp, outputName: fixtureOut},
 			content:     "info,other:console:debug,file:trace",
 			wantLevel:   level.Info,
 			wantMatcher: L,
@@ -81,7 +91,7 @@ func TestEntryBoundaries(t *testing.T) {
 		},
 		{
 			name:        "Should work - bare level is case-insensitive",
-			args:        args{componentName: "comp", outputName: "out"},
+			args:        args{componentName: fixtureComp, outputName: fixtureOut},
 			content:     "TRACE",
 			wantLevel:   level.Trace,
 			wantMatcher: L,
@@ -93,7 +103,7 @@ func TestEntryBoundaries(t *testing.T) {
 		//////
 		{
 			name:        "Should fail - component prefixed with a level name (infosvc)",
-			args:        args{componentName: "other", outputName: "file"},
+			args:        args{componentName: "other", outputName: fixtureFile},
 			content:     "infosvc:console:trace",
 			wantLevel:   level.None,
 			wantMatcher: None,
@@ -101,7 +111,7 @@ func TestEntryBoundaries(t *testing.T) {
 		},
 		{
 			name:        "Should fail - component prefixed with a level name (errorhandler)",
-			args:        args{componentName: "other", outputName: "file"},
+			args:        args{componentName: "other", outputName: fixtureFile},
 			content:     "errorhandler:console:trace",
 			wantLevel:   level.None,
 			wantMatcher: None,
@@ -109,7 +119,7 @@ func TestEntryBoundaries(t *testing.T) {
 		},
 		{
 			name:        "Should fail - output name is a substring of another output",
-			args:        args{componentName: "comp", outputName: "es"},
+			args:        args{componentName: fixtureComp, outputName: "es"},
 			content:     "es-backup:trace",
 			wantLevel:   level.None,
 			wantMatcher: None,
@@ -117,7 +127,7 @@ func TestEntryBoundaries(t *testing.T) {
 		},
 		{
 			name:        "Should fail - output entry scoped to a superstring output",
-			args:        args{componentName: "comp", outputName: "console"},
+			args:        args{componentName: fixtureComp, outputName: fixtureConsole},
 			content:     "console2:trace",
 			wantLevel:   level.None,
 			wantMatcher: None,
@@ -125,7 +135,7 @@ func TestEntryBoundaries(t *testing.T) {
 		},
 		{
 			name:        "Should fail - component entry scoped to a superstring component",
-			args:        args{componentName: "comp", outputName: "console"},
+			args:        args{componentName: fixtureComp, outputName: fixtureConsole},
 			content:     "comp2:console:trace",
 			wantLevel:   level.None,
 			wantMatcher: None,
@@ -137,7 +147,7 @@ func TestEntryBoundaries(t *testing.T) {
 		//////
 		{
 			name:        "Should fail - bare level not at the beginning (order matters)",
-			args:        args{componentName: "comp", outputName: "out"},
+			args:        args{componentName: fixtureComp, outputName: fixtureOut},
 			content:     "other:console:debug,file:trace,info",
 			wantLevel:   level.None,
 			wantMatcher: None,
@@ -145,7 +155,7 @@ func TestEntryBoundaries(t *testing.T) {
 		},
 		{
 			name:        "Should fail - empty env var",
-			args:        args{componentName: "comp", outputName: "out"},
+			args:        args{componentName: fixtureComp, outputName: fixtureOut},
 			content:     "",
 			wantLevel:   level.None,
 			wantMatcher: None,

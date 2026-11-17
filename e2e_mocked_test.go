@@ -89,7 +89,7 @@ func TestE2E_JSONFormatter(t *testing.T) {
 	l.PrintWithOptions(
 		level.Info,
 		"json-msg\n",
-		sypl.WithFields(fields.Fields{"fkey": "fval"}),
+		sypl.WithFields(fields.Fields{fixtureFkey: fixtureFval}),
 		sypl.WithTags("tag-a"),
 	)
 
@@ -100,19 +100,19 @@ func TestE2E_JSONFormatter(t *testing.T) {
 		t.Fatalf("output is not valid JSON: %v: %q", err, line)
 	}
 
-	if decoded["component"] != "e2e-json" {
+	if decoded[fixtureComponent] != "e2e-json" {
 		t.Fatalf("component = %v, expected e2e-json", decoded["component"])
 	}
 
-	if decoded["level"] != "info" {
+	if decoded[fixtureLevel] != fixtureInfo {
 		t.Fatalf("level = %v, expected info", decoded["level"])
 	}
 
-	if decoded["message"] != "json-msg" {
+	if decoded[fixtureMessage] != "json-msg" {
 		t.Fatalf("message = %v, expected json-msg", decoded["message"])
 	}
 
-	if decoded["fkey"] != "fval" {
+	if decoded[fixtureFkey] != fixtureFval {
 		t.Fatalf("field fkey = %v, expected fval", decoded["fkey"])
 	}
 
@@ -161,7 +161,7 @@ func TestE2E_ForcedPrints(t *testing.T) {
 
 	l.PrintWithOptions(level.Trace, "forced\n", sypl.WithFlag(flag.Force))
 
-	if buf.String() != "forced\n" {
+	if buf.String() != fixtureForcedLine {
 		t.Fatalf("forced message printed %q, expected %q", buf.String(), "forced\n")
 	}
 }
@@ -173,9 +173,9 @@ func TestE2E_FieldsPrecedence(t *testing.T) {
 	o.SetFormatter(formatter.JSON())
 
 	l := sypl.New("e2e-fields", o)
-	l.SetFields(fields.Fields{"env": "global", "shared": "global-value"})
+	l.SetFields(fields.Fields{fixtureEnv: "global", fixtureShared: "global-value"})
 
-	l.PrintWithOptions(level.Info, "fields-msg\n", sypl.WithFields(fields.Fields{"shared": "message-value"}))
+	l.PrintWithOptions(level.Info, "fields-msg\n", sypl.WithFields(fields.Fields{fixtureShared: "message-value"}))
 
 	line := strings.TrimSuffix(buf.String(), "\n")
 
@@ -184,11 +184,11 @@ func TestE2E_FieldsPrecedence(t *testing.T) {
 		t.Fatalf("output is not valid JSON: %v: %q", err, line)
 	}
 
-	if decoded["env"] != "global" {
+	if decoded[fixtureEnv] != "global" {
 		t.Fatalf("global field env = %v, expected global", decoded["env"])
 	}
 
-	if decoded["shared"] != "message-value" {
+	if decoded[fixtureShared] != "message-value" {
 		t.Fatalf("per-message field must win: shared = %v, expected message-value", decoded["shared"])
 	}
 }

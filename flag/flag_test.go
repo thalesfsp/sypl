@@ -6,6 +6,10 @@ package flag
 
 import "testing"
 
+const (
+	fixtureUnknownTitle = "Unknown"
+)
+
 func TestFlag_String(t *testing.T) {
 	tests := []struct {
 		name string
@@ -45,17 +49,17 @@ func TestFlag_String(t *testing.T) {
 		{
 			name: "Should work - out-of-range - negative",
 			f:    Flag(-1),
-			want: "Unknown",
+			want: fixtureUnknownTitle,
 		},
 		{
 			name: "Should work - out-of-range - SkipAndMute + 1",
 			f:    SkipAndMute + 1,
-			want: "Unknown",
+			want: fixtureUnknownTitle,
 		},
 		{
 			name: "Should work - out-of-range - big positive",
 			f:    Flag(100),
-			want: "Unknown",
+			want: fixtureUnknownTitle,
 		},
 	}
 	for _, tt := range tests {

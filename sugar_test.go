@@ -6,6 +6,7 @@ package sypl_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
@@ -51,11 +52,11 @@ func TestSugar_HappyPairs(t *testing.T) {
 
 	decoded := sugarLine(t, buf)
 
-	if decoded["message"] != "user logged in" {
+	if decoded[fixtureMessage] != "user logged in" {
 		t.Fatalf("message = %v, want %q", decoded["message"], "user logged in")
 	}
 
-	if decoded["level"] != "info" {
+	if decoded[fixtureLevel] != fixtureInfo {
 		t.Fatalf("level = %v, want info", decoded["level"])
 	}
 
@@ -79,10 +80,10 @@ func TestSugar_LeveledVariants(t *testing.T) {
 	}{
 		{func() { l.Tracew("m", "k", "v") }, "trace"},
 		{func() { l.Debugw("m", "k", "v") }, "debug"},
-		{func() { l.Infow("m", "k", "v") }, "info"},
-		{func() { l.Warnw("m", "k", "v") }, "warn"},
+		{func() { l.Infow("m", "k", "v") }, fixtureInfo},
+		{func() { l.Warnw("m", "k", "v") }, fixtureWarn},
 		{func() { l.Errorw("m", "k", "v") }, "error"},
-		{func() { l.Logw(level.Warn, "m", "k", "v") }, "warn"},
+		{func() { l.Logw(level.Warn, "m", "k", "v") }, fixtureWarn},
 	}
 
 	for _, tt := range tests {
@@ -92,7 +93,7 @@ func TestSugar_LeveledVariants(t *testing.T) {
 
 		decoded := sugarLine(t, buf)
 
-		if decoded["level"] != tt.level {
+		if decoded[fixtureLevel] != tt.level {
 			t.Fatalf("level = %v, want %s", decoded["level"], tt.level)
 		}
 
@@ -157,7 +158,7 @@ func TestSugar_EmptyKeyValues(t *testing.T) {
 
 	decoded := sugarLine(t, buf)
 
-	if decoded["message"] != "no fields" {
+	if decoded[fixtureMessage] != "no fields" {
 		t.Fatalf("message = %v, want %q", decoded["message"], "no fields")
 	}
 
@@ -204,7 +205,7 @@ func TestSugar_FatalwExits(t *testing.T) {
 	}
 
 	//nolint:gosec // Re-running the test binary itself.
-	cmd := exec.Command(os.Args[0], "-test.run=TestSugar_FatalwExits$")
+	cmd := exec.CommandContext(context.Background(), os.Args[0], "-test.run=TestSugar_FatalwExits$")
 
 	cmd.Env = append(os.Environ(), "SYPL_TEST_SUGAR_FATALW=1")
 

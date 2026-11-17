@@ -22,6 +22,14 @@ import (
 	"github.com/thalesfsp/sypl/v2/status"
 )
 
+const (
+	fixtureBufferTitle   = "Buffer"
+	fixtureFkey          = "fkey"
+	fixtureFval          = "fval"
+	fixtureSuffixed      = " - suffixed"
+	fixtureSuffixerTitle = "Suffixer"
+)
+
 //////
 // Test helpers.
 //////
@@ -272,7 +280,7 @@ func TestAsync_ProxiesIOutput(t *testing.T) {
 	found := false
 
 	for _, p := range a.GetProcessors() {
-		if p.GetName() == "Suffixer" {
+		if p.GetName() == fixtureSuffixerTitle {
 			found = true
 		}
 	}
@@ -287,7 +295,7 @@ func TestAsync_ProxiesIOutput(t *testing.T) {
 
 	names := a.GetProcessorsNames()
 
-	if len(names) != 2 || names[0] != prefixerName || names[1] != "Suffixer" {
+	if len(names) != 2 || names[0] != prefixerName || names[1] != fixtureSuffixerTitle {
 		t.Errorf("GetProcessorsNames() = %v, want [Prefixer Suffixer]", names)
 	}
 

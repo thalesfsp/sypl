@@ -22,6 +22,10 @@ import (
 	"github.com/thalesfsp/sypl/v2/status"
 )
 
+const (
+	fixtureOne = "one"
+)
+
 //////
 // Test helpers.
 //////
@@ -415,10 +419,10 @@ func TestHandler_ImmutableDerivation(t *testing.T) {
 
 	expected := []fields.Fields{
 		{},
-		{"one": "1"},
+		{fixtureOne: "1"},
 		{"two": "2"},
-		{"one": "1", "a": "a"},
-		{"one": "1", "b": "b"},
+		{fixtureOne: "1", "a": "a"},
+		{fixtureOne: "1", "b": "b"},
 	}
 
 	for i, e := range expected {

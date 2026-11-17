@@ -75,3 +75,11 @@ Release proposal: publish root `v2.0.1` before `es/v2.0.1`. The nested module no
 requires root v2.0.1; its existing development replacement permits local tests
 before publishing, but does not affect consumers. Root publication and clean
 consumer checks must precede the es release.
+
+Lint upgrade reconciliation: the original v1.61.0 enabled set is preserved by
+an explicit v2.15.0 mapping, including successor test exclusions and all four
+formatters. Original mechanical lint findings were fixed without assertions,
+thresholds or check policies being weakened. ANSI assertions run in a clean
+child only when inherited NO_COLOR was captured during package initialization.
+The mapping, formatting negative control and committed CI logs are retained
+with fix-report.json in the external scratch directory.

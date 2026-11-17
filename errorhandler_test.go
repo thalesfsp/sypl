@@ -130,7 +130,7 @@ func TestErrorHandler_MultiOutputDelivery(t *testing.T) {
 		t.Fatalf("handler called %d times, want 2", len(errs))
 	}
 
-	names := []string{}
+	names := make([]string, 0, len(errs))
 
 	for _, err := range errs {
 		if !errors.Is(err, errWriteBoom) {

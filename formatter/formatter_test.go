@@ -10,12 +10,19 @@ import (
 	"github.com/thalesfsp/sypl/v2/message"
 )
 
+const (
+	fixtureKey1            = "key1"
+	fixtureNilField        = "nilField"
+	fixtureShouldWorkTitle = "Should work"
+	fixtureValue1          = "value1"
+)
+
 func TestText(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 		},
 	}
 	for _, tt := range tests {
@@ -23,7 +30,7 @@ func TestText(t *testing.T) {
 			m := message.New(level.Info, sypltest.DefaultContentOutput)
 			m.SetComponentName(sypltest.DefaultComponentNameOutput)
 			m.SetFields(fields.Fields{
-				"key1": "value1",
+				fixtureKey1: fixtureValue1,
 			})
 
 			if err := Text().Run(m); err != nil {
@@ -54,7 +61,7 @@ func TestJSONPrettify(t *testing.T) {
 		name string
 	}{
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 		},
 	}
 	for _, tt := range tests {
@@ -62,7 +69,7 @@ func TestJSONPrettify(t *testing.T) {
 			m := message.New(level.Info, sypltest.DefaultContentOutput)
 			m.SetComponentName(sypltest.DefaultComponentNameOutput)
 			m.SetFields(fields.Fields{
-				"key1": "value1",
+				fixtureKey1: fixtureValue1,
 			})
 
 			if err := JSONPretty().Run(m); err != nil {
@@ -93,7 +100,7 @@ func TestJSON(t *testing.T) {
 		name string
 	}{
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 		},
 	}
 	for _, tt := range tests {
@@ -101,7 +108,7 @@ func TestJSON(t *testing.T) {
 			m := message.New(level.Info, sypltest.DefaultContentOutput)
 			m.SetComponentName(sypltest.DefaultComponentNameOutput)
 			m.SetFields(fields.Fields{
-				"key1": "value1",
+				fixtureKey1: fixtureValue1,
 			})
 
 			if err := JSON().Run(m); err != nil {

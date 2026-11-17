@@ -37,7 +37,7 @@ func bulkOKHandler(w http.ResponseWriter, r *http.Request) {
 	// NDJSON: one action line + one source line per item.
 	lines := strings.Count(strings.TrimSuffix(body.String(), "\n"), "\n") + 1
 
-	items := []string{}
+	items := make([]string, 0, lines/2)
 
 	for range lines / 2 {
 		items = append(items, `{"index":{"_index":"idx","status":201,"result":"created"}}`)
@@ -223,7 +223,7 @@ func TestNewBulk_FatalPath(t *testing.T) {
 	}
 
 	//nolint:gosec // Re-running the test binary itself.
-	cmd := exec.Command(os.Args[0], "-test.run=TestNewBulk_FatalPath$")
+	cmd := exec.CommandContext(context.Background(), os.Args[0], "-test.run=TestNewBulk_FatalPath$")
 
 	cmd.Env = append(os.Environ(), "SYPL_TEST_ES_BULK_FATAL_MODE=1")
 
@@ -372,7 +372,7 @@ func TestElasticSearchBulk_DynamicIndexRouting(t *testing.T) {
 	day := testDay1
 
 	es := NewBulkWithDynamicIndex(
-		func() string { return "idx-" + day },
+		func() string { return fixtureIdx + day },
 		Config{Addresses: []string{srv.URL}},
 		BulkWithNumWorkers(1),
 	)

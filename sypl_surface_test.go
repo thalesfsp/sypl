@@ -5,6 +5,7 @@
 package sypl_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -207,34 +208,34 @@ func TestSypl_LeveledMatrix(t *testing.T) {
 
 	matrix := map[string][]variant{
 		"Error": {
-			{"plain", func(l *sypl.Sypl) { l.Error("msg") }, "msg"},
-			{"f", func(l *sypl.Sypl) { l.Errorf("%s-%d", "m", 1) }, "m-1"},
-			{"ln", func(l *sypl.Sypl) { l.Errorln("msg") }, "msg\n"},
-			{"lnf", func(l *sypl.Sypl) { l.Errorlnf("%s-%d", "m", 1) }, "m-1\n"},
+			{fixturePlain, func(l *sypl.Sypl) { l.Error("msg") }, fixtureMsg},
+			{"f", func(l *sypl.Sypl) { l.Errorf("%s-%d", "m", 1) }, fixtureM1},
+			{"ln", func(l *sypl.Sypl) { l.Errorln("msg") }, fixtureMsgLine},
+			{fixtureLnf, func(l *sypl.Sypl) { l.Errorlnf("%s-%d", "m", 1) }, fixtureM1Line},
 		},
 		"Info": {
-			{"plain", func(l *sypl.Sypl) { l.Info("msg") }, "msg"},
-			{"f", func(l *sypl.Sypl) { l.Infof("%s-%d", "m", 1) }, "m-1"},
-			{"ln", func(l *sypl.Sypl) { l.Infoln("msg") }, "msg\n"},
-			{"lnf", func(l *sypl.Sypl) { l.Infolnf("%s-%d", "m", 1) }, "m-1\n"},
+			{fixturePlain, func(l *sypl.Sypl) { l.Info("msg") }, fixtureMsg},
+			{"f", func(l *sypl.Sypl) { l.Infof("%s-%d", "m", 1) }, fixtureM1},
+			{"ln", func(l *sypl.Sypl) { l.Infoln("msg") }, fixtureMsgLine},
+			{fixtureLnf, func(l *sypl.Sypl) { l.Infolnf("%s-%d", "m", 1) }, fixtureM1Line},
 		},
 		"Warn": {
-			{"plain", func(l *sypl.Sypl) { l.Warn("msg") }, "msg"},
-			{"f", func(l *sypl.Sypl) { l.Warnf("%s-%d", "m", 1) }, "m-1"},
-			{"ln", func(l *sypl.Sypl) { l.Warnln("msg") }, "msg\n"},
-			{"lnf", func(l *sypl.Sypl) { l.Warnlnf("%s-%d", "m", 1) }, "m-1\n"},
+			{fixturePlain, func(l *sypl.Sypl) { l.Warn("msg") }, fixtureMsg},
+			{"f", func(l *sypl.Sypl) { l.Warnf("%s-%d", "m", 1) }, fixtureM1},
+			{"ln", func(l *sypl.Sypl) { l.Warnln("msg") }, fixtureMsgLine},
+			{fixtureLnf, func(l *sypl.Sypl) { l.Warnlnf("%s-%d", "m", 1) }, fixtureM1Line},
 		},
 		"Debug": {
-			{"plain", func(l *sypl.Sypl) { l.Debug("msg") }, "msg"},
-			{"f", func(l *sypl.Sypl) { l.Debugf("%s-%d", "m", 1) }, "m-1"},
-			{"ln", func(l *sypl.Sypl) { l.Debugln("msg") }, "msg\n"},
-			{"lnf", func(l *sypl.Sypl) { l.Debuglnf("%s-%d", "m", 1) }, "m-1\n"},
+			{fixturePlain, func(l *sypl.Sypl) { l.Debug("msg") }, fixtureMsg},
+			{"f", func(l *sypl.Sypl) { l.Debugf("%s-%d", "m", 1) }, fixtureM1},
+			{"ln", func(l *sypl.Sypl) { l.Debugln("msg") }, fixtureMsgLine},
+			{fixtureLnf, func(l *sypl.Sypl) { l.Debuglnf("%s-%d", "m", 1) }, fixtureM1Line},
 		},
 		"Trace": {
-			{"plain", func(l *sypl.Sypl) { l.Trace("msg") }, "msg"},
-			{"f", func(l *sypl.Sypl) { l.Tracef("%s-%d", "m", 1) }, "m-1"},
-			{"ln", func(l *sypl.Sypl) { l.Traceln("msg") }, "msg\n"},
-			{"lnf", func(l *sypl.Sypl) { l.Tracelnf("%s-%d", "m", 1) }, "m-1\n"},
+			{fixturePlain, func(l *sypl.Sypl) { l.Trace("msg") }, fixtureMsg},
+			{"f", func(l *sypl.Sypl) { l.Tracef("%s-%d", "m", 1) }, fixtureM1},
+			{"ln", func(l *sypl.Sypl) { l.Traceln("msg") }, fixtureMsgLine},
+			{fixtureLnf, func(l *sypl.Sypl) { l.Tracelnf("%s-%d", "m", 1) }, fixtureM1Line},
 		},
 	}
 
@@ -492,10 +493,10 @@ func TestSypl_PrintMessagesToOutputsWithOptions(t *testing.T) {
 
 	l.PrintMessagesToOutputsWithOptions(
 		&options.Options{Flag: flag.Force},
-		sypl.MessageToOutput{Content: "forced\n", Level: level.Debug, OutputName: "A"},
+		sypl.MessageToOutput{Content: fixtureForcedLine, Level: level.Debug, OutputName: "A"},
 	)
 
-	if bufA.String() != "forced\n" {
+	if bufA.String() != fixtureForcedLine {
 		t.Fatalf("forced message not printed: %q", bufA.String())
 	}
 
@@ -507,7 +508,7 @@ func TestSypl_PrintMessagesToOutputsWithOptions(t *testing.T) {
 
 	lb.PrintMessagesToOutputsWithOptions(
 		&options.Options{
-			Fields:          fields.Fields{"fkey": "fval"},
+			Fields:          fields.Fields{fixtureFkey: fixtureFval},
 			ProcessorsNames: []string{"Prefixer"},
 			Tags:            []string{"opt-tag"},
 		},
@@ -627,11 +628,11 @@ func TestSypl_FilterEnvVar(t *testing.T) {
 		component  string
 		wantPrints bool
 	}{
-		{"name in list", "svc,api", "svc", true},
-		{"second name in list", "svc,api", "api", true},
-		{"name not in list", "svc,api", "nope", false},
-		{"exact match only - prefix must not match", "svc", "svc-worker", false},
-		{"case-insensitive", "SVC", "svc", true},
+		{"name in list", fixtureSvcApi, fixtureSvc, true},
+		{"second name in list", fixtureSvcApi, "api", true},
+		{"name not in list", fixtureSvcApi, "nope", false},
+		{"exact match only - prefix must not match", fixtureSvc, "svc-worker", false},
+		{"case-insensitive", "SVC", fixtureSvc, true},
 		{"list entries are trimmed", "svc , api", "api", true},
 		{"empty filter prints", "", "anything", true},
 	}
@@ -672,7 +673,7 @@ func TestSypl_ProcessNilReceiver(t *testing.T) {
 	}
 
 	//nolint:gosec
-	cmd := exec.Command(os.Args[0], "-test.run=TestSypl_ProcessNilReceiver$")
+	cmd := exec.CommandContext(context.Background(), os.Args[0], "-test.run=TestSypl_ProcessNilReceiver$")
 	cmd.Env = append(os.Environ(), "SYPL_TEST_NIL_PROCESS=1")
 
 	var stderr strings.Builder
@@ -728,7 +729,7 @@ func TestSypl_FatalVariants(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.variant, func(t *testing.T) {
 			//nolint:gosec
-			cmd := exec.Command(os.Args[0], "-test.run=TestSypl_FatalVariants$")
+			cmd := exec.CommandContext(context.Background(), os.Args[0], "-test.run=TestSypl_FatalVariants$")
 			cmd.Env = append(os.Environ(), "SYPL_TEST_FATAL_VARIANT="+tt.variant)
 
 			out, err := cmd.Output()

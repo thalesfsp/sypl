@@ -93,7 +93,7 @@ func MustFromString(level string) Level {
 
 // LevelsToString converts a slice of levels to string (concatenated).
 func LevelsToString(levels []Level) string {
-	names := []string{}
+	names := make([]string, 0, len(levels))
 
 	for _, level := range levels {
 		names = append(names, level.String())
@@ -104,7 +104,7 @@ func LevelsToString(levels []Level) string {
 
 // LevelsNames returns the name of all available levels.
 func LevelsNames() []string {
-	finalNames := []string{}
+	finalNames := make([]string, 0, len(names))
 
 	for _, name := range names {
 		finalNames = append(finalNames, strings.ToLower(name))

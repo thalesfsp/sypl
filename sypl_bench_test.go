@@ -86,7 +86,7 @@ func BenchmarkPrint_MutedLevel_FastGate(b *testing.B) {
 // copy).
 func BenchmarkWith(b *testing.B) {
 	l := sypl.New("bench", discardOutput("Discard"))
-	l.SetFields(fields.Fields{"parent": "value"})
+	l.SetFields(fields.Fields{fixtureParent: "value"})
 
 	f := fields.Fields{"child": "value"}
 
@@ -102,7 +102,7 @@ func BenchmarkWith(b *testing.B) {
 func BenchmarkPrintWithOptions_Fields(b *testing.B) {
 	l := sypl.New("bench", discardOutput("Discard"))
 
-	f := fields.Fields{"key1": "value1", "key2": 2}
+	f := fields.Fields{"key1": fixtureValue1, "key2": 2}
 
 	b.ReportAllocs()
 	b.ResetTimer()

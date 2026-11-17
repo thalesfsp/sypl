@@ -24,10 +24,10 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should work - COL",
 			args: args{
-				componentName: "componentX",
-				outputName:    "outputY",
+				componentName: fixtureComponentX,
+				outputName:    fixtureOutputY,
 			},
-			content:     "info,componentX:outputY:debug,outputZ:trace",
+			content:     fixtureInfoComponentXOutputYDebugOutputZTrace,
 			wantLevel:   level.Debug,
 			wantMatcher: COL,
 			wantOK:      true,
@@ -35,10 +35,10 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should work - OL",
 			args: args{
-				componentName: "componentX",
+				componentName: fixtureComponentX,
 				outputName:    "outputZ",
 			},
-			content:     "info,componentX:outputY:debug,outputZ:trace",
+			content:     fixtureInfoComponentXOutputYDebugOutputZTrace,
 			wantLevel:   level.Trace,
 			wantMatcher: OL,
 			wantOK:      true,
@@ -46,10 +46,10 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should work - L",
 			args: args{
-				componentName: "componentX",
+				componentName: fixtureComponentX,
 				outputName:    "outputW",
 			},
-			content:     "info,componentX:outputY:debug,outputZ:trace",
+			content:     fixtureInfoComponentXOutputYDebugOutputZTrace,
 			wantLevel:   level.Info,
 			wantMatcher: L,
 			wantOK:      true,
@@ -57,8 +57,8 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should work - level none",
 			args: args{
-				componentName: "componentX",
-				outputName:    "outputY",
+				componentName: fixtureComponentX,
+				outputName:    fixtureOutputY,
 			},
 			content:     "info,componentX:outputY:none,outputZ:trace",
 			wantLevel:   level.None,
@@ -68,7 +68,7 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should fail - no match",
 			args: args{
-				componentName: "componentX",
+				componentName: fixtureComponentX,
 				outputName:    "outputW",
 			},
 			content:     "componentX:outputY:debug,outputZ:trace,info",
@@ -79,8 +79,8 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should fail - invalid level",
 			args: args{
-				componentName: "componentX",
-				outputName:    "outputY",
+				componentName: fixtureComponentX,
+				outputName:    fixtureOutputY,
 			},
 			content:     "componentX:outputY:asd,outputZ:trace,info",
 			wantLevel:   level.None,
@@ -90,8 +90,8 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should do nothing",
 			args: args{
-				componentName: "componentX",
-				outputName:    "outputY",
+				componentName: fixtureComponentX,
+				outputName:    fixtureOutputY,
 			},
 			wantLevel:   level.None,
 			wantMatcher: None,

@@ -6,6 +6,7 @@ package es
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -211,7 +212,7 @@ func TestNew_FatalPaths(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			//nolint:gosec // Re-running the test binary itself.
-			cmd := exec.Command(os.Args[0], "-test.run=TestNew_FatalPaths$")
+			cmd := exec.CommandContext(context.Background(), os.Args[0], "-test.run=TestNew_FatalPaths$")
 
 			cmd.Env = append(os.Environ(), "SYPL_TEST_ES_FATAL_MODE="+tt.mode)
 

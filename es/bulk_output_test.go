@@ -226,7 +226,7 @@ func TestElasticSearchBulkWithDynamicIndexOutput(t *testing.T) {
 	day := testDay1
 
 	o := BulkOutputWithDynamicIndex(
-		func() string { return "idx-" + day },
+		func() string { return fixtureIdx + day },
 		Config{Addresses: []string{srv.URL}},
 		level.Trace,
 		singleWorker(),

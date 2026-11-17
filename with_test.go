@@ -46,23 +46,23 @@ func TestWith_MergedFieldsChildWins(t *testing.T) {
 	o.SetFormatter(formatter.JSON())
 
 	parent := sypl.New("with-merge", o)
-	parent.SetFields(fields.Fields{"env": envProd, "shared": "parent-value"})
+	parent.SetFields(fields.Fields{fixtureEnv: envProd, fixtureShared: "parent-value"})
 
-	child := parent.With(fields.Fields{"request_id": "r-1", "shared": "child-value"})
+	child := parent.With(fields.Fields{fixtureRequestId: "r-1", fixtureShared: "child-value"})
 
 	child.Println(level.Info, "child message")
 
 	decoded := jsonLine(t, buf)
 
-	if decoded["env"] != envProd {
+	if decoded[fixtureEnv] != envProd {
 		t.Fatalf("child lost the parent field: env = %v", decoded["env"])
 	}
 
-	if decoded["request_id"] != "r-1" {
+	if decoded[fixtureRequestId] != "r-1" {
 		t.Fatalf("child lost its own field: request_id = %v", decoded["request_id"])
 	}
 
-	if decoded["shared"] != "child-value" {
+	if decoded[fixtureShared] != "child-value" {
 		t.Fatalf("child's field must win on conflict: shared = %v", decoded["shared"])
 	}
 
@@ -73,11 +73,11 @@ func TestWith_MergedFieldsChildWins(t *testing.T) {
 
 	decoded = jsonLine(t, buf)
 
-	if _, ok := decoded["request_id"]; ok {
+	if _, ok := decoded[fixtureRequestId]; ok {
 		t.Fatal("parent inherited the child's field: request_id present")
 	}
 
-	if decoded["shared"] != "parent-value" {
+	if decoded[fixtureShared] != "parent-value" {
 		t.Fatalf("parent's field mutated: shared = %v", decoded["shared"])
 	}
 }
@@ -147,8 +147,8 @@ func TestWith_ChainedMerge(t *testing.T) {
 	o.SetFormatter(formatter.JSON())
 
 	grandchild := sypl.New("with-chain", o).
-		With(fields.Fields{"l1": "one", "shared": "first"}).
-		With(fields.Fields{"l2": "two", "shared": "second"})
+		With(fields.Fields{"l1": "one", fixtureShared: "first"}).
+		With(fields.Fields{"l2": "two", fixtureShared: "second"})
 
 	grandchild.Println(level.Info, "chained")
 
@@ -158,7 +158,7 @@ func TestWith_ChainedMerge(t *testing.T) {
 		t.Fatalf("chained fields lost: l1=%v l2=%v", decoded["l1"], decoded["l2"])
 	}
 
-	if decoded["shared"] != "second" {
+	if decoded[fixtureShared] != "second" {
 		t.Fatalf("innermost With must win: shared = %v", decoded["shared"])
 	}
 }
@@ -170,7 +170,7 @@ func TestWith_NilAndEmptyFields(t *testing.T) {
 	o.SetFormatter(formatter.JSON())
 
 	parent := sypl.New("with-nil", o)
-	parent.SetFields(fields.Fields{"env": envProd})
+	parent.SetFields(fields.Fields{fixtureEnv: envProd})
 
 	for name, f := range map[string]fields.Fields{"nil": nil, "empty": {}} {
 		buf.Reset()
@@ -179,7 +179,7 @@ func TestWith_NilAndEmptyFields(t *testing.T) {
 
 		child.Println(level.Info, "child message")
 
-		if decoded := jsonLine(t, buf); decoded["env"] != envProd {
+		if decoded := jsonLine(t, buf); decoded[fixtureEnv] != envProd {
 			t.Fatalf("%s fields: child lost the parent field: env = %v", name, decoded["env"])
 		}
 	}
@@ -192,7 +192,7 @@ func TestWith_ParentChildIsolationRace(t *testing.T) {
 	_, o := output.SafeBuffer(level.Trace)
 
 	parent := sypl.New("with-race", o)
-	parent.SetFields(fields.Fields{"who": "parent"})
+	parent.SetFields(fields.Fields{fixtureWho: fixtureParent})
 
 	// Three separate appends leave the tags slice with SPARE CAPACITY
 	// (len 3, cap 4) - the 25dfacc precondition: were the backing array
@@ -201,7 +201,7 @@ func TestWith_ParentChildIsolationRace(t *testing.T) {
 	parent.SetTags("t2")
 	parent.SetTags("t3")
 
-	child := parent.With(fields.Fields{"who": whoChild})
+	child := parent.With(fields.Fields{fixtureWho: whoChild})
 
 	var wg sync.WaitGroup
 
@@ -212,7 +212,7 @@ func TestWith_ParentChildIsolationRace(t *testing.T) {
 
 		for i := range 100 {
 			parent.SetTags("parent-tag")
-			parent.SetFields(fields.Fields{"who": "parent", "i": i})
+			parent.SetFields(fields.Fields{fixtureWho: fixtureParent, "i": i})
 		}
 	}()
 
@@ -221,7 +221,7 @@ func TestWith_ParentChildIsolationRace(t *testing.T) {
 
 		for i := range 100 {
 			child.SetTags("child-tag")
-			child.SetFields(fields.Fields{"who": whoChild, "i": i})
+			child.SetFields(fields.Fields{fixtureWho: whoChild, "i": i})
 		}
 	}()
 
@@ -244,11 +244,11 @@ func TestWith_ParentChildIsolationRace(t *testing.T) {
 	wg.Wait()
 
 	// Steady-state isolation.
-	if parent.GetFields()["who"] != "parent" {
+	if parent.GetFields()[fixtureWho] != fixtureParent {
 		t.Fatalf("child leaked into parent fields: %v", parent.GetFields())
 	}
 
-	if child.GetFields()["who"] != whoChild {
+	if child.GetFields()[fixtureWho] != whoChild {
 		t.Fatalf("parent leaked into child fields: %v", child.GetFields())
 	}
 
@@ -264,9 +264,9 @@ func TestWith_DoesNotAliasArgument(t *testing.T) {
 	_, o := output.SafeBuffer(level.Trace)
 
 	parent := sypl.New("with-alias", o)
-	parent.SetFields(fields.Fields{"env": envProd})
+	parent.SetFields(fields.Fields{fixtureEnv: envProd})
 
-	arg := fields.Fields{"request_id": "r-9"}
+	arg := fields.Fields{fixtureRequestId: "r-9"}
 
 	child := parent.With(arg)
 
@@ -274,7 +274,7 @@ func TestWith_DoesNotAliasArgument(t *testing.T) {
 	child.SetFields(fields.Fields{"replaced": true})
 	child.GetFields()["injected"] = true
 
-	if len(arg) != 1 || arg["request_id"] != "r-9" {
+	if len(arg) != 1 || arg[fixtureRequestId] != "r-9" {
 		t.Fatalf("With aliased the caller's fields map: %v", arg)
 	}
 }

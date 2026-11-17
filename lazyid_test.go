@@ -49,7 +49,7 @@ func TestLazyID_TransparentToJSONFormatter(t *testing.T) {
 	// eager message for the same content.
 	want := message.New(level.Info, "lazy-id-msg").GetContentBasedHashID()
 
-	if decoded["contentBasedHashID"] != want {
+	if decoded[fixtureContentBasedHashID] != want {
 		t.Fatalf("contentBasedHashID = %v, want %v", decoded["contentBasedHashID"], want)
 	}
 }
@@ -105,7 +105,7 @@ func TestLazyID_SameIdentityAcrossOutputs(t *testing.T) {
 		t.Fatalf("per-output copies diverged: id A=%v B=%v", a["id"], b["id"])
 	}
 
-	if a["contentBasedHashID"] == "" || a["contentBasedHashID"] != b["contentBasedHashID"] {
+	if a[fixtureContentBasedHashID] == "" || a[fixtureContentBasedHashID] != b[fixtureContentBasedHashID] {
 		t.Fatalf("per-output copies diverged: hash A=%v B=%v", a["contentBasedHashID"], b["contentBasedHashID"])
 	}
 }

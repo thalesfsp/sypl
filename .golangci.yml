@@ -1,32 +1,107 @@
 # Copyright 2021 The sypl Authors. All rights reserved.
 # Use of this source code is governed by a MIT license in LICENSE.
-# Migrated to golangci-lint v2 with the upstream migrate command.
+# Preserve the enabled v1.61.0 policy explicitly across the v2 upgrade.
 # Removed deprecated scopelint/nosnakecase exclusions had no active checks;
-# Existing active wsl test exclusions remain unchanged.
+# Successor linters inherit the original exclusions and settings.
 version: "2"
 run:
   timeout: 1m
 linters:
-  default: all
-  disable:
-    - copyloopvar
-    - cyclop
-    - depguard
-    - err113
-    - exhaustruct
-    - forcetypeassert
-    - gochecknoglobals
-    - godox
-    - interfacebloat
-    - ireturn
-    - paralleltest
-    - perfsprint
-    - revive
-    - tagliatelle
-    - testpackage
-    - varnamelen
-    - wrapcheck
+  default: none
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - decorder
+    - dogsled
+    - dupl
+    - dupword
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - fatcontext
+    - forbidigo
+    - funlen
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - gochecknoinits
+    - gochecksumtype
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - goheader
+    - gomoddirectives
+    - gomodguard_v2
+    - goprintffuncname
+    - gosec
+    - gosmopolitan
+    - govet
+    - grouper
+    - importas
+    - inamedparam
+    - ineffassign
+    - intrange
+    - lll
+    - loggercheck
+    - maintidx
+    - makezero
+    - mirror
+    - misspell
+    - mnd
+    - musttag
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - nlreturn
+    - noctx
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - prealloc
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - staticcheck
+    - tagalign
+    - testableexamples
+    - testifylint
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - usetesting
+    - wastedassign
+    - whitespace
+    - wsl_v5
+    - zerologlint
   settings:
+    # tenv only checked os.Setenv; preserve that scope via its successor.
+    usetesting:
+      os-setenv: true
+      os-create-temp: false
+      os-mkdir-temp: false
+      os-chdir: false
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: false
+      branch-max-lines: 2
     funlen:
       lines: 150
       statements: 45
@@ -61,7 +136,7 @@ linters:
           - dupword
           - funlen
           - nlreturn
-          - wsl
+          - wsl_v5
         path: _test\.go
       - linters:
           - lll

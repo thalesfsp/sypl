@@ -39,7 +39,7 @@ func TestRecorder_CapturesStructuredSnapshots(t *testing.T) {
 
 	m := message.New(level.Info, "hello\n")
 
-	m.SetFields(fields.Fields{"fkey": "fval"})
+	m.SetFields(fields.Fields{fixtureFkey: fixtureFval})
 	m.AddTags("tag-b", "tag-a")
 	m.SetOutputName(recorderName)
 
@@ -74,7 +74,7 @@ func TestRecorder_CapturesStructuredSnapshots(t *testing.T) {
 		t.Errorf("ProcessedContent = %q, want %q", record.ProcessedContent, "p: hello\n")
 	}
 
-	if record.Fields["fkey"] != "fval" {
+	if record.Fields[fixtureFkey] != fixtureFval {
 		t.Errorf("Fields = %v, want fkey=fval", record.Fields)
 	}
 
@@ -138,7 +138,7 @@ func TestRecorder_RespectsLevelGating(t *testing.T) {
 func TestRecorder_CaptureTimeCopies(t *testing.T) {
 	recorder, o := Recorder(level.Trace)
 
-	mutable := fields.Fields{"fkey": "original"}
+	mutable := fields.Fields{fixtureFkey: "original"}
 
 	m := message.New(level.Info, "hello\n")
 
@@ -149,9 +149,9 @@ func TestRecorder_CaptureTimeCopies(t *testing.T) {
 	}
 
 	// Mutating the caller's map AFTER the write must not affect the store.
-	mutable["fkey"] = "mutated"
+	mutable[fixtureFkey] = "mutated"
 
-	if records := recorder.Messages(); records[0].Fields["fkey"] != "original" {
+	if records := recorder.Messages(); records[0].Fields[fixtureFkey] != "original" {
 		t.Errorf(`Fields["fkey"] = %v, want "original" - capture must deep copy`,
 			records[0].Fields["fkey"])
 	}
@@ -162,7 +162,7 @@ func TestRecorder_MessagesReturnsDefensiveCopies(t *testing.T) {
 
 	m := message.New(level.Info, "hello\n")
 
-	m.SetFields(fields.Fields{"fkey": "fval"})
+	m.SetFields(fields.Fields{fixtureFkey: fixtureFval})
 	m.AddTags("tag-a")
 
 	if err := o.Write(m); err != nil {
@@ -172,14 +172,14 @@ func TestRecorder_MessagesReturnsDefensiveCopies(t *testing.T) {
 	// Mutate everything mutable on the returned records.
 	tampered := recorder.Messages()
 
-	tampered[0].Fields["fkey"] = tamperedValue
+	tampered[0].Fields[fixtureFkey] = tamperedValue
 	tampered[0].Tags[0] = tamperedValue
 	tampered[0].ProcessorsNames = append(tampered[0].ProcessorsNames, tamperedValue)
 	tampered[0].ProcessedContent = tamperedValue
 
 	fresh := recorder.Messages()
 
-	if fresh[0].Fields["fkey"] != "fval" {
+	if fresh[0].Fields[fixtureFkey] != fixtureFval {
 		t.Errorf(`Fields["fkey"] = %v, want "fval" - the store was mutated`, fresh[0].Fields["fkey"])
 	}
 

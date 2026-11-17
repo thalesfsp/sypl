@@ -30,7 +30,7 @@ func Test_generateDefaultPrefix(t *testing.T) {
 		want string
 	}{
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 			args: args{
 				timestamp: time.Now().Format(sypltest.DefaultTimestampFormat),
 				component: sypltest.DefaultComponentNameOutput,
@@ -63,7 +63,7 @@ func TestPrefixer(t *testing.T) {
 		want    string
 	}{
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 			args: args{
 				prefix: sypltest.DefaultPrefixValue,
 			},
@@ -96,7 +96,7 @@ func TestSuffixer(t *testing.T) {
 		want    string
 	}{
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 			args: args{
 				suffix: " - My Suffix",
 			},
@@ -195,9 +195,9 @@ func TestNewProcessor(t *testing.T) {
 		want string
 	}{
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 			args: args{
-				name: "Prefixer",
+				name: fixturePrefixerTitle,
 				RunFunc: func(m message.IMessage) error {
 					m.GetContent().SetProcessed(sypltest.DefaultPrefixValue + m.GetContent().GetProcessed())
 
@@ -238,7 +238,7 @@ func TestProcessor_SetStatus(t *testing.T) {
 		{
 			name: "Should work - No processing",
 			args: args{
-				name: "Prefixer",
+				name: fixturePrefixerTitle,
 				RunFunc: func(message message.IMessage) error {
 					message.GetContent().SetProcessed(sypltest.DefaultPrefixValue + message.GetContent().GetProcessed())
 
@@ -280,9 +280,9 @@ func TestProcessor_GetStatus(t *testing.T) {
 		want   status.Status
 	}{
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 			args: args{
-				name: "Prefixer",
+				name: fixturePrefixerTitle,
 				RunFunc: func(message message.IMessage) error {
 					message.GetContent().SetProcessed(sypltest.DefaultPrefixValue + message.GetContent().GetProcessed())
 

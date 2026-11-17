@@ -13,6 +13,39 @@ import (
 	"github.com/thalesfsp/sypl/v2/safebuffer"
 )
 
+const (
+	fixtureComponent          = "component"
+	fixtureConsole1Title      = "Console 1"
+	fixtureContentBasedHashID = "contentBasedHashID"
+	fixtureEnv                = "env"
+	fixtureFkey               = "fkey"
+	fixtureForcedLine         = "forced\n"
+	fixtureFval               = "fval"
+	fixtureInfo               = "info"
+	fixtureLevel              = "level"
+	fixtureLnf                = "lnf"
+	fixtureM1                 = "m-1"
+	fixtureM1Line             = "m-1\n"
+	fixtureMessage            = "message"
+	fixtureMsg                = "msg"
+	fixtureMsgDebug           = "msg-debug"
+	fixtureMsgError           = "msg-error"
+	fixtureMsgInfo            = "msg-info"
+	fixtureMsgLine            = "msg\n"
+	fixtureMsgTrace           = "msg-trace"
+	fixtureMsgWarn            = "msg-warn"
+	fixtureParent             = "parent"
+	fixturePlain              = "plain"
+	fixtureRequestId          = "request_id"
+	fixtureShared             = "shared"
+	fixtureSvc                = "svc"
+	fixtureSvcApi             = "svc,api"
+	fixtureTraceId            = "trace_id"
+	fixtureValue1             = "value1"
+	fixtureWarn               = "warn"
+	fixtureWho                = "who"
+)
+
 // namedSafeBuffer builds a buffer-backed output with the given name - the
 // v2 replacement for the removed `SetName`: names are fixed at
 // construction.

@@ -9,6 +9,13 @@ import (
 	"testing"
 )
 
+const (
+	fixtureKeep   = "keep"
+	fixtureShared = "shared"
+	fixtureTest   = "test"
+	fixtureTest2  = "test2"
+)
+
 // Copy with a nil dst must allocate a NEW map - not alias src.
 func TestCopy_NilDstAllocatesNewMap(t *testing.T) {
 	src := Fields{"a": 1, "b": 2}
@@ -65,18 +72,18 @@ func TestCopy_OverlappingKeysPrecedence(t *testing.T) {
 		{
 			name: "Should work - src wins on overlap",
 			args: args{
-				src: Fields{"shared": "fromSrc", "srcOnly": 1},
-				dst: Fields{"shared": "fromDst", "dstOnly": 2},
+				src: Fields{fixtureShared: "fromSrc", "srcOnly": 1},
+				dst: Fields{fixtureShared: "fromDst", "dstOnly": 2},
 			},
-			want: Fields{"shared": "fromSrc", "srcOnly": 1, "dstOnly": 2},
+			want: Fields{fixtureShared: "fromSrc", "srcOnly": 1, "dstOnly": 2},
 		},
 		{
 			name: "Should work - src nil value overrides dst value",
 			args: args{
-				src: Fields{"shared": nil},
-				dst: Fields{"shared": "fromDst"},
+				src: Fields{fixtureShared: nil},
+				dst: Fields{fixtureShared: "fromDst"},
 			},
-			want: Fields{"shared": nil},
+			want: Fields{fixtureShared: nil},
 		},
 	}
 	for _, tt := range tests {
@@ -104,11 +111,11 @@ func TestCopy_EmptySrc(t *testing.T) {
 	})
 
 	t.Run("empty src - populated dst - dst unchanged", func(t *testing.T) {
-		dst := Fields{"keep": true}
+		dst := Fields{fixtureKeep: true}
 
 		got := Copy(Fields{}, dst)
 
-		want := Fields{"keep": true}
+		want := Fields{fixtureKeep: true}
 
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("Copy(Fields{}, dst) = %v, want %v", got, want)
@@ -118,7 +125,7 @@ func TestCopy_EmptySrc(t *testing.T) {
 
 // nil src returns nil regardless of dst, and must not touch dst.
 func TestCopy_NilSrcLeavesDstUntouched(t *testing.T) {
-	dst := Fields{"keep": true}
+	dst := Fields{fixtureKeep: true}
 
 	got := Copy(nil, dst)
 
@@ -126,7 +133,7 @@ func TestCopy_NilSrcLeavesDstUntouched(t *testing.T) {
 		t.Errorf("Copy(nil, dst) = %v, want nil", got)
 	}
 
-	want := Fields{"keep": true}
+	want := Fields{fixtureKeep: true}
 
 	if !reflect.DeepEqual(dst, want) {
 		t.Errorf("dst after Copy(nil, dst) = %v, want %v", dst, want)

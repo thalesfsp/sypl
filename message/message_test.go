@@ -15,6 +15,12 @@ import (
 	"github.com/thalesfsp/sypl/v2/shared"
 )
 
+const (
+	fixtureShouldWorkTitle = "Should work"
+	fixtureTest1Title      = "Test 1"
+	fixtureTest1TitleLine  = "Test 1\n"
+)
+
 func TestNewMessage(t *testing.T) {
 	type args struct {
 		level   level.Level
@@ -68,7 +74,7 @@ func TestCopy(t *testing.T) {
 		name string
 	}{
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 		},
 	}
 	for _, tt := range tests {
@@ -97,31 +103,31 @@ func Test_message_strip(t *testing.T) {
 			name:                "Should work - \\n",
 			m:                   New(level.Info, "Test 1\n"),
 			wantChars:           []string{"\n"},
-			wantContent:         "Test 1",
-			wantContentOriginal: "Test 1\n",
+			wantContent:         fixtureTest1Title,
+			wantContentOriginal: fixtureTest1TitleLine,
 			wantSize:            1,
 		},
 		{
 			name:                "Should work - Println",
 			m:                   New(level.Info, fmt.Sprintln("Test 1")),
 			wantChars:           []string{"\n"},
-			wantContent:         "Test 1",
-			wantContentOriginal: "Test 1\n",
+			wantContent:         fixtureTest1Title,
+			wantContentOriginal: fixtureTest1TitleLine,
 			wantSize:            1,
 		},
 		{
 			name:                "Should work - Printf",
 			m:                   New(level.Info, fmt.Sprintf("%s\n", "Test 1")),
 			wantChars:           []string{"\n"},
-			wantContent:         "Test 1",
-			wantContentOriginal: "Test 1\n",
+			wantContent:         fixtureTest1Title,
+			wantContentOriginal: fixtureTest1TitleLine,
 			wantSize:            1,
 		},
 		{
 			name:                "Should work - \\r",
 			m:                   New(level.Info, "Test 1\r"),
 			wantChars:           []string{"\r"},
-			wantContent:         "Test 1",
+			wantContent:         fixtureTest1Title,
 			wantContentOriginal: "Test 1\r",
 			wantSize:            1,
 		},
@@ -129,7 +135,7 @@ func Test_message_strip(t *testing.T) {
 			name:                "Should work - many (\\n\\r\\n)",
 			m:                   New(level.Info, "Test 1\n\r\n"),
 			wantChars:           []string{"\n", "\r", "\n"},
-			wantContent:         "Test 1",
+			wantContent:         fixtureTest1Title,
 			wantContentOriginal: "Test 1\n\r\n",
 			wantSize:            3,
 		},
@@ -137,8 +143,8 @@ func Test_message_strip(t *testing.T) {
 			name:                "Should work - none",
 			m:                   New(level.Info, "Test 1"),
 			wantChars:           []string{},
-			wantContent:         "Test 1",
-			wantContentOriginal: "Test 1",
+			wantContent:         fixtureTest1Title,
+			wantContentOriginal: fixtureTest1Title,
 			wantSize:            0,
 		},
 	}

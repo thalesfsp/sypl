@@ -43,7 +43,9 @@ func TestV2Ordering_FromInt(t *testing.T) {
 // The String/FromString round-trip is UNAFFECTED by the reordering: names
 // still map to themselves.
 func TestV2Ordering_StringRoundTripUnaffected(t *testing.T) {
-	for _, name := range []string{"none", "fatal", "error", "warn", "info", "debug", "trace"} {
+	values := []string{fixtureNone, fixtureFatal, fixtureError, fixtureWarn, fixtureInfo, fixtureDebug, fixtureTrace}
+
+	for _, name := range values {
 		l, err := FromString(name)
 		if err != nil {
 			t.Fatalf("FromString(%q) error = %v, want nil", name, err)
@@ -57,7 +59,7 @@ func TestV2Ordering_StringRoundTripUnaffected(t *testing.T) {
 
 // LevelsNames follows the v2 order: warn before info.
 func TestV2Ordering_LevelsNames(t *testing.T) {
-	want := []string{"none", "fatal", "error", "warn", "info", "debug", "trace"}
+	want := []string{fixtureNone, fixtureFatal, fixtureError, fixtureWarn, fixtureInfo, fixtureDebug, fixtureTrace}
 
 	got := LevelsNames()
 
