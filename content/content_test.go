@@ -10,6 +10,10 @@ import (
 	"github.com/thalesfsp/sypl/v2/internal/sypltest"
 )
 
+const (
+	fixtureProcessed = "processed"
+)
+
 func TestNew(t *testing.T) {
 	type args struct {
 		c string
@@ -75,10 +79,10 @@ func TestSetProcessed(t *testing.T) {
 			name: "Should work - single set",
 			args: args{
 				initial:   sypltest.DefaultContentOutput,
-				processed: []string{"processed"},
+				processed: []string{fixtureProcessed},
 			},
 			wantOriginal:  sypltest.DefaultContentOutput,
-			wantProcessed: "processed",
+			wantProcessed: fixtureProcessed,
 		},
 		{
 			name: "Should work - multiple sets - last wins",
@@ -102,10 +106,10 @@ func TestSetProcessed(t *testing.T) {
 			name: "Should work - empty original, set processed",
 			args: args{
 				initial:   "",
-				processed: []string{"processed"},
+				processed: []string{fixtureProcessed},
 			},
 			wantOriginal:  "",
-			wantProcessed: "processed",
+			wantProcessed: fixtureProcessed,
 		},
 	}
 	for _, tt := range tests {

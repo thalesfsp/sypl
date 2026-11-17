@@ -15,6 +15,13 @@ import (
 	"github.com/thalesfsp/sypl/v2/message"
 )
 
+const (
+	fixtureInternal        = "internal"
+	fixturePrefixerTitle   = "Prefixer"
+	fixtureSecret          = "secret"
+	fixtureShouldWorkTitle = "Should work"
+)
+
 //////
 // Test helpers.
 //////
@@ -489,19 +496,19 @@ func TestPrintOnlyIfNotTaggedWith(t *testing.T) {
 	}{
 		{
 			name:        "Should mute - message has a denied tag",
-			denylist:    []string{"internal", "secret"},
-			messageTags: []string{"secret"},
+			denylist:    []string{fixtureInternal, fixtureSecret},
+			messageTags: []string{fixtureSecret},
 			want:        flag.Mute,
 		},
 		{
 			name:        "Should not mute - message has no denied tag",
-			denylist:    []string{"internal", "secret"},
+			denylist:    []string{fixtureInternal, fixtureSecret},
 			messageTags: []string{"public"},
 			want:        flag.None,
 		},
 		{
 			name:        "Should not mute - message has no tags",
-			denylist:    []string{"internal"},
+			denylist:    []string{fixtureInternal},
 			messageTags: nil,
 			want:        flag.None,
 		},

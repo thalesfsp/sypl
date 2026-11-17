@@ -24,10 +24,10 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should work - COL",
 			args: args{
-				componentName: "componentX",
-				outputName:    "outputY",
+				componentName: fixtureComponentX,
+				outputName:    fixtureOutputY,
 			},
-			content:     "info,componentX:outputY:debug,outputZ:trace",
+			content:     fixtureInfoComponentXOutputYDebugOutputZTrace,
 			wantLevel:   level.Debug,
 			wantMatcher: COL,
 			wantOK:      true,
@@ -35,10 +35,10 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should work - OL",
 			args: args{
-				componentName: "componentX",
+				componentName: fixtureComponentX,
 				outputName:    "outputZ",
 			},
-			content:     "info,componentX:outputY:debug,outputZ:trace",
+			content:     fixtureInfoComponentXOutputYDebugOutputZTrace,
 			wantLevel:   level.Trace,
 			wantMatcher: OL,
 			wantOK:      true,
@@ -46,10 +46,10 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should work - L",
 			args: args{
-				componentName: "componentX",
+				componentName: fixtureComponentX,
 				outputName:    "outputW",
 			},
-			content:     "info,componentX:outputY:debug,outputZ:trace",
+			content:     fixtureInfoComponentXOutputYDebugOutputZTrace,
 			wantLevel:   level.Info,
 			wantMatcher: L,
 			wantOK:      true,
@@ -57,8 +57,8 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should work - level none",
 			args: args{
-				componentName: "componentX",
-				outputName:    "outputY",
+				componentName: fixtureComponentX,
+				outputName:    fixtureOutputY,
 			},
 			content:     "info,componentX:outputY:none,outputZ:trace",
 			wantLevel:   level.None,
@@ -68,7 +68,7 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should fail - no match",
 			args: args{
-				componentName: "componentX",
+				componentName: fixtureComponentX,
 				outputName:    "outputW",
 			},
 			content:     "componentX:outputY:debug,outputZ:trace,info",
@@ -79,8 +79,8 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should fail - invalid level",
 			args: args{
-				componentName: "componentX",
-				outputName:    "outputY",
+				componentName: fixtureComponentX,
+				outputName:    fixtureOutputY,
 			},
 			content:     "componentX:outputY:asd,outputZ:trace,info",
 			wantLevel:   level.None,
@@ -90,9 +90,25 @@ func TestNew(t *testing.T) {
 		{
 			name: "Should do nothing",
 			args: args{
-				componentName: "componentX",
-				outputName:    "outputY",
+				componentName: fixtureComponentX,
+				outputName:    fixtureOutputY,
 			},
+			wantLevel:   level.None,
+			wantMatcher: None,
+			wantOK:      false,
+		},
+		{
+			name:        "Should fail - component dot must not match another name",
+			args:        args{componentName: "a.b", outputName: "literal-output"},
+			content:     "aXb:literal-output:debug",
+			wantLevel:   level.None,
+			wantMatcher: None,
+			wantOK:      false,
+		},
+		{
+			name:        "Should fail - output dot must not match another name",
+			args:        args{componentName: "literal-component", outputName: "a.b"},
+			content:     "aXb:debug",
 			wantLevel:   level.None,
 			wantMatcher: None,
 			wantOK:      false,
@@ -117,6 +133,18 @@ func TestNew(t *testing.T) {
 
 			if lvl != tt.wantLevel {
 				t.Fatalf("OK; expected %+v got %+v", tt.wantLevel, lvl)
+			}
+		})
+	}
+
+	// Names are literals, including unmatched delimiters and other regexp syntax.
+	for _, name := range []string{"api(v2", "C++ service", "*x", `a\q`, "x{99999}", `()[]{}*+?|^$\.`} {
+		t.Run("Should work - literal names "+name, func(t *testing.T) {
+			t.Setenv(shared.LevelEnvVar, name+":"+name+":debug")
+
+			lvl, matcher, ok := New(name, name).Level()
+			if !ok || lvl != level.Debug || matcher != COL {
+				t.Fatalf("Level() = (%v, %v, %v), want (debug, %v, true)", lvl, matcher, ok, COL)
 			}
 		})
 	}

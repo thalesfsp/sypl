@@ -29,8 +29,8 @@ func fullyLoadedMessage() message.IMessage {
 	m.SetOutputsNames([]string{"Console", "File"})
 	m.SetProcessorsNames([]string{"Prefixer"})
 	m.SetFields(fields.Fields{
-		"customField": "customValue",
-		"nilField":    nil,
+		"customField":   "customValue",
+		fixtureNilField: nil,
 	})
 
 	return m
@@ -110,7 +110,7 @@ func assertFullyLoadedJSON(t *testing.T, m message.IMessage, parsed map[string]i
 	}
 
 	// A nil-valued field must be dropped.
-	if _, ok := parsed["nilField"]; ok {
+	if _, ok := parsed[fixtureNilField]; ok {
 		t.Error("nilField should have been dropped")
 	}
 }
@@ -169,8 +169,8 @@ func TestText_TagsAndNilFields(t *testing.T) {
 	m.SetOutputName("Console")
 	m.AddTags("alpha")
 	m.SetFields(fields.Fields{
-		"presentField": "value",
-		"nilField":     nil,
+		"presentField":  "value",
+		fixtureNilField: nil,
 	})
 
 	if err := Text().Run(m); err != nil {

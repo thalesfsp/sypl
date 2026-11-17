@@ -195,9 +195,10 @@ func (o *output) SetProcessors(processors ...processor.IProcessor) IOutput {
 
 // GetProcessorsNames returns the names of the registered processors.
 func (o *output) GetProcessorsNames() []string {
-	processorsNames := []string{}
+	processors := o.GetProcessors()
+	processorsNames := make([]string, 0, len(processors))
 
-	for _, processor := range o.GetProcessors() {
+	for _, processor := range processors {
 		processorsNames = append(processorsNames, processor.GetName())
 	}
 

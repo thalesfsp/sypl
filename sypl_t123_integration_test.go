@@ -5,6 +5,7 @@
 package sypl_test
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"os"
@@ -89,7 +90,10 @@ func TestIntegration_FatalFlushesAsyncBeforeExit(t *testing.T) {
 	path := t.TempDir() + "/fatal.log"
 
 	//nolint:gosec // Re-executing the test binary itself.
-	cmd := exec.Command(os.Args[0], "-test.run", "^TestIntegration_FatalFlushesAsyncBeforeExit$", "-test.v")
+	cmd := exec.CommandContext(
+		context.Background(), os.Args[0], "-test.run",
+		"^TestIntegration_FatalFlushesAsyncBeforeExit$", "-test.v",
+	)
 	cmd.Env = append(os.Environ(), "SYPL_T123_FATAL_PATH="+path)
 
 	err := cmd.Run()
@@ -164,7 +168,7 @@ func TestIntegration_WithDerivedFieldsRecorded(t *testing.T) {
 	rec, out := output.Recorder(level.Trace)
 
 	parent := sypl.New("with-recorder", out)
-	child := parent.With(fields.Fields{"request_id": "r-42"})
+	child := parent.With(fields.Fields{fixtureRequestId: "r-42"})
 
 	child.Errorln("boom")
 
@@ -173,7 +177,7 @@ func TestIntegration_WithDerivedFieldsRecorded(t *testing.T) {
 		t.Fatalf("recorder captured %d records, want 1", len(records))
 	}
 
-	if got := records[0].Fields["request_id"]; got != "r-42" {
+	if got := records[0].Fields[fixtureRequestId]; got != "r-42" {
 		t.Errorf(`record field request_id = %v, want "r-42"`, got)
 	}
 

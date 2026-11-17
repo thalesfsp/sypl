@@ -6,6 +6,9 @@
 
 ## Install
 
+Requires Go 1.26.11 or newer. Local development and CI use Go 1.27.4
+(pinned in `mise.toml`); both modules keep their existing v2 import paths.
+
 `$ go get github.com/thalesfsp/sypl/v2`
 
 Logging to ElasticSearch? It's a separate module: `$ go get github.com/thalesfsp/sypl/es/v2`

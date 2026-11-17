@@ -22,7 +22,7 @@ type traceIDKey struct{}
 // traceIDExtractor pulls the fake trace ID out of the context.
 func traceIDExtractor(ctx context.Context) fields.Fields {
 	if traceID, ok := ctx.Value(traceIDKey{}).(string); ok {
-		return fields.Fields{"trace_id": traceID}
+		return fields.Fields{fixtureTraceId: traceID}
 	}
 
 	return nil
@@ -110,7 +110,7 @@ func TestContext_ExtractorGetSet(t *testing.T) {
 
 	ctx := context.WithValue(context.Background(), traceIDKey{}, "t-1")
 
-	if f := fn(ctx); f["trace_id"] != "t-1" {
+	if f := fn(ctx); f[fixtureTraceId] != "t-1" {
 		t.Fatalf("retrieved extractor returned %v, want trace_id=t-1", f)
 	}
 }
@@ -122,7 +122,7 @@ func TestContext_PrintWithContextExtractsAndMerges(t *testing.T) {
 	o.SetFormatter(formatter.JSON())
 
 	l := sypl.New("ctx-extract", o)
-	l.SetFields(fields.Fields{"env": envProd, "trace_id": "global-loses"})
+	l.SetFields(fields.Fields{fixtureEnv: envProd, fixtureTraceId: "global-loses"})
 	l.SetContextExtractor(traceIDExtractor)
 
 	ctx := context.WithValue(context.Background(), traceIDKey{}, "abc-123")
@@ -131,15 +131,15 @@ func TestContext_PrintWithContextExtractsAndMerges(t *testing.T) {
 
 	decoded := sugarLine(t, buf)
 
-	if decoded["trace_id"] != "abc-123" {
+	if decoded[fixtureTraceId] != "abc-123" {
 		t.Fatalf("trace_id = %v, want abc-123 (extracted, message-level, wins)", decoded["trace_id"])
 	}
 
-	if decoded["env"] != envProd {
+	if decoded[fixtureEnv] != envProd {
 		t.Fatalf("global field env = %v, want prod", decoded["env"])
 	}
 
-	if decoded["message"] != "handling request" {
+	if decoded[fixtureMessage] != "handling request" {
 		t.Fatalf("message = %v, want %q", decoded["message"], "handling request")
 	}
 }
@@ -157,7 +157,7 @@ func TestContext_PrintWithContextEdgeCases(t *testing.T) {
 
 	l.PrintWithContext(ctx, level.Info, "no extractor")
 
-	if decoded := sugarLine(t, buf); decoded["trace_id"] != nil {
+	if decoded := sugarLine(t, buf); decoded[fixtureTraceId] != nil {
 		t.Fatalf("no extractor: trace_id = %v, want absent", decoded["trace_id"])
 	}
 
@@ -169,7 +169,7 @@ func TestContext_PrintWithContextEdgeCases(t *testing.T) {
 	//nolint:staticcheck // Deliberate nil-context robustness probe.
 	l.PrintWithContext(nil, level.Info, "nil ctx")
 
-	if decoded := sugarLine(t, buf); decoded["message"] != "nil ctx" {
+	if decoded := sugarLine(t, buf); decoded[fixtureMessage] != "nil ctx" {
 		t.Fatalf("nil ctx: message = %v, want %q", decoded["message"], "nil ctx")
 	}
 
@@ -178,7 +178,7 @@ func TestContext_PrintWithContextEdgeCases(t *testing.T) {
 
 	l.PrintWithContext(context.Background(), level.Info, "no trace id")
 
-	if decoded := sugarLine(t, buf); decoded["trace_id"] != nil {
+	if decoded := sugarLine(t, buf); decoded[fixtureTraceId] != nil {
 		t.Fatalf("extractor returned nil: trace_id = %v, want absent", decoded["trace_id"])
 	}
 }
@@ -198,8 +198,8 @@ func TestContext_LeveledVariants(t *testing.T) {
 		level string
 	}{
 		{func() { l.DebugWithContext(ctx, "m") }, "debug"},
-		{func() { l.InfoWithContext(ctx, "m") }, "info"},
-		{func() { l.WarnWithContext(ctx, "m") }, "warn"},
+		{func() { l.InfoWithContext(ctx, "m") }, fixtureInfo},
+		{func() { l.WarnWithContext(ctx, "m") }, fixtureWarn},
 		{func() { l.ErrorWithContext(ctx, "m") }, "error"},
 	}
 
@@ -210,11 +210,11 @@ func TestContext_LeveledVariants(t *testing.T) {
 
 		decoded := sugarLine(t, buf)
 
-		if decoded["level"] != tt.level {
+		if decoded[fixtureLevel] != tt.level {
 			t.Fatalf("level = %v, want %s", decoded["level"], tt.level)
 		}
 
-		if decoded["trace_id"] != "lvl-1" {
+		if decoded[fixtureTraceId] != "lvl-1" {
 			t.Fatalf("%s: trace_id = %v, want lvl-1", tt.level, decoded["trace_id"])
 		}
 	}
@@ -253,7 +253,7 @@ func TestContext_RespectsFastGate(t *testing.T) {
 
 	l.PrintWithContext(ctx, level.Info, "allowed ctx print")
 
-	if decoded := sugarLine(t, buf); decoded["trace_id"] != "gated" {
+	if decoded := sugarLine(t, buf); decoded[fixtureTraceId] != "gated" {
 		t.Fatalf("allowed PrintWithContext lost extraction: %v", decoded)
 	}
 }
@@ -266,7 +266,7 @@ func TestContext_WithInheritsExtractor(t *testing.T) {
 	parent := sypl.New("ctx-with", o)
 	parent.SetContextExtractor(traceIDExtractor)
 
-	child := parent.With(fields.Fields{"component": whoChild})
+	child := parent.With(fields.Fields{fixtureComponent: whoChild})
 
 	ctx := context.WithValue(context.Background(), traceIDKey{}, "inherited")
 
@@ -274,11 +274,11 @@ func TestContext_WithInheritsExtractor(t *testing.T) {
 
 	decoded := sugarLine(t, buf)
 
-	if decoded["trace_id"] != "inherited" {
+	if decoded[fixtureTraceId] != "inherited" {
 		t.Fatalf("trace_id = %v, want inherited (child lost the extractor)", decoded["trace_id"])
 	}
 
-	if decoded["component"] != whoChild {
+	if decoded[fixtureComponent] != whoChild {
 		t.Fatalf("component = %v, want child", decoded["component"])
 	}
 }

@@ -6,6 +6,7 @@ package sypl_test
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"os"
 	"os/exec"
@@ -164,7 +165,7 @@ func TestFastGate_GatedCallAllocs(t *testing.T) {
 // The Force flag must bypass the gate: options can alter the flag, so any
 // call carrying options takes the slow path.
 // forcedMsg is the payload used by the force-bypass probe.
-const forcedMsg = "forced\n"
+const forcedMsg = fixtureForcedLine
 
 func TestFastGate_ForceBypassesGate(t *testing.T) {
 	clearSyplEnvVars(t)
@@ -326,7 +327,7 @@ func TestFastGate_FatalNotGated(t *testing.T) {
 	}
 
 	//nolint:gosec // Re-running the test binary itself.
-	cmd := exec.Command(os.Args[0], "-test.run=TestFastGate_FatalNotGated$")
+	cmd := exec.CommandContext(context.Background(), os.Args[0], "-test.run=TestFastGate_FatalNotGated$")
 
 	cmd.Env = append(os.Environ(),
 		"SYPL_TEST_FASTGATE_FATAL=1",

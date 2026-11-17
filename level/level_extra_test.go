@@ -6,6 +6,7 @@ package level
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"os"
 	"os/exec"
@@ -16,22 +17,34 @@ import (
 	"github.com/thalesfsp/sypl/v2/shared"
 )
 
+const (
+	fixtureDebug        = "debug"
+	fixtureError        = "error"
+	fixtureFatal        = "fatal"
+	fixtureInfo         = "info"
+	fixtureInfoTitle    = "Info"
+	fixtureNone         = "none"
+	fixtureTrace        = "trace"
+	fixtureUnknownTitle = "Unknown"
+	fixtureWarn         = "warn"
+)
+
 func TestLevel_String(t *testing.T) {
 	tests := []struct {
 		name string
 		l    Level
 		want string
 	}{
-		{name: "None", l: None, want: "none"},
-		{name: "Fatal", l: Fatal, want: "fatal"},
-		{name: "Error", l: Error, want: "error"},
-		{name: "Info", l: Info, want: "info"},
-		{name: "Warn", l: Warn, want: "warn"},
-		{name: "Debug", l: Debug, want: "debug"},
-		{name: "Trace", l: Trace, want: "trace"},
-		{name: "Out-of-range - negative", l: Level(-1), want: "Unknown"},
-		{name: "Out-of-range - Trace + 1", l: Trace + 1, want: "Unknown"},
-		{name: "Out-of-range - big positive", l: Level(100), want: "Unknown"},
+		{name: "None", l: None, want: fixtureNone},
+		{name: "Fatal", l: Fatal, want: fixtureFatal},
+		{name: "Error", l: Error, want: fixtureError},
+		{name: fixtureInfoTitle, l: Info, want: fixtureInfo},
+		{name: "Warn", l: Warn, want: fixtureWarn},
+		{name: "Debug", l: Debug, want: fixtureDebug},
+		{name: "Trace", l: Trace, want: fixtureTrace},
+		{name: "Out-of-range - negative", l: Level(-1), want: fixtureUnknownTitle},
+		{name: "Out-of-range - Trace + 1", l: Trace + 1, want: fixtureUnknownTitle},
+		{name: "Out-of-range - big positive", l: Level(100), want: fixtureUnknownTitle},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -56,25 +69,25 @@ func TestFromInt_Extra(t *testing.T) {
 			name:       "Should work - lower boundary",
 			args:       args{level: 0},
 			want:       None,
-			wantString: "none",
+			wantString: fixtureNone,
 		},
 		{
 			name:       "Should work - upper boundary",
 			args:       args{level: 6},
 			want:       Trace,
-			wantString: "trace",
+			wantString: fixtureTrace,
 		},
 		{
 			name:       "Should work - negative maps to Unknown",
 			args:       args{level: -1},
 			want:       Level(-1),
-			wantString: "Unknown",
+			wantString: fixtureUnknownTitle,
 		},
 		{
 			name:       "Should work - too big maps to Unknown",
 			args:       args{level: 100},
 			want:       Level(100),
-			wantString: "Unknown",
+			wantString: fixtureUnknownTitle,
 		},
 	}
 	for _, tt := range tests {
@@ -98,13 +111,13 @@ func TestFromString_AllLevels(t *testing.T) {
 		level string
 		want  Level
 	}{
-		{name: "none - lower", level: "none", want: None},
-		{name: "fatal - lower", level: "fatal", want: Fatal},
-		{name: "error - lower", level: "error", want: Error},
-		{name: "info - lower", level: "info", want: Info},
-		{name: "warn - lower", level: "warn", want: Warn},
-		{name: "debug - lower", level: "debug", want: Debug},
-		{name: "trace - lower", level: "trace", want: Trace},
+		{name: "none - lower", level: fixtureNone, want: None},
+		{name: "fatal - lower", level: fixtureFatal, want: Fatal},
+		{name: "error - lower", level: fixtureError, want: Error},
+		{name: "info - lower", level: fixtureInfo, want: Info},
+		{name: "warn - lower", level: fixtureWarn, want: Warn},
+		{name: "debug - lower", level: fixtureDebug, want: Debug},
+		{name: "trace - lower", level: fixtureTrace, want: Trace},
 		{name: "TRACE - upper", level: "TRACE", want: Trace},
 		{name: "DeBuG - mixed", level: "DeBuG", want: Debug},
 	}
@@ -179,7 +192,7 @@ func TestMustFromString_Fatal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			//nolint:gosec // Re-running the test binary itself.
-			cmd := exec.Command(os.Args[0], "-test.run=TestMustFromString_Fatal$")
+			cmd := exec.CommandContext(context.Background(), os.Args[0], "-test.run=TestMustFromString_Fatal$")
 
 			cmd.Env = append(os.Environ(), "SYPL_TEST_MUSTFROMSTRING_LEVEL="+tt.level)
 
@@ -232,7 +245,7 @@ func TestLevelsToString_Extra(t *testing.T) {
 		{
 			name: "Should work - single",
 			args: args{levels: []Level{Trace}},
-			want: "trace",
+			want: fixtureTrace,
 		},
 		{
 			name: "Should work - all levels, in order",
@@ -255,7 +268,7 @@ func TestLevelsToString_Extra(t *testing.T) {
 }
 
 func TestLevelsNames_Completeness(t *testing.T) {
-	want := []string{"none", "fatal", "error", "warn", "info", "debug", "trace"}
+	want := []string{fixtureNone, fixtureFatal, fixtureError, fixtureWarn, fixtureInfo, fixtureDebug, fixtureTrace}
 
 	got := LevelsNames()
 

@@ -272,7 +272,7 @@ func ExampleNew_flags() {
 
 // Serror{f|lnf|ln} example.
 //
-//nolint:goerr113
+//nolint:err113
 func ExampleNew_serrorX() {
 	// Creates logger, and name it.
 	testingLogger := sypl.New("Testing Logger", output.Console(level.Info))
@@ -309,7 +309,7 @@ func ExampleNew_textFormatter() {
 			level.Info,
 			sypltest.DefaultContentOutput,
 			sypl.WithFields(fields.Fields{
-				"field1": "value1",
+				"field1": fixtureValue1,
 				"field2": "value2",
 				"field3": "value3",
 			}),
@@ -347,7 +347,7 @@ func ExampleNew_jsonFormatter() {
 			level.Info,
 			sypltest.DefaultContentOutput,
 			sypl.WithFields(fields.Fields{
-				"field1": "value1",
+				"field1": fixtureValue1,
 				"field2": 1,
 				"field3": true,
 				"field4": []string{"1", "2"},
@@ -429,8 +429,8 @@ func ExampleNew_printMessagesToOutputs() {
 		output.New("Console 2", level.Trace, os.Stdout).SetFormatter(formatter.Text()),
 		output.New("Console 3", level.Trace, os.Stdout).SetFormatter(formatter.Text()),
 	).PrintMessagesToOutputs(
-		sypl.MessageToOutput{OutputName: "Console 1", Level: level.Info, Content: "Test 1\n"},
-		sypl.MessageToOutput{OutputName: "Console 1", Level: level.Debug, Content: "Test 2\n"},
+		sypl.MessageToOutput{OutputName: fixtureConsole1Title, Level: level.Info, Content: "Test 1\n"},
+		sypl.MessageToOutput{OutputName: fixtureConsole1Title, Level: level.Debug, Content: "Test 2\n"},
 		sypl.MessageToOutput{OutputName: "Console 2", Level: level.Info, Content: "Test 3\n"},
 		sypl.MessageToOutput{OutputName: "Console 4", Level: level.Info, Content: "Test 4\n"},
 	)
@@ -522,7 +522,7 @@ func ExampleNew_printMessagesToOutputsWithOptions() {
 	l.PrintMessagesToOutputsWithOptions(&options.Options{
 		Fields: fields.Fields{"1": 2},
 	},
-		sypl.MessageToOutput{Content: fmt.Sprintln(sypltest.DefaultContentOutput), Level: level.Info, OutputName: "Console 1"},
+		sypl.MessageToOutput{Content: fmt.Sprintln(sypltest.DefaultContentOutput), Level: level.Info, OutputName: fixtureConsole1Title},
 		sypl.MessageToOutput{Content: fmt.Sprintln(sypltest.DefaultContentOutput), Level: level.Warn, OutputName: "Console 2"},
 	)
 
@@ -656,8 +656,6 @@ func ExampleNew_debugAndFilter() {
 }
 
 // Sypl as io.Writer, including sub-loggers thru interfaces.
-//
-//nolint:gosimple
 func ExampleNew_ioWriter() {
 	buf, o := output.SafeBuffer(level.Trace)
 
@@ -676,9 +674,7 @@ func ExampleNew_ioWriter() {
 		fmt.Println(false)
 	}
 
-	var m sypl.ISypl
-
-	m = l.New("sub")
+	var m sypl.ISypl = l.New("sub")
 
 	m.SetDefaultIoWriterLevel(level.Debug)
 

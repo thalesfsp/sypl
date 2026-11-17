@@ -18,46 +18,46 @@ func TestCopy(t *testing.T) {
 		{
 			name: "Should work",
 			args: args{
-				src: Fields{"test": 2},
-				dst: Fields{"test": 1},
+				src: Fields{fixtureTest: 2},
+				dst: Fields{fixtureTest: 1},
 			},
-			want: Fields{"test": 2},
+			want: Fields{fixtureTest: 2},
 		},
 		{
 			name: "Should work",
 			args: args{
-				src: Fields{"test": 1},
-				dst: Fields{"test": 2},
+				src: Fields{fixtureTest: 1},
+				dst: Fields{fixtureTest: 2},
 			},
-			want: Fields{"test": 1},
+			want: Fields{fixtureTest: 1},
 		},
 		{
 			name: "Should work - only src - both init",
 			args: args{
-				src: Fields{"test": 1},
+				src: Fields{fixtureTest: 1},
 				dst: Fields{},
 			},
-			want: Fields{"test": 1},
+			want: Fields{fixtureTest: 1},
 		},
 		{
 			name: "Should work - only dst - both init",
 			args: args{
-				src: Fields{"test": 1},
+				src: Fields{fixtureTest: 1},
 				dst: Fields{},
 			},
-			want: Fields{"test": 1},
+			want: Fields{fixtureTest: 1},
 		},
 		{
 			name: "Should work - only src - dst nil",
 			args: args{
-				src: Fields{"test": 1, "test2": 2},
+				src: Fields{fixtureTest: 1, fixtureTest2: 2},
 			},
-			want: Fields{"test": 1, "test2": 2},
+			want: Fields{fixtureTest: 1, fixtureTest2: 2},
 		},
 		{
 			name: "Should work - only dst - src nil",
 			args: args{
-				dst: Fields{"test": 1, "test2": 2},
+				dst: Fields{fixtureTest: 1, fixtureTest2: 2},
 			},
 			want: nil,
 		},

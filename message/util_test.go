@@ -11,7 +11,7 @@ func Test_generateUUID(t *testing.T) {
 		name string
 	}{
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 		},
 	}
 	for _, tt := range tests {
@@ -35,21 +35,21 @@ func Test_generateID(t *testing.T) {
 		want string
 	}{
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 			args: args{
 				ct: "test",
 			},
 			want: "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3",
 		},
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 			args: args{
 				ct: `{"key1":"value1"}`,
 			},
 			want: "17c9f74584d86d5a852200d274799f5f7d5828da",
 		},
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 			args: args{
 				ct: "",
 			},

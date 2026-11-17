@@ -1,99 +1,171 @@
 # Copyright 2021 The sypl Authors. All rights reserved.
-# Use of this source code is governed by a MIT
-# license that can be found in the LICENSE file.
-
----
-
+# Use of this source code is governed by a MIT license in LICENSE.
+# Preserve the enabled v1.61.0 policy explicitly across the v2 upgrade.
+# Removed deprecated scopelint/nosnakecase exclusions had no active checks;
+# Successor linters inherit the original exclusions and settings.
+version: "2"
 run:
   timeout: 1m
-  skip-files:
-    - internal/*
-
 linters:
-  enable-all: true
-  disable:
-    - wrapcheck
-    - testpackage
-    - gochecknoglobals
-    - exhaustivestruct
-    - exhaustruct
-    - paralleltest
-    - godox
-    - cyclop
-    - tagliatelle
-    - goerr113
-    - forcetypeassert
-    - ireturn
-    - varnamelen
-    - interfacebloat
-    - depguard
-    - revive
-    - copyloopvar
-    - perfsprint
-  fast: false
-
-# Settings for specific linters
-linters-settings:
-  funlen:
-    lines: 150
-    statements: 45
-
-  # The nested es/ module intentionally carries a development-time
-  # `replace github.com/thalesfsp/sypl/v2 => ../` so both modules are
-  # buildable, and testable from the working tree - see MIGRATION-V2.md
-  # (release tagging drops nothing: the replace only affects builds FROM
-  # this repository, never consumers).
-  gomoddirectives:
-    replace-local: true
-
-issues:
-  exclude-rules:
-    - path: cmd/
-      linters:
-        - gochecknoinits
-        - gomnd
-        - forbidigo
-
-    - path: message/util.go
-      linters:
-        - gosec
-
-    - path: example_test.go
-      linters:
-        - lll
-
-    - path: internal/http/
-      linters:
-        - unparam
-        - nlreturn
-
-    - path: _test\.go
-      linters:
-        - scopelint
-        - wsl
-        - nlreturn
-        - funlen
-        - dupl
-        - dupword
-
-    - path: doc.go
-      linters:
-        - lll
-
-    - path: example_test.go
-      linters:
-        - nosnakecase
-        - testableexamples
-
-    - text: "O_WRONLY|O_RDWR|O_CREATE|O_TRUNC|O_APPEND"
-      linters:
-        - nosnakecase
-
-    - linters:
-        - lll
-      source: "json:"
-
-    - linters:
-        - gocritic
-        - godot
-      source: "//////"
+  default: none
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - decorder
+    - dogsled
+    - dupl
+    - dupword
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - fatcontext
+    - forbidigo
+    - funlen
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - gochecknoinits
+    - gochecksumtype
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - goheader
+    - gomoddirectives
+    - gomodguard_v2
+    - goprintffuncname
+    - gosec
+    - gosmopolitan
+    - govet
+    - grouper
+    - importas
+    - inamedparam
+    - ineffassign
+    - intrange
+    - lll
+    - loggercheck
+    - maintidx
+    - makezero
+    - mirror
+    - misspell
+    - mnd
+    - musttag
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - nlreturn
+    - noctx
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - prealloc
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - staticcheck
+    - tagalign
+    - testableexamples
+    - testifylint
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - usetesting
+    - wastedassign
+    - whitespace
+    - wsl_v5
+    - zerologlint
+  settings:
+    # tenv only checked os.Setenv; preserve that scope via its successor.
+    usetesting:
+      os-setenv: true
+      os-create-temp: false
+      os-mkdir-temp: false
+      os-chdir: false
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: false
+      branch-max-lines: 2
+    funlen:
+      lines: 150
+      statements: 45
+    # es/ keeps its development-only replacement to this repo root.
+    gomoddirectives:
+      replace-local: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - forbidigo
+          - gochecknoinits
+          - mnd
+        path: cmd/
+      - linters:
+          - gosec
+        path: message/util.go
+      - linters:
+          - lll
+        path: example_test.go
+      - linters:
+          - nlreturn
+          - unparam
+        path: internal/http/
+      - linters:
+          - dupl
+          - dupword
+          - funlen
+          - nlreturn
+          - wsl_v5
+        path: _test\.go
+      - linters:
+          - lll
+        path: doc.go
+      - linters:
+          - testableexamples
+        path: example_test.go
+      - linters:
+          - lll
+        source: 'json:'
+      - linters:
+          - gocritic
+          - godot
+        source: //////
+    paths:
+      - internal/*
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - internal/*
+      - third_party$
+      - builtin$
+      - examples$

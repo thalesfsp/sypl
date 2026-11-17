@@ -22,6 +22,14 @@ import (
 	"github.com/thalesfsp/sypl/v2/status"
 )
 
+const (
+	fixtureBufferTitle   = "Buffer"
+	fixtureFkey          = "fkey"
+	fixtureFval          = "fval"
+	fixtureSuffixed      = " - suffixed"
+	fixtureSuffixerTitle = "Suffixer"
+)
+
 //////
 // Test helpers.
 //////
@@ -272,7 +280,7 @@ func TestAsync_ProxiesIOutput(t *testing.T) {
 	found := false
 
 	for _, p := range a.GetProcessors() {
-		if p.GetName() == "Suffixer" {
+		if p.GetName() == fixtureSuffixerTitle {
 			found = true
 		}
 	}
@@ -287,7 +295,7 @@ func TestAsync_ProxiesIOutput(t *testing.T) {
 
 	names := a.GetProcessorsNames()
 
-	if len(names) != 2 || names[0] != prefixerName || names[1] != "Suffixer" {
+	if len(names) != 2 || names[0] != prefixerName || names[1] != fixtureSuffixerTitle {
 		t.Errorf("GetProcessorsNames() = %v, want [Prefixer Suffixer]", names)
 	}
 
@@ -624,11 +632,7 @@ func TestAsync_FlushSnapshotUnderSustainedWrites(t *testing.T) {
 	var wg sync.WaitGroup
 
 	for w := range 4 {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			for i := 0; ; i++ {
 				select {
 				case <-stop:
@@ -638,7 +642,7 @@ func TestAsync_FlushSnapshotUnderSustainedWrites(t *testing.T) {
 
 				_ = a.Write(message.New(level.Info, fmt.Sprintf("post-w%d-%d\n", w, i)))
 			}
-		}()
+		})
 	}
 
 	f, ok := a.(interface{ Flush() error })
@@ -1231,30 +1235,22 @@ func TestAsync_ConcurrentWritersFlushersAndClose(t *testing.T) {
 
 	// Concurrent writers.
 	for w := range writers {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			for i := range messagesPerWriter {
 				if err := a.Write(message.New(level.Info, fmt.Sprintf("w%d-m%d\n", w, i))); err == nil {
 					written.Add(1)
 				}
 			}
-		}()
+		})
 	}
 
 	// Concurrent flushers.
 	for range 2 {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			for range 5 {
 				_ = asyncFlush(t, a)
 			}
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -1263,15 +1259,11 @@ func TestAsync_ConcurrentWritersFlushersAndClose(t *testing.T) {
 	var closeWg sync.WaitGroup
 
 	for range 2 {
-		closeWg.Add(1)
-
-		go func() {
-			defer closeWg.Done()
-
+		closeWg.Go(func() {
 			if err := asyncClose(t, a); err != nil {
 				t.Errorf("Close() error = %v, want nil", err)
 			}
-		}()
+		})
 	}
 
 	closeWg.Wait()

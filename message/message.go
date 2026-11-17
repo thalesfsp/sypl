@@ -118,7 +118,7 @@ func (m *message) DeleteTag(tag string) {
 
 // GetTags retrieves tags, lexicographically sorted.
 func (m *message) GetTags() []string {
-	tags := []string{}
+	tags := make([]string, 0, len(m.tags))
 
 	for tag := range m.tags {
 		tags = append(tags, tag)

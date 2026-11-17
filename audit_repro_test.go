@@ -5,6 +5,7 @@
 package sypl_test
 
 import (
+	"context"
 	"errors"
 	"os"
 	"os/exec"
@@ -241,7 +242,7 @@ func TestAudit_DoubleFatalNoRace(t *testing.T) {
 	}
 
 	//nolint:gosec
-	cmd := exec.Command(os.Args[0], "-test.run=TestAudit_DoubleFatalNoRace")
+	cmd := exec.CommandContext(context.Background(), os.Args[0], "-test.run=TestAudit_DoubleFatalNoRace")
 	cmd.Env = append(os.Environ(),
 		"SYPL_TEST_DOUBLE_FATAL=1",
 		"GORACE=halt_on_error=1 exitcode=66",

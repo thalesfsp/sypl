@@ -173,7 +173,7 @@ func TestOutput_Write_ProcessorsAreApplied(t *testing.T) {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
-	want := sypltest.DefaultPrefixValue + sypltest.DefaultContentOutput + " - suffixed"
+	want := sypltest.DefaultPrefixValue + sypltest.DefaultContentOutput + fixtureSuffixed
 
 	if buf.String() != want {
 		t.Errorf("Write() output = %q, want %q", buf.String(), want)
@@ -189,13 +189,13 @@ func TestOutput_Write_MessageSelectedProcessors(t *testing.T) {
 	m := message.New(level.Info, sypltest.DefaultContentOutput)
 
 	// The message narrows processing down to a single processor.
-	m.SetProcessorsNames([]string{"Suffixer"})
+	m.SetProcessorsNames([]string{fixtureSuffixerTitle})
 
 	if err := o.Write(m); err != nil {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
-	want := sypltest.DefaultContentOutput + " - suffixed"
+	want := sypltest.DefaultContentOutput + fixtureSuffixed
 
 	if buf.String() != want {
 		t.Errorf("Write() output = %q, want %q", buf.String(), want)
@@ -216,7 +216,7 @@ func TestOutput_Write_ProcessorErrorContinues(t *testing.T) {
 		t.Fatalf("Write() error = %v, want nil", err)
 	}
 
-	want := sypltest.DefaultContentOutput + " - suffixed"
+	want := sypltest.DefaultContentOutput + fixtureSuffixed
 
 	if buf.String() != want {
 		t.Errorf("Write() output = %q, want %q", buf.String(), want)

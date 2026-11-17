@@ -74,7 +74,7 @@ func parseSyplJSONLines(t *testing.T, raw string) []map[string]interface{} {
 
 	results := []map[string]interface{}{}
 
-	for _, line := range strings.Split(raw, "\n") {
+	for line := range strings.SplitSeq(raw, "\n") {
 		// sypl's JSON formatter content carries the JSON encoder's own
 		// trailing newline, and the pipeline restores the record's linebreak
 		// after it - so records are separated by a blank line.

@@ -301,7 +301,7 @@ func (sypl *Sypl) PrintlnPretty(l level.Level, data interface{}) ISypl {
 //
 // NOTE: If the named output doesn't exits, the message will not be printed.
 func (sypl *Sypl) PrintMessagesToOutputs(messagesToOutputs ...MessageToOutput) ISypl {
-	messages := []message.IMessage{}
+	messages := make([]message.IMessage, 0, len(messagesToOutputs))
 
 	for _, mto := range messagesToOutputs {
 		m := message.New(mto.Level, mto.Content)
@@ -323,7 +323,7 @@ func (sypl *Sypl) PrintMessagesToOutputsWithOptions(
 	o *options.Options,
 	messagesToOutputs ...MessageToOutput,
 ) ISypl {
-	messages := []message.IMessage{}
+	messages := make([]message.IMessage, 0, len(messagesToOutputs))
 
 	for _, mto := range messagesToOutputs {
 		m := message.New(mto.Level, mto.Content)
@@ -662,9 +662,10 @@ func (sypl *Sypl) GetOutputs() []output.IOutput {
 
 // GetOutputsNames returns the names of the registered outputs.
 func (sypl *Sypl) GetOutputsNames() []string {
-	outputsNames := []string{}
+	outputs := sypl.GetOutputs()
+	outputsNames := make([]string, 0, len(outputs))
 
-	for _, output := range sypl.GetOutputs() {
+	for _, output := range outputs {
 		outputsNames = append(outputsNames, output.GetName())
 	}
 
@@ -711,11 +712,7 @@ func (sypl *Sypl) process(messages ...message.IMessage) {
 		// https://golang.org/doc/faq#closures_and_goroutines
 		m := m
 
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			// Do nothing if message is flagged with `SkipAndMute` - it
 			// should not be processed, neither printed.
 			if m.GetFlag() == flag.SkipAndMute {
@@ -751,9 +748,11 @@ func (sypl *Sypl) process(messages ...message.IMessage) {
 			// Should allows to set global tags.
 			// Per-message tags should have precedence.
 			if sypl.GetTags() != nil {
-				finalTags := []string{}
-				finalTags = append(finalTags, sypl.GetTags()...)
-				finalTags = append(finalTags, m.GetTags()...)
+				globalTags := sypl.GetTags()
+				messageTags := m.GetTags()
+				finalTags := make([]string, 0, len(globalTags)+len(messageTags))
+				finalTags = append(finalTags, globalTags...)
+				finalTags = append(finalTags, messageTags...)
 				m.AddTags(finalTags...)
 			}
 
@@ -762,7 +761,7 @@ func (sypl *Sypl) process(messages ...message.IMessage) {
 			if m.GetLevel() == level.Fatal {
 				shouldExit.Store(true)
 			}
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -846,7 +845,7 @@ func mergeOptions(m message.IMessage, o *options.Options) message.IMessage {
 // filterMatch checks if the component `name` exactly matches - case
 // insensitive - any of the comma-separated `filter` entries.
 func filterMatch(filter, name string) bool {
-	for _, entry := range strings.Split(filter, ",") {
+	for entry := range strings.SplitSeq(filter, ",") {
 		if strings.EqualFold(strings.TrimSpace(entry), name) {
 			return true
 		}

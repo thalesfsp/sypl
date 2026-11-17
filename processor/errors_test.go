@@ -23,7 +23,7 @@ func TestNewProcessingError(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 			args: args{
 				m: message.New(level.Info, "Message content"),
 				e: errors.New("Error content"),
@@ -53,7 +53,7 @@ func TestProcessingError_Error(t *testing.T) {
 		want   string
 	}{
 		{
-			name: "Should work",
+			name: fixtureShouldWorkTitle,
 			fields: fields{
 				Cause:         errors.New("Error content"),
 				Message:       message.New(level.Info, "Message content"),

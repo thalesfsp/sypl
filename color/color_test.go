@@ -6,6 +6,9 @@ package color
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"slices"
 	"strings"
 	"testing"
 
@@ -57,6 +60,26 @@ func colorTable() []struct {
 }
 
 func TestColors_WrapWithANSICodes(t *testing.T) {
+	// fatih/color captures NO_COLOR in each built-in during package init.
+	// Exercise the same real built-ins in a clean child, not replacement colors.
+	if os.Getenv("NO_COLOR") != "" {
+		testBinary, err := os.Executable()
+		if err != nil {
+			t.Fatalf("Resolve test executable: %v", err)
+		}
+
+		cmd := exec.CommandContext(t.Context(), testBinary, "-test.run=^TestColors_WrapWithANSICodes$", "-test.v")
+		cmd.Env = slices.DeleteFunc(os.Environ(), func(value string) bool {
+			return strings.HasPrefix(value, "NO_COLOR=")
+		})
+
+		if output, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("ANSI color subprocess: %v\n%s", err, output)
+		}
+
+		return
+	}
+
 	enableColor(t)
 
 	for _, tt := range colorTable() {
