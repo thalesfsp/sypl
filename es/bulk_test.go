@@ -128,6 +128,11 @@ func (s *stubIndexer) Add(context.Context, esutil.BulkIndexerItem) error { retur
 func (s *stubIndexer) Close(context.Context) error                       { return s.closeErr }
 func (s *stubIndexer) Stats() esutil.BulkIndexerStats                    { return esutil.BulkIndexerStats{} }
 
+// Flush satisfies the esutil.BulkIndexer interface - the method exists in
+// go-elasticsearch v8.19.x (absent in v8.16.0). ElasticSearchBulk never
+// calls it: its Flush drains through Close, and swaps in a fresh indexer.
+func (s *stubIndexer) Flush(context.Context) error { return nil }
+
 //////
 // Factories.
 //////

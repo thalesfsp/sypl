@@ -921,3 +921,18 @@ func TestSypl_NewDefault(t *testing.T) {
 		t.Fatalf("NewDefault io.Writer level = %s, expected none", l.GetDefaultIoWriterLevel())
 	}
 }
+
+// Debug overrides must accept literal names through the public logging path.
+func TestSypl_LiteralNamesWithDebugLevel(t *testing.T) {
+	t.Setenv(shared.LevelEnvVar, "api(v2:out[:debug")
+	t.Setenv(shared.FilterEnvVar, "")
+
+	var buf safebuffer.Buffer
+
+	l := sypl.New("api(v2", output.New("out[", level.Info, &buf))
+	l.Debugln("literal names")
+
+	if got := buf.String(); got != "literal names\n" {
+		t.Fatalf("Debugln() = %q, want %q", got, "literal names\n")
+	}
+}

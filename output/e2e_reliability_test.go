@@ -140,11 +140,7 @@ func TestE2E_RotatingFileThroughSypl(t *testing.T) {
 	var wg sync.WaitGroup
 
 	for w := range writers {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			for i := range messagesPerWriter {
 				l.Infolnf("w%d-m%02d", w, i)
 
@@ -154,7 +150,7 @@ func TestE2E_RotatingFileThroughSypl(t *testing.T) {
 					}
 				}
 			}
-		}()
+		})
 	}
 
 	wg.Wait()

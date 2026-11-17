@@ -187,8 +187,11 @@ var matchersCache sync.Map
 // the cap by a handful of entries; the point is that growth stops.
 var matchersCacheSize atomic.Int64
 
-// newMatchers compiles the matchers for a component, and output pair.
+// newMatchers compiles matchers for a pair of literal component/output names.
 func newMatchers(componentName, outputName string) *matchers {
+	componentName = regexp.QuoteMeta(componentName)
+	outputName = regexp.QuoteMeta(outputName)
+
 	levels := strings.Join(level.LevelsNames(), "|")
 
 	return &matchers{

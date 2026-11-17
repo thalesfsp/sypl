@@ -624,11 +624,7 @@ func TestAsync_FlushSnapshotUnderSustainedWrites(t *testing.T) {
 	var wg sync.WaitGroup
 
 	for w := range 4 {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			for i := 0; ; i++ {
 				select {
 				case <-stop:
@@ -638,7 +634,7 @@ func TestAsync_FlushSnapshotUnderSustainedWrites(t *testing.T) {
 
 				_ = a.Write(message.New(level.Info, fmt.Sprintf("post-w%d-%d\n", w, i)))
 			}
-		}()
+		})
 	}
 
 	f, ok := a.(interface{ Flush() error })
@@ -1231,30 +1227,22 @@ func TestAsync_ConcurrentWritersFlushersAndClose(t *testing.T) {
 
 	// Concurrent writers.
 	for w := range writers {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			for i := range messagesPerWriter {
 				if err := a.Write(message.New(level.Info, fmt.Sprintf("w%d-m%d\n", w, i))); err == nil {
 					written.Add(1)
 				}
 			}
-		}()
+		})
 	}
 
 	// Concurrent flushers.
 	for range 2 {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			for range 5 {
 				_ = asyncFlush(t, a)
 			}
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -1263,15 +1251,11 @@ func TestAsync_ConcurrentWritersFlushersAndClose(t *testing.T) {
 	var closeWg sync.WaitGroup
 
 	for range 2 {
-		closeWg.Add(1)
-
-		go func() {
-			defer closeWg.Done()
-
+		closeWg.Go(func() {
 			if err := asyncClose(t, a); err != nil {
 				t.Errorf("Close() error = %v, want nil", err)
 			}
-		}()
+		})
 	}
 
 	closeWg.Wait()

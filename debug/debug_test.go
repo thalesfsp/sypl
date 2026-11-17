@@ -97,6 +97,22 @@ func TestNew(t *testing.T) {
 			wantMatcher: None,
 			wantOK:      false,
 		},
+		{
+			name:        "Should fail - component dot must not match another name",
+			args:        args{componentName: "a.b", outputName: "literal-output"},
+			content:     "aXb:literal-output:debug",
+			wantLevel:   level.None,
+			wantMatcher: None,
+			wantOK:      false,
+		},
+		{
+			name:        "Should fail - output dot must not match another name",
+			args:        args{componentName: "literal-component", outputName: "a.b"},
+			content:     "aXb:debug",
+			wantLevel:   level.None,
+			wantMatcher: None,
+			wantOK:      false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -117,6 +133,18 @@ func TestNew(t *testing.T) {
 
 			if lvl != tt.wantLevel {
 				t.Fatalf("OK; expected %+v got %+v", tt.wantLevel, lvl)
+			}
+		})
+	}
+
+	// Names are literals, including unmatched delimiters and other regexp syntax.
+	for _, name := range []string{"api(v2", "C++ service", "*x", `a\q`, "x{99999}", `()[]{}*+?|^$\.`} {
+		t.Run("Should work - literal names "+name, func(t *testing.T) {
+			t.Setenv(shared.LevelEnvVar, name+":"+name+":debug")
+
+			lvl, matcher, ok := New(name, name).Level()
+			if !ok || lvl != level.Debug || matcher != COL {
+				t.Fatalf("Level() = (%v, %v, %v), want (debug, %v, true)", lvl, matcher, ok, COL)
 			}
 		})
 	}

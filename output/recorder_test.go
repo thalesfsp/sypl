@@ -253,11 +253,7 @@ func TestRecorder_ConcurrentWriters(t *testing.T) {
 	var wg sync.WaitGroup
 
 	for w := range writers {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			for i := range messagesPerWriter {
 				m := message.New(level.Info, fmt.Sprintf("w%d-m%d\n", w, i))
 
@@ -267,7 +263,7 @@ func TestRecorder_ConcurrentWriters(t *testing.T) {
 					t.Errorf("Write() error = %v, want nil", err)
 				}
 			}
-		}()
+		})
 	}
 
 	wg.Wait()

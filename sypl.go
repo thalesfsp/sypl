@@ -711,11 +711,7 @@ func (sypl *Sypl) process(messages ...message.IMessage) {
 		// https://golang.org/doc/faq#closures_and_goroutines
 		m := m
 
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			// Do nothing if message is flagged with `SkipAndMute` - it
 			// should not be processed, neither printed.
 			if m.GetFlag() == flag.SkipAndMute {
@@ -762,7 +758,7 @@ func (sypl *Sypl) process(messages ...message.IMessage) {
 			if m.GetLevel() == level.Fatal {
 				shouldExit.Store(true)
 			}
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -846,7 +842,7 @@ func mergeOptions(m message.IMessage, o *options.Options) message.IMessage {
 // filterMatch checks if the component `name` exactly matches - case
 // insensitive - any of the comma-separated `filter` entries.
 func filterMatch(filter, name string) bool {
-	for _, entry := range strings.Split(filter, ",") {
+	for entry := range strings.SplitSeq(filter, ",") {
 		if strings.EqualFold(strings.TrimSpace(entry), name) {
 			return true
 		}

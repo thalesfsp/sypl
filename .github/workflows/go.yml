@@ -23,18 +23,18 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.23
+          go-version: "1.27.4"
 
       - name: Setup golangci-lint
-        uses: golangci/golangci-lint-action@v6.1.0
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: v1.61.0
+          version: v2.15.0
           args: --timeout 10m -v -c .golangci.yml
 
       - name: Lint es module
-        uses: golangci/golangci-lint-action@v6.1.0
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: v1.61.0
+          version: v2.15.0
           working-directory: es
           args: --timeout 10m -v -c ../.golangci.yml
 
